@@ -61,7 +61,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "DreamCity Backend API is running smoothly",
+    message: "PlotPro Backend API is running smoothly",
     timestamp: new Date().toISOString(),
   });
 });
@@ -82,8 +82,8 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[DreamCity Server] Listening on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`);
-  console.log(`[DreamCity Server] Local:   http://localhost:${PORT}`);
+  console.log(`[PlotPro Server] Listening on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`);
+  console.log(`[PlotPro Server] Local:   http://localhost:${PORT}`);
 });
 
 export default app;

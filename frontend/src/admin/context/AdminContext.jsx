@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { admins as initialAdmins } from "../data/superAdminMockData";
 import { useNotifications } from "./NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import { superAdminApi } from "../../services/api";

@@ -33,6 +33,37 @@ Thumbs.db
 
 # Testing & temporary
 .momentic/
+*/.momentic/
+test-results/
+*/test-results/
 .playwright/
+*/.playwright/
+*.test.yaml
+*.spec.yaml
 frontend/.kilo/
 *.zip
+
+# Agent & Skill files
+.agents/
+*/.agents/
+.claude/
+*/.claude/
+.codex/
+*/.codex/
+.gemini/
+*/.gemini/
+.opencode/
+*/.opencode/
+skills/
+*/skills/
+*.skill
+momentic.config.yaml
+*/momentic.config.yaml
+opencode.json
+*/opencode.json
+.mcp.json
+*/.mcp.json
+
+# Local scripts & DB migrations
+backend/scripts/migrateToAtlas.js
+

@@ -1,5 +1,0 @@
-[mcp_servers.momentic]
-command = "npx"
-args = [ "-y", "momentic", "mcp", "--config", "momentic.config.yaml" ]
-startup_timeout_sec = 30
-

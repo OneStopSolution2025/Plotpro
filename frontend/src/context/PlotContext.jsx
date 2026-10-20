@@ -7,7 +7,6 @@ import {
 } from "react";
 import { useLocation } from "react-router-dom";
 
-import { plots as initialPlots } from "../data/plots";
 import { publicApi, adminApi, superAdminApi } from "../services/api";
 import { useAuth } from "./AuthContext";
 import { useProjects } from "./ProjectContext";
