@@ -23,7 +23,7 @@ import { useNotifications } from "../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import { useAdmins } from "../context/AdminContext";
 
-import "../styles/adminsidebar.css";
+import "../styles/Adminsidebar.css";
 
 const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
   const navigate = useNavigate();
