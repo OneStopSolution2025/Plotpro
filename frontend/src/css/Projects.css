@@ -1,0 +1,1361 @@
+/* =====================================================
+   HERO SECTION
+===================================================== */
+
+.hero-section1 {
+
+    position: relative;
+
+    height: 320px;
+
+    overflow: hidden;
+
+    border-radius: 30px;
+
+    margin-top: 20px;
+}
+
+
+.hero-section1 .hero-img {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    border-radius: 30px;
+}
+
+
+.hero-content1 {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 0;
+
+    transform: translateY(-50%);
+
+    padding: 15px 50px;
+
+    z-index: 2;
+}
+
+
+.hero-content1 h1 {
+
+    color: white;
+
+    margin: 0 0 10px;
+}
+
+
+.hero-content1 p {
+
+    color: white;
+
+    width: 500px;
+
+    max-width: 100%;
+
+    margin: 0;
+
+    line-height: 1.6;
+}
+
+
+.hero-overlay1 {
+
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 30px;
+
+    background: linear-gradient(90deg,
+            rgba(50, 50, 50, 0.75),
+            rgba(117, 117, 117, 0.4),
+            rgba(220, 220, 220, 0.05));
+
+    z-index: 1;
+}
+
+
+/* =====================================================
+   DESKTOP CATEGORY BAR
+===================================================== */
+
+.mid-section1 {
+
+    width: 100%;
+}
+
+
+.plot-sort1 {
+
+    padding: 25px 0;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 15px;
+
+    flex-wrap: wrap;
+}
+
+
+.sort-button1 {
+
+    font-size: 16px;
+
+    font-weight: 400;
+
+    letter-spacing: 0.5px;
+
+    border-radius: 25px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease;
+
+    padding: 10px 25px;
+
+    border: 1px solid #111;
+
+    background: #fff;
+
+    color: #111;
+}
+
+
+.sort-button1:hover {
+
+    border-color: #a63d2f;
+
+    background-color: #a63d2f;
+
+    color: #fff;
+
+    transform: translateY(-2px);
+}
+
+
+.sort-button1.active {
+
+    border-color: #a63d2f;
+
+    background-color: #a63d2f;
+
+    color: #fff;
+}
+
+
+/* =====================================================
+   PROJECT SECTION
+===================================================== */
+
+.project-section {
+
+    width: 100%;
+
+    max-width: 1400px;
+
+    margin: 0 auto;
+
+    padding: 20px 30px 50px;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 25px;
+}
+
+
+/* =====================================================
+   FILTER SIDEBAR
+===================================================== */
+
+.filters {
+
+    width: 280px;
+
+    min-width: 280px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background: rgba(255, 255, 255, 0.8);
+
+    backdrop-filter: blur(30px);
+
+    -webkit-backdrop-filter: blur(10px);
+
+    border-radius: 20px;
+
+    padding: 10px 0 20px;
+
+    align-self: flex-start;
+
+    border: 1px solid rgba(0, 0, 0, 0.05);
+
+    box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =====================================================
+   FILTER HEADER
+===================================================== */
+
+.fil-reset {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+}
+
+
+.fil {
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 20px;
+
+    gap: 8px;
+}
+
+
+.filimg {
+
+    width: 16px;
+
+    height: 16px;
+
+    object-fit: contain;
+}
+
+
+.fil p {
+
+    margin: 0;
+
+    font-size: 19px;
+
+    font-weight: 500;
+}
+
+
+.reset-btn {
+
+    padding: 15px;
+}
+
+
+.reset-btn button {
+
+    background-color: #a63d2f;
+
+    padding: 7px 15px;
+
+    border: none;
+
+    color: white;
+
+    border-radius: 13px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+
+.reset-btn button:hover {
+
+    background-color: #872e22;
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   MOBILE CATEGORY INSIDE FILTER
+===================================================== */
+
+.filter-category-mobile {
+
+    display: none;
+}
+
+
+/* =====================================================
+   FILTER GROUP
+===================================================== */
+
+.location,
+.location1 {
+
+    padding: 20px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+}
+
+
+.location {
+
+    border-bottom:
+        1px solid rgb(222, 222, 222);
+}
+
+
+.selection {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+
+.loc1 {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 24px;
+}
+
+
+.loc1 input[type="checkbox"],
+.loc1 input[type="radio"] {
+
+    width: 17px;
+
+    height: 17px;
+
+    margin: 0;
+
+    cursor: pointer;
+
+    accent-color: #a63d2f;
+
+    flex-shrink: 0;
+}
+
+
+.loc1 label {
+
+    margin: 0;
+
+    cursor: pointer;
+
+    line-height: 1.3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.location-count {
+    font-size: 12px;
+    color: #888;
+    font-weight: 400;
+    background: #f0f0f0;
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+
+
+/* =====================================================
+   LOCATION SEARCH & SHOW MORE
+===================================================== */
+
+.location-search {
+    margin: 12px 20px 8px;
+}
+
+.location-search input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 13px;
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.location-search input:focus {
+    outline: none;
+    border-color: #a63d2f;
+    box-shadow: 0 0 0 2px rgba(166, 61, 47, 0.15);
+    background: white;
+}
+
+.location-search input::placeholder {
+    color: #aaa;
+}
+
+.show-more-btn {
+    width: calc(100% - 40px);
+    margin: 8px 20px 4px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #a63d2f;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.show-more-btn:hover {
+    background: #f0f7ff;
+    border-color: #a63d2f;
+}
+
+.show-more-btn:active {
+    background: #fbf0ec;
+}
+
+
+.title {
+
+    font-size: 18px;
+
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   APPLY FILTER
+===================================================== */
+
+.apply-filter {
+
+    width: calc(100% - 40px);
+
+    margin: 10px 20px 0;
+
+    background-color: #a63d2f;
+
+    color: white;
+
+    border-radius: 15px;
+
+    padding: 11px 0;
+
+    border: none;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    transition:
+        background-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+
+.apply-filter:hover {
+
+    background-color: #872e22;
+
+    transform: translateY(-2px);
+}
+
+
+.apply-filter:active {
+
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   PRICE RANGE SLIDER
+===================================================== */
+
+.price-range-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.price-range-inputs {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.price-range-inputs label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+}
+
+.price-range-inputs input {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 100%;
+    min-width: 80px;
+}
+
+.price-range-inputs input:focus {
+    outline: none;
+    border-color: #a63d2f;
+    box-shadow: 0 0 0 2px rgba(166, 61, 47, 0.15);
+}
+
+
+/* =====================================================
+   PRICE SLIDER (DUAL THUMB) - CURRENT JSX STRUCTURE
+===================================================== */
+
+.price-track-container {
+    position: relative;
+    width: 100%;
+    height: 32px;
+    display: flex;
+    align-items: center;
+}
+
+.price-track {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: #e5e5e5;
+    border-radius: 999px;
+}
+
+.price-range-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: #a63d2f;
+    border-radius: 999px;
+    z-index: 1;
+}
+
+.price-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #a63d2f;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    cursor: grab;
+    z-index: 2;
+    border: none;
+    appearance: none;
+}
+
+.price-thumb:hover {
+    transform: translate(-50%, -50%) scale(1.12);
+}
+
+.price-thumb:active {
+    cursor: grabbing;
+}
+
+.price-thumb:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.4);
+}
+
+.price-thumb.min-thumb {
+    z-index: 3;
+}
+
+.price-thumb.max-thumb {
+    z-index: 3;
+}
+
+.price-range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+.price-range-labels span {
+    font-weight: 600;
+    color: #333;
+}
+
+
+/* =====================================================
+   PROJECT RESULTS
+===================================================== */
+
+.project-results-wrapper {
+
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+/* =====================================================
+   RESULTS HEADER
+===================================================== */
+
+.project-results-header {
+
+    display: flex;
+
+    align-items: center;
+
+    margin-bottom: 15px;
+}
+
+
+.project-results-header span {
+
+    display: block;
+
+    font-size: 11px;
+
+    letter-spacing: 0.15em;
+
+    color: #777;
+
+    margin-bottom: 3px;
+}
+
+
+.project-results-header h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 600;
+
+    color: #111;
+}
+
+
+/* =====================================================
+   PROJECT GRID
+===================================================== */
+
+.project-card2 {
+
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit,
+            minmax(250px, 1fr));
+
+    gap: 20px;
+
+    align-items: start;
+}
+
+
+/* =====================================================
+   NO PROJECTS
+===================================================== */
+
+.no-projects {
+
+    width: 100%;
+
+    min-height: 250px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    border: 1px dashed #d5d5d5;
+
+    border-radius: 20px;
+
+    padding: 30px;
+}
+
+
+.no-projects h3 {
+
+    margin: 0 0 8px;
+
+    font-size: 22px;
+}
+
+
+.no-projects p {
+
+    margin: 0 0 15px;
+
+    color: #777;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+.no-projects button {
+
+    border: none;
+
+    background: #a63d2f;
+
+    color: white;
+
+    border-radius: 10px;
+
+    padding: 9px 18px;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+
+.no-projects button:hover {
+
+    background: #872e22;
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   MOBILE FILTER BUTTON
+===================================================== */
+
+.mobile-filter-trigger {
+
+    display: none;
+}
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 992px) {
+
+    .project-section {
+
+        padding: 20px;
+
+        gap: 20px;
+    }
+
+
+    .filters {
+
+        width: 240px;
+
+        min-width: 240px;
+    }
+
+
+    .hero-content1 {
+
+        padding: 15px 30px;
+    }
+
+
+    .project-card2 {
+
+        grid-template-columns:
+            repeat(auto-fit,
+                minmax(220px, 1fr));
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+    /* =================================================
+       HERO
+    ================================================= */
+
+    .hero-section1 {
+
+        height: 280px;
+
+        border-radius: 20px;
+    }
+
+
+    .hero-section1 .hero-img,
+    .hero-overlay1 {
+
+        border-radius: 20px;
+    }
+
+
+    .hero-content1 {
+
+        padding: 20px;
+
+        top: 50%;
+    }
+
+
+    .hero-content1 h1 {
+
+        font-size: 23px;
+    }
+
+
+    .hero-content1 p {
+
+        width: 100%;
+
+        font-size: 14px;
+
+        line-height: 1.5;
+    }
+
+
+    /* =================================================
+       HIDE TOP CATEGORY ON MOBILE
+    ================================================= */
+
+    .mid-section1 {
+
+        display: none;
+    }
+
+
+    .plot-sort1 {
+
+        display: none;
+    }
+
+
+    /* =================================================
+       MOBILE FILTER BUTTON
+    ================================================= */
+
+    .mobile-filter-trigger {
+
+        display: flex;
+
+        justify-content: flex-end;
+
+        width: 100%;
+
+        padding:
+            15px 15px 10px;
+    }
+
+
+    .mobile-filter-trigger button {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 7px;
+
+        min-width: 95px;
+
+        height: 42px;
+
+        padding: 0 14px;
+
+        border: none;
+
+        border-radius: 12px;
+
+        background: #111;
+
+        color: white;
+
+        font-size: 13px;
+
+        font-weight: 500;
+
+        cursor: pointer;
+
+        transition:
+            background-color 0.25s ease,
+            transform 0.25s ease;
+    }
+
+
+    .mobile-filter-trigger button:active {
+
+        transform: scale(0.97);
+    }
+
+
+    .mobile-filter-trigger img {
+
+        width: 14px;
+
+        height: 14px;
+
+        object-fit: contain;
+
+        filter: brightness(0) invert(1);
+    }
+
+
+    /* =================================================
+       PROJECT SECTION
+    ================================================= */
+
+    .project-section {
+
+        flex-direction: column;
+
+        width: 100%;
+
+        padding:
+            5px 15px 40px;
+
+        gap: 15px;
+    }
+
+
+    /* =================================================
+       FILTER HIDDEN INITIALLY
+    ================================================= */
+
+    .filters {
+
+        display: none;
+
+        width: 100%;
+
+        min-width: 100%;
+
+        order: 1;
+
+        border-radius: 18px;
+    }
+
+
+    /* =================================================
+       FILTER REVEALED
+    ================================================= */
+
+    .filters.mobile-filter-visible {
+
+        display: flex;
+
+        animation:
+            filterReveal 0.25s ease;
+    }
+
+
+    @keyframes filterReveal {
+
+        from {
+
+            opacity: 0;
+
+            transform: translateY(-10px);
+        }
+
+
+        to {
+
+            opacity: 1;
+
+            transform: translateY(0);
+        }
+
+    }
+
+
+    /* =================================================
+       CATEGORY INSIDE MOBILE FILTER
+    ================================================= */
+
+    .filter-category-mobile {
+
+        display: flex;
+
+        padding: 20px;
+
+        flex-direction: column;
+
+        gap: 15px;
+
+        border-bottom:
+            1px solid rgb(222, 222, 222);
+    }
+
+
+    .filter-category-mobile .selection {
+
+        gap: 10px;
+    }
+
+
+    /* =================================================
+       MOBILE FILTER HEADER
+    ================================================= */
+
+    .fil {
+
+        padding: 18px;
+    }
+
+
+    .fil p {
+
+        font-size: 17px;
+    }
+
+
+    .reset-btn {
+
+        padding: 12px;
+    }
+
+
+    .reset-btn button {
+
+        padding: 7px 13px;
+
+        font-size: 11px;
+    }
+
+
+    /* =================================================
+       FILTER GROUP
+    ================================================= */
+
+    .location,
+    .location1 {
+
+        padding: 18px;
+
+        gap: 13px;
+    }
+
+
+    .title {
+
+        font-size: 15px;
+    }
+
+
+    .selection {
+
+        gap: 9px;
+    }
+
+
+    .loc1 {
+
+        min-height: 25px;
+
+        gap: 8px;
+    }
+
+
+    .loc1 input[type="checkbox"],
+    .loc1 input[type="radio"] {
+
+        width: 16px;
+
+        height: 16px;
+    }
+
+
+    .loc1 label {
+
+        font-size: 13px;
+    }
+
+
+    /* =================================================
+       APPLY
+    ================================================= */
+
+    .apply-filter {
+
+        width: calc(100% - 36px);
+
+        margin:
+            8px 18px 18px;
+
+        height: 44px;
+
+        font-size: 13px;
+    }
+
+
+    /* =================================================
+       PROJECT RESULTS
+    ================================================= */
+
+    .project-results-wrapper {
+
+        width: 100%;
+
+        order: 2;
+    }
+
+
+    .project-results-header {
+
+        margin-bottom: 12px;
+    }
+
+
+    .project-results-header span {
+
+        font-size: 9px;
+    }
+
+
+    .project-results-header h2 {
+
+        font-size: 18px;
+    }
+
+
+    /* =================================================
+       MOBILE PROJECT GRID
+    ================================================= */
+
+    .project-card2 {
+
+        width: 100%;
+
+        grid-template-columns:
+            repeat(2,
+                minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    /* =================================================
+       NO RESULTS
+    ================================================= */
+
+    .no-projects {
+
+        min-height: 220px;
+
+        padding: 25px;
+    }
+
+
+    .no-projects h3 {
+
+        font-size: 18px;
+    }
+
+
+    .no-projects p {
+
+        font-size: 12px;
+    }
+
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+    .hero-content1 {
+        position: absolute;
+
+        top: 30%;
+
+        padding: 18px;
+
+        font-weight: 500;
+    }
+
+
+    .hero-content1 h1 {
+
+        font-size: 20px;
+
+        margin-bottom: 8px;
+    }
+
+
+    .hero-content1 p {
+
+        font-size: 11px;
+
+        line-height: 1.5;
+    }
+
+
+    .mobile-filter-trigger {
+
+        padding:
+            12px 10px 8px;
+    }
+
+
+    .mobile-filter-trigger button {
+
+        min-width: 88px;
+
+        height: 39px;
+
+        font-size: 11px;
+
+        border-radius: 10px;
+    }
+
+
+    .project-section {
+
+        padding:
+            5px 10px 35px;
+    }
+
+
+    .project-card2 {
+
+        grid-template-columns:
+            repeat(2,
+                minmax(0, 1fr));
+
+        gap: 9px;
+    }
+
+
+    .project-results-header h2 {
+
+        font-size: 16px;
+    }
+
+
+    .project-results-header span {
+
+        font-size: 8px;
+    }
+
+
+    .filter-category-mobile,
+    .location,
+    .location1 {
+
+        padding: 16px;
+    }
+
+
+    .title {
+
+        font-size: 14px;
+    }
+
+
+    .loc1 label {
+
+        font-size: 12px;
+    }
+
+
+    .apply-filter {
+
+        width: calc(100% - 32px);
+
+        margin:
+            8px 16px 16px;
+    }
+}
+
+
+/* =====================================================
+   TABLET - MOBILE PROJECT GRID
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .project-results-wrapper {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .project-card2 {
+        width: 100%;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+
+        align-items: stretch;
+    }
+}
+
+
+/* =====================================================
+   SMALL MOBILE - PROJECT GRID
+===================================================== */
+
+@media (max-width: 480px) {
+
+    .project-card2 {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 9px;
+    }
+}

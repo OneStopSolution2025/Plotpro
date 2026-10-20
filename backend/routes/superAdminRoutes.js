@@ -1,0 +1,74 @@
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import { authorize } from "../middleware/roleMiddleware.js";
+import {
+  getAllAdmins,
+  createAdminAccount,
+  updateAdminAccount,
+  toggleAdminStatus,
+  deleteAdminAccount,
+  getAllProjectsSuperAdmin,
+  getPendingProjects,
+  approveProject,
+  rejectProject,
+  assignProjectAdmin,
+  archiveProject,
+  getSuperAdminAnalytics,
+  getAllPlotsSuperAdmin,
+  createProjectSuperAdmin,
+  getProjectPlotsSuperAdmin,
+  getSubscriptionInfo,
+} from "../controllers/superAdminController.js";
+import {
+  getAllEnquiriesSuperAdmin,
+  updateEnquiryStatusSuperAdmin,
+} from "../controllers/enquiryController.js";
+import { getAllSiteVisitsSuperAdmin } from "../controllers/siteVisitController.js";
+import {
+  getAdminProfile,
+  updateAdminProfile,
+  changeAdminPassword,
+} from "../controllers/adminProfileController.js";
+
+const router = express.Router();
+
+// Enforce authentication & SUPER_ADMIN role for all routes in this router
+router.use(protect);
+router.use(authorize("SUPER_ADMIN"));
+
+// Analytics
+router.get("/analytics", getSuperAdminAnalytics);
+
+// Admin Management & Subscription Info
+router.get("/subscription-info", getSubscriptionInfo);
+router.get("/admins", getAllAdmins);
+router.post("/admins", createAdminAccount);
+router.put("/admins/:id", updateAdminAccount);
+router.patch("/admins/:id/status", toggleAdminStatus);
+router.delete("/admins/:id", deleteAdminAccount);
+
+// Project Oversight, Creation & Approvals
+router.get("/projects", getAllProjectsSuperAdmin);
+router.post("/projects", createProjectSuperAdmin);
+router.get("/projects/pending", getPendingProjects);
+router.get("/projects/:id/plots", getProjectPlotsSuperAdmin);
+router.patch("/projects/:id/approve", approveProject);
+router.patch("/projects/:id/reject", rejectProject);
+router.patch("/projects/:id/assign", assignProjectAdmin);
+router.delete("/projects/:id", archiveProject);
+
+// Plot Inventory Oversight
+router.get("/plots", getAllPlotsSuperAdmin);
+
+// Leads Oversight
+router.get("/enquiries", getAllEnquiriesSuperAdmin);
+router.patch("/enquiries/:id/status", updateEnquiryStatusSuperAdmin);
+router.get("/site-visits", getAllSiteVisitsSuperAdmin);
+
+// Profile & Security
+router.get("/profile", getAdminProfile);
+router.put("/profile", updateAdminProfile);
+router.put("/profile/password", changeAdminPassword);
+
+export default router;
+

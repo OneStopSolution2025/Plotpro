@@ -1,0 +1,314 @@
+.footer {
+    width: 100%;
+
+    margin-top: 70px;
+
+    background: #ffffff;
+
+    color: #222;
+
+}
+
+.footer-content {
+    width: 90%;
+    max-width: 1300px;
+
+    margin: 0 auto;
+
+    padding: 20px 0 45px;
+
+    display: grid;
+
+    grid-template-columns:
+        5fr
+        1fr 1fr;
+    gap: 45px;
+}
+
+.footer-brand img{
+    height: 80px;
+    margin-bottom: 10px;
+    transform: translateX(-20px);
+}
+
+.footer-brand p {
+    max-width: 300px;
+
+    margin: 0;
+
+    color: #727b87;
+
+    font-size: 13px;
+
+    line-height: 1.8;
+}
+
+.footer-column {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.footer-column h3 {
+    margin: 0 0 8px;
+
+    font-size: 16px;
+
+    line-height: 1.3;
+
+    color: #222;
+}
+
+.footer-column a {
+    width: fit-content;
+
+    text-decoration: none;
+
+    color: #69727e;
+
+    font-size: 13px;
+
+    transition: color 0.2s ease;
+}
+
+.footer-column a:hover {
+    color: #a63d2f;
+}
+
+.contact-column p {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    margin: 0;
+
+    color: #69727e;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+.contact-column a{
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    margin: 0;
+
+    color: #69727e;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+.contact-column svg {
+    width: 17px;
+
+    height: 17px;
+
+    margin-top: 2px;
+
+    color: #a63d2f;
+
+    flex-shrink: 0;
+}
+
+.footer-bottom {
+    width: 90%;
+    max-width: 1300px;
+
+    min-height: 65px;
+
+    margin: 0 auto;
+
+    padding: 18px 0;
+
+    border-top: 1px solid #e9eef3;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.footer-bottom p {
+    margin: 0;
+
+    color: #8a929d;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.footer-bottom div {
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 20px;
+}
+
+.footer-bottom a {
+    text-decoration: none;
+
+    color: #8a929d;
+
+    font-size: 12px;
+
+    transition: color 0.2s ease;
+}
+
+.footer-bottom span{
+    font-size: 0.8rem;
+}
+.footer-bottom a {
+    font-size: 0.8rem;
+    color: #a63d2f;
+}
+
+.footer-bottom a:hover{
+    color: #ffb600;
+}
+
+@media (max-width: 992px) {
+
+    .footer-cta {
+        width: 92%;
+    }
+
+    .footer-content {
+        width: 92%;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 35px;
+    }
+
+    .footer-brand p {
+        max-width: 350px;
+    }
+
+    .footer-bottom {
+        width: 92%;
+    }
+
+}
+
+@media (max-width: 576px) {
+
+    .footer {
+        margin-top: 50px;
+    }
+
+    .footer-cta {
+        width: 92%;
+
+        min-height: auto;
+
+        margin-bottom: 30px;
+
+        padding: 25px;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 20px;
+    }
+
+    .footer-cta h2 {
+        font-size: 22px;
+    }
+
+    .footer-cta p {
+        font-size: 13px;
+    }
+
+    .footer-cta-btn {
+        width: 100%;
+    }
+
+    .footer-content {
+        width: 92%;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 30px 20px;
+
+        padding-bottom: 35px;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+
+    .footer-brand h2 {
+        font-size: 24px;
+    }
+
+    .footer-brand p {
+        max-width: 100%;
+    }
+
+    .footer-column h3 {
+        font-size: 15px;
+    }
+
+    .footer-column a,
+    .contact-column p {
+        font-size: 12px;
+    }
+
+    .footer-bottom {
+        width: 92%;
+
+        padding: 16px 0 20px;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 12px;
+    }
+
+    .footer-bottom div {
+        gap: 12px;
+    }
+
+}
+
+@media (max-width: 360px) {
+
+    .footer-content {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-brand {
+        grid-column: auto;
+    }
+
+    .footer-bottom div {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 8px;
+    }
+
+}

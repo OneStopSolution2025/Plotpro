@@ -1,0 +1,149 @@
+.mini-stats {
+
+    width: 100%;
+
+}
+
+
+.outer {
+
+    width: 100%;
+
+    min-height: 90px;
+
+    background-color: #ededed;
+
+    border-radius: 15px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 15px 20px;
+
+    transition: all 0.3s ease;
+
+}
+
+
+.outer:hover {
+
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 25px
+        rgba(0, 0, 0, 0.08);
+
+}
+
+
+.icon-class {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+}
+
+
+.icon3 {
+
+    color: #a63d2f;
+
+    background-color: white;
+
+    border-radius: 12px;
+
+    padding: 10px;
+
+    width: 52px;
+
+    height: 52px;
+
+}
+
+
+.details2 {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    min-width: 0;
+
+}
+
+
+.details2 p {
+
+    margin: 0;
+
+}
+
+
+.tot-acre {
+
+    font-size: 14px;
+
+    color: #606060;
+
+    font-weight: 400;
+
+}
+
+
+.acre {
+
+    margin-top: 4px !important;
+
+    font-size: 18px;
+
+    font-weight: 600;
+
+    color: #1f1f1f;
+
+}
+@media (max-width: 576px) {
+
+    .outer {
+
+        min-height: 80px;
+
+        padding: 12px 15px;
+
+    }
+
+
+    .icon3 {
+
+        width: 45px;
+
+        height: 45px;
+
+        padding: 8px;
+
+    }
+
+
+    .tot-acre {
+
+        font-size: 13px;
+
+    }
+
+
+    .acre {
+
+        font-size: 16px;
+
+    }
+
+}

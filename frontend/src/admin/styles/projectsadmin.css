@@ -1,0 +1,2593 @@
+/* =========================================================
+   DREAMCITY ADMIN — PROJECTS
+========================================================= */
+
+.projects-page {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.projects-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 22px;
+}
+
+.projects-kicker {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #a63d2f;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 1px;
+}
+
+.projects-page-header h1 {
+  margin: 0;
+
+  color: #111111;
+
+  font-size: 29px;
+  line-height: 1;
+
+  font-weight: 800;
+
+  letter-spacing: -1.2px;
+}
+
+.projects-page-header p {
+  margin: 8px 0 0;
+
+  color: #777d85;
+
+  font-size: 11px;
+}
+
+.projects-add-btn {
+  height: 39px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 0 17px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #a63d2f;
+
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.projects-add-btn:hover {
+  background: #872e22;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 20px rgba(166, 61, 47, 0.18);
+}
+
+
+/* =========================================================
+   OVERVIEW
+========================================================= */
+
+.projects-overview {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-bottom: 15px;
+}
+
+.projects-overview-card {
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 15px;
+
+  border: 1px solid #e8edf2;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 20px rgba(20, 40, 70, 0.03);
+}
+
+.projects-overview-icon {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+}
+
+.projects-overview-icon.blue {
+  background: #eaf5ff;
+  color: #a63d2f;
+}
+
+.projects-overview-icon.green {
+  background: #eef8f3;
+  color: #238b5b;
+}
+
+.projects-overview-icon.grey {
+  background: #f1f3f5;
+  color: #697079;
+}
+
+.projects-overview-icon.black {
+  background: #eef0f2;
+  color: #111111;
+}
+
+.projects-overview-card>div:last-child {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.projects-overview-card strong {
+  color: #111111;
+
+  font-size: 35px !important;
+  line-height: 1;
+
+  color: #a63d2f;
+
+  font-weight: 800;
+}
+
+.projects-overview-card span {
+  color: #656566;
+
+  font-size: 8px;
+}
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.projects-toolbar {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 13px;
+}
+
+.projects-search {
+  width: 500px !important;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+
+  border: 1px solid #e4e9ee;
+  border-radius: 9px;
+
+  background: #dddddd;
+}
+
+.projects-search:focus-within {
+  border-color: #a63d2f;
+
+  box-shadow:
+    0 0 0 3px rgba(166, 61, 47, 0.07);
+}
+
+.projects-search svg {
+  margin-left: 12px;
+
+  color: #a63d2f;
+
+  font-size: 17px !important;
+}
+
+.projects-search input {
+  width: 100%;
+  height: 100%;
+
+  padding: 0 10px;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: #222222;
+
+  font-size: 15px !important;
+
+  font-weight: 500;
+}
+
+.projects-search input::placeholder {
+  color: #050505;
+}
+
+.projects-status-select {
+  height: 38px;
+
+  position: relative;
+}
+
+.projects-status-select select {
+  width: 135px;
+  height: 38px;
+
+  appearance: none;
+
+  padding: 0 27px 0 11px;
+
+  border: 1px solid #e4e9ee;
+  border-radius: 9px;
+
+  outline: 0;
+
+  background: #d9d8d8;
+
+  color: rgb(55, 55, 55);
+
+  font-size: 13px !important;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.projects-status-select svg {
+  position: absolute;
+
+  right: 9px;
+  top: 15px;
+
+  pointer-events: none;
+
+  color: #59595a;
+
+  font-size: 11px;
+}
+
+.projects-view-toggle {
+
+  margin-left: auto;
+
+  height: 38px;
+
+  display: flex;
+
+  padding: 3px;
+
+  border: 1px solid #e4e9ee;
+  border-radius: 100px !important;
+
+  background: #ffffff;
+}
+
+
+
+.projects-view-toggle button {
+  width: 32px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #9a9fa6;
+
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.projects-view-toggle button.active {
+  background: #eaf5ff;
+
+  color: #a63d2f;
+}
+
+
+/* =========================================================
+   RESULT
+========================================================= */
+
+.projects-results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 12px;
+}
+
+.projects-results>div {
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+}
+
+.projects-results strong {
+  color: #111111;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.projects-results span {
+  color: #999fa6;
+
+  font-size: 8px;
+}
+
+
+/* =========================================================
+   PROJECT GRID
+========================================================= */
+
+.projects-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 15px;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.project-admin-card {
+  min-width: 0;
+
+  overflow: hidden;
+
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 20px rgba(20, 40, 70, 0.04);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  height: auto;
+}
+
+.project-admin-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 32px rgba(20, 40, 70, 0.08);
+}
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+.project-admin-image {
+  height: 175px;
+
+  position: relative;
+
+  overflow: visible;
+
+  background: #edf1f4;
+}
+
+.project-admin-image>img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  border-radius: 15px 15px 0 0;
+
+  transition:
+    transform 0.45s ease;
+}
+
+
+.project-status {
+  position: absolute;
+
+  top: 10px;
+  left: 10px;
+
+  min-height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 8px;
+
+  border-radius: 999px;
+
+  font-size: 13px !important;
+
+  font-weight: 750;
+
+  z-index: 2;
+}
+
+.project-status.active {
+  background: #ffffff;
+
+  color: #a63d2f;
+}
+
+.project-status.draft {
+  background: #111111;
+
+  color: #ffffff;
+}
+
+.project-status.completed {
+  background: #f1f3f5;
+
+  color: #555b62;
+}
+
+
+/* =========================================================
+   MENU
+========================================================= */
+
+.project-menu {
+  position: absolute;
+
+  top: 9px;
+  right: 9px;
+
+  z-index: 20;
+}
+
+.project-menu>button {
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.94);
+
+  color: #333333;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.project-menu-dropdown {
+  width: 140px;
+
+  position: absolute;
+
+  top: 34px;
+  right: 0;
+
+  padding: 5px;
+
+  border: 1px solid #e5e9ee;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.10);
+}
+
+.project-menu-dropdown button {
+  width: 100%;
+  height: 33px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #4b4b4b;
+
+  font-size: 11.5px;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.project-menu-dropdown button:hover {
+  background: #f3f9ff;
+
+  color: #a63d2f;
+}
+
+.project-menu-dropdown button.delete:hover {
+  color: red;
+
+  background: #f5f5f5;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.project-admin-content {
+  padding: 16px;
+}
+
+.project-admin-heading {
+  display: flex;
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.project-admin-heading h3 {
+  margin: 0;
+
+  color: #111111;
+
+  font-size: 22px !important;
+  line-height: 1.1;
+
+  font-weight: 800;
+
+  letter-spacing: -0.4px;
+}
+
+.project-admin-heading p {
+  margin: 5px 0 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+
+  color: #6a6b6c;
+
+  font-size: 12px !important;
+}
+
+.project-admin-heading p svg {
+  color: #a63d2f;
+
+  font-size: 13px !important;
+}
+
+
+/* =========================================================
+   PRICE
+========================================================= */
+
+.project-price {
+  display: flex;
+  align-items: baseline;
+
+  gap: 5px;
+
+  margin-top: 14px;
+
+  padding-top: 13px;
+
+  border-top: 1px solid #edf0f3;
+}
+
+.project-price span {
+  color: #656667;
+
+  font-size: 10px !important;
+}
+
+.project-price strong {
+  color: #a63d2f;
+
+  font-size: 23px !important;
+  line-height: 1;
+
+  font-weight: 800;
+}
+
+.project-price small {
+  color: #999fa6;
+
+  font-size: 10px !important;
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.project-stats {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  margin-top: 14px;
+
+  padding-top: 13px;
+
+  border-top: 1px solid #edf0f3;
+}
+
+.project-stats>div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  padding-left: 8px;
+
+  border-left: 1px solid #edf0f3;
+}
+
+.project-stats>div:first-child {
+  padding-left: 0;
+
+  border-left: 0;
+}
+
+.project-stats strong {
+  color: #111111;
+
+  font-size: 18px !important;
+
+  line-height: 1;
+
+  font-weight: 800;
+}
+
+.project-stats span {
+  color: #797a7b;
+
+  font-size: 11px !important;
+}
+
+
+/* =========================================================
+   SALES
+========================================================= */
+
+.project-sales {
+  margin-top: 15px;
+}
+
+.project-sales-heading {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 6px;
+
+  color: #545556;
+
+  font-size: 10px !important;
+
+  font-weight: 500;
+}
+
+.project-sales-heading strong {
+  color: #a63d2f;
+
+  font-size: 13px !important;
+}
+
+.project-sales-bar {
+  height: 7px !important;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: #edf2f6;
+}
+
+.project-sales-bar span {
+  height: 100%;
+
+  display: block;
+
+  border-radius: inherit;
+
+  background: #a63d2f;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.project-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 15px;
+
+  padding-top: 12px;
+
+  border-top: 1px solid #edf0f3;
+}
+
+.project-launch {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.project-launch span {
+  color: #a63d2f;
+
+  font-size: 11px !important;
+
+  font-weight: 500;
+}
+
+.project-launch strong {
+  color: #555b62;
+
+  font-size: 10px !important;
+}
+
+.project-card-footer>button {
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: #a63d2f;
+
+  color: #ffffff;
+
+  font-size: 11px !important;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.project-card-footer>button:hover {
+  background: #872e22;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.projects-list {
+  overflow: hidden;
+
+  border: 1px solid #e8edf2;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 20px rgba(20, 40, 70, 0.04);
+}
+
+.projects-list-head,
+.projects-list-row {
+  display: grid;
+
+  grid-template-columns:
+    minmax(250px, 1.7fr) 95px 70px 85px 70px 110px 40px;
+
+  align-items: center;
+
+  column-gap: 15px;
+}
+
+.projects-list-head {
+  min-height: 43px;
+
+  padding: 0 17px;
+
+  border-bottom: 1px solid #e9edf2;
+
+  background: #fafbfc;
+
+  color: #969ba3;
+
+  font-size: 8px;
+  font-weight: 750;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+.projects-list-row {
+  min-height: 74px;
+
+  padding: 9px 17px;
+
+  border-bottom: 1px solid #f0f2f4;
+
+  color: #686e75;
+
+  font-size: 9px;
+}
+
+.projects-list-row:last-child {
+  border-bottom: 0;
+}
+
+.projects-list-row:hover {
+  background: #fbfdff;
+}
+
+.list-project-info {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.list-project-info img {
+  width: 55px;
+  height: 43px;
+
+  flex-shrink: 0;
+
+  object-fit: cover;
+
+  border-radius: 7px;
+}
+
+.list-project-info>div {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.list-project-info strong {
+  overflow: hidden;
+
+  color: #111111;
+
+  font-size: 10px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.list-project-info span {
+  display: flex;
+  align-items: center;
+
+  gap: 3px;
+
+  overflow: hidden;
+
+  color: #999fa6;
+
+  font-size: 7px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.list-project-info span svg {
+  color: #a63d2f;
+}
+
+.list-project-status {
+  position: static;
+
+  width: fit-content;
+}
+
+.available-number {
+  color: #a63d2f;
+}
+
+.list-project-menu {
+  width: 27px;
+  height: 27px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e7ebef;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #777d85;
+
+  font-size: 8px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.projects-empty {
+  padding: 70px 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  text-align: center;
+
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+
+  background: #ffffff;
+}
+
+.projects-empty>div {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background: #f1f3f5;
+
+  color: #777d85;
+
+  font-size: 17px;
+}
+
+.projects-empty h3 {
+  margin: 14px 0 0;
+
+  color: #111111;
+
+  font-size: 15px;
+}
+
+.projects-empty p {
+  margin: 6px 0 15px;
+
+  color: #92979e;
+
+  font-size: 10px;
+}
+
+.projects-empty button {
+  height: 34px;
+
+  padding: 0 13px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: #a63d2f;
+
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .projects-overview {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .projects-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .projects-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .projects-search {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .projects-page-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .projects-add-btn {
+    width: 100%;
+
+    justify-content: center;
+  }
+
+  .projects-overview {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .projects-inventory {
+    padding: 16px;
+  }
+
+  .inventory-legend {
+    justify-content: space-between;
+
+    gap: 10px;
+  }
+
+  .projects-toolbar {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .projects-search {
+    width: 100% !important;
+  }
+
+
+  .projects-status-select,
+  .projects-status-select select {
+    width: 100%;
+  }
+
+  .projects-view-toggle {
+    width: fit-content;
+
+    margin-left: auto;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .projects-list {
+    overflow-x: auto;
+  }
+
+  .projects-list-head,
+  .projects-list-row {
+    min-width: 760px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .projects-page-header h1 {
+    font-size: 26px;
+  }
+
+  .projects-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .projects-inventory-heading {
+    align-items: flex-start;
+  }
+
+  .inventory-legend {
+    flex-wrap: wrap;
+
+    justify-content: flex-start;
+
+    gap: 12px 22px;
+  }
+
+  .projects-results {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 5px;
+  }
+
+}
+
+/* =========================================================
+   PROJECTS — FINAL UI SCALE OVERRIDE
+========================================================= */
+
+.projects-page {
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 38px 42px 60px;
+  background: #f6f8fb;
+  color: #111827;
+}
+
+/* Header */
+
+.projects-page-header {
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.projects-kicker {
+  margin-bottom: 8px;
+  color: #55708f;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.projects-page-header h1 {
+  font-size: 40px;
+  line-height: 1.08;
+  letter-spacing: -1.8px;
+}
+
+.projects-page-header p {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.projects-add-btn {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* Overview */
+
+.projects-overview {
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.projects-overview-card {
+  min-height: 110px;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.projects-overview-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  font-size: 16px;
+}
+
+.projects-overview-card strong {
+  font-size: 28px;
+}
+
+.projects-overview-card span {
+  font-size: 11px;
+}
+
+/* Inventory */
+
+.projects-inventory {
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  border-radius: 18px;
+}
+
+.projects-inventory-heading {
+  margin-bottom: 17px;
+}
+
+.projects-inventory-heading>div:first-child>span {
+  font-size: 10px;
+}
+
+.projects-inventory-heading h2 {
+  margin-top: 6px;
+  font-size: 20px;
+}
+
+.inventory-total {
+  font-size: 24px;
+}
+
+.inventory-total small {
+  font-size: 10px;
+}
+
+.inventory-bar {
+  height: 9px;
+}
+
+.inventory-legend {
+  gap: 30px;
+  margin-top: 14px;
+}
+
+.inventory-legend strong {
+  font-size: 11px;
+}
+
+.inventory-legend small {
+  font-size: 10px;
+}
+
+/* Toolbar */
+
+.projects-toolbar {
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.projects-search {
+  width: 340px;
+  height: 44px;
+  border-radius: 11px;
+}
+
+.projects-search svg {
+  margin-left: 14px;
+  font-size: 12px;
+}
+
+.projects-search input {
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.projects-status-select {
+  height: 44px;
+}
+
+.projects-status-select select {
+  width: 150px;
+  height: 44px;
+  font-size: 11px;
+}
+
+.projects-status-select svg {
+  top: 17px;
+}
+
+.projects-view-toggle {
+  height: 44px;
+  border-radius: 11px;
+}
+
+.projects-view-toggle button {
+  width: 35px;
+  height: 36px;
+}
+
+/* Results */
+
+.projects-results {
+  margin-bottom: 16px;
+}
+
+.projects-results strong {
+  font-size: 13px;
+}
+
+.projects-results span {
+  font-size: 11px;
+}
+
+/* Project Grid */
+
+.projects-grid {
+  gap: 18px;
+}
+
+.project-admin-card {
+  border-radius: 20px;
+}
+
+.project-admin-image {
+  height: 190px;
+}
+
+.project-admin-image>img {
+  border-radius: 19px 19px 0 0;
+}
+
+.project-status {
+  top: 12px;
+  left: 12px;
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.project-menu {
+  top: 11px;
+  right: 11px;
+}
+
+.project-menu>button {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+/* Card content */
+
+.project-admin-content {
+  padding: 20px;
+}
+
+.project-admin-heading h3 {
+  font-size: 20px;
+  letter-spacing: -.5px;
+}
+
+.project-admin-heading p {
+  margin-top: 7px;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.project-admin-heading p svg {
+  font-size: 10px;
+}
+
+.project-type {
+  margin-top: 11px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  font-size: 8px;
+}
+
+/* Price */
+
+.project-price {
+  gap: 6px;
+  margin-top: 17px;
+  padding-top: 15px;
+}
+
+.project-price span {
+  font-size: 9px;
+}
+
+.project-price strong {
+  font-size: 19px;
+}
+
+.project-price small {
+  font-size: 9px;
+}
+
+/* Stats */
+
+.project-stats {
+  margin-top: 16px;
+  padding-top: 15px;
+}
+
+.project-stats>div {
+  gap: 4px;
+  padding-left: 10px;
+}
+
+.project-stats strong {
+  font-size: 13px;
+}
+
+.project-stats span {
+  font-size: 8px;
+}
+
+/* Sales */
+
+.project-sales {
+  margin-top: 17px;
+}
+
+.project-sales-heading {
+  margin-bottom: 7px;
+  font-size: 9px;
+}
+
+.project-sales-heading strong {
+  font-size: 10px;
+}
+
+.project-sales-bar {
+  height: 6px;
+}
+
+/* Footer */
+
+.project-card-footer {
+  margin-top: 17px;
+  padding-top: 14px;
+}
+
+.project-launch {
+  gap: 4px;
+}
+
+.project-launch span {
+  font-size: 8px;
+}
+
+.project-launch strong {
+  font-size: 9px;
+}
+
+.project-card-footer>button {
+  height: 34px;
+  gap: 6px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font-size: 9px;
+}
+
+/* List view */
+
+.projects-list {
+  border-radius: 18px;
+}
+
+.projects-list-head,
+.projects-list-row {
+  font-size: 11px;
+}
+
+.projects-list-head {
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: 10px;
+}
+
+.projects-list-row {
+  min-height: 82px;
+  padding: 10px 20px;
+}
+
+.list-project-info {
+  gap: 12px;
+}
+
+.list-project-info img {
+  width: 64px;
+  height: 48px;
+  border-radius: 8px;
+}
+
+.list-project-info strong {
+  font-size: 12px;
+}
+
+.list-project-info span {
+  font-size: 9px;
+}
+
+.list-project-status {
+  font-size: 9px;
+}
+
+.available-number {
+  font-size: 12px;
+}
+
+.list-project-menu {
+  width: 30px;
+  height: 30px;
+}
+
+/* Empty */
+
+.projects-empty {
+  padding: 80px 20px;
+  border-radius: 18px;
+}
+
+.projects-empty h3 {
+  font-size: 18px;
+}
+
+.projects-empty p {
+  font-size: 11px;
+}
+
+.projects-empty button {
+  height: 36px;
+  padding: 0 15px;
+  font-size: 10px;
+}
+
+/* Responsive */
+
+@media (max-width: 1200px) {
+  .projects-page {
+    padding: 32px 30px 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .projects-page {
+    padding: 28px 20px 45px;
+  }
+
+  .projects-page-header h1 {
+    font-size: 34px;
+  }
+
+  .projects-page-header p {
+    font-size: 13px;
+  }
+
+  .projects-add-btn {
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .projects-page {
+    padding: 24px 14px 40px;
+  }
+
+  .projects-page-header h1 {
+    font-size: 30px;
+  }
+}
+
+/* =========================================================
+   LIST VIEW — ACTION DROPDOWN
+========================================================= */
+
+.projects-list {
+  overflow: visible;
+}
+
+.projects-list-row {
+  position: relative;
+}
+
+.list-project-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.list-dropdown {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 100;
+  width: 150px;
+}
+
+.list-dropdown button {
+  font-size: 12px;
+
+  color: #222222;
+}
+
+
+/* =========================================================
+   EDIT PROJECT MODAL
+========================================================= */
+
+/* =========================================================
+   EDIT / ADD PROJECT MODAL
+========================================================= */
+
+.project-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(5px);
+
+  overflow-y: auto;
+}
+
+.project-modal {
+  width: 100%;
+  max-width: 650px;
+  max-height: calc(100vh - 48px);
+
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+
+  border: 1px solid #e5eaf0;
+  border-radius: 18px;
+
+  box-shadow:
+    0 25px 70px rgba(15, 23, 42, 0.22);
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.project-modal-header {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px 24px;
+
+  border-bottom: 1px solid #edf0f3;
+}
+
+.project-modal-header h2 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.project-modal-header button {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #f1f3f5;
+  color: #6b7280;
+
+  font-size: 15px;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.project-modal-header button:hover {
+  background: #e8edf2;
+  color: #111827;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.project-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 17px 16px;
+
+  padding: 22px 24px;
+
+  overflow-y: auto;
+}
+
+.project-form label {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  color: #374151;
+
+  font-size: 11px;
+  font-weight: 750;
+}
+
+/* Project name + location full width */
+
+.project-form label:nth-child(1),
+.project-form label:nth-child(2) {
+  grid-column: 1 / -1;
+}
+
+.project-form input {
+  width: 100%;
+  height: 43px;
+
+  box-sizing: border-box;
+
+  padding: 0 13px;
+
+  border: 1px solid #dfe5eb;
+  border-radius: 9px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #111827;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.project-form select {
+  width: 100%;
+  height: 43px;
+
+  box-sizing: border-box;
+
+  padding: 0 40px 0 13px;
+
+  border: 1px solid #dfe5eb;
+  border-radius: 9px;
+
+  outline: none;
+
+  background-color: #ffffff;
+  color: #111827;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.project-form input:focus,
+.project-form select:focus {
+  border-color: #a63d2f;
+
+  box-shadow:
+    0 0 0 3px rgba(166, 61, 47, 0.08);
+}
+
+/* Number input arrows */
+
+.project-form input[type="number"] {
+  appearance: auto;
+}
+
+/* =========================================================
+   MODAL ACTIONS
+========================================================= */
+
+.project-modal-actions {
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 20px 24px;
+
+
+  background: #ffffff;
+}
+
+.project-cancel-btn,
+.project-save-btn {
+
+  height: 40px;
+
+  padding: 0 17px;
+
+  border: 0;
+  border-radius: 8px;
+
+  font-family: 'poppins';
+
+  font-size: 13px !important;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.project-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.project-cancel-btn {
+  background: #f1f3f5;
+  color: #4b5563;
+}
+
+.project-cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+.project-save-btn {
+  background: #a63d2f;
+  color: #ffffff;
+}
+
+.project-save-btn:hover {
+  background: #872e22;
+}
+
+/* =========================================================
+   CUSTOM STATUS DROPDOWN
+========================================================= */
+
+.custom-status-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-status-trigger {
+  width: 100%;
+  height: 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 13px;
+
+  border: 1px solid #dfe5eb;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #111827;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.custom-status-trigger:hover {
+  border-color: #cbd5df;
+}
+
+.custom-status-trigger:focus {
+  border-color: #a63d2f;
+
+  box-shadow:
+    0 0 0 3px rgba(166, 61, 47, 0.08);
+}
+
+.status-chevron {
+  color: #6b7280;
+  font-size: 10px;
+
+  transition: transform 0.2s ease;
+}
+
+.status-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Options */
+
+.custom-status-options {
+  position: absolute;
+
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+
+  z-index: 1000;
+
+  padding: 5px;
+
+  border: 1px solid #e1e7ed;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.12);
+
+  animation: statusDropdownIn 0.15s ease;
+}
+
+.custom-status-options button {
+  width: 100%;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 10px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #4b5563;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition: all 0.15s ease;
+}
+
+.custom-status-options button:hover {
+  background: #f3f8fd;
+  color: #a63d2f;
+}
+
+.custom-status-options button.selected {
+  background: #eaf5ff;
+  color: #a63d2f;
+  font-weight: 700;
+}
+
+@keyframes statusDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .project-modal-overlay {
+    padding: 14px;
+    align-items: center;
+  }
+
+  .project-modal {
+    max-height: calc(100vh - 28px);
+    border-radius: 15px;
+  }
+
+  .project-form {
+    grid-template-columns: 1fr;
+
+    padding: 20px;
+
+    gap: 15px;
+  }
+
+  .project-form label:nth-child(1),
+  .project-form label:nth-child(2) {
+    grid-column: auto;
+  }
+
+  .project-modal-header {
+    padding: 17px 20px;
+  }
+
+  .project-modal-header h2 {
+    font-size: 19px;
+  }
+
+  .project-modal-actions {
+    padding: 14px 20px;
+  }
+}
+
+/* =========================================================
+   PROJECT STATUS FILTER DROPDOWN
+========================================================= */
+
+.custom-project-filter {
+  position: relative;
+  width: 150px;
+  height: 44px;
+}
+
+.project-filter-trigger {
+  width: 100%;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 12px;
+
+  border: 1px solid #e4e9ee;
+  border-radius: 11px;
+
+  background: #d9d8d8;
+  color: #373737;
+
+  font-family: inherit;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.project-filter-trigger:hover {
+  border-color: #cbd5df;
+}
+
+.project-filter-chevron {
+  color: #59595a;
+  font-size: 10px;
+
+  transition: transform 0.2s ease;
+}
+
+.project-filter-chevron.open {
+  transform: rotate(180deg);
+}
+
+.project-filter-options {
+  position: absolute;
+
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+
+  z-index: 500;
+
+  padding: 4px;
+
+  border: 1px solid #e1e5ea;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 10px 25px rgba(15, 23, 42, 0.12);
+
+  animation: projectFilterDropdownIn 0.15s ease;
+}
+
+.project-filter-options button {
+  width: 100%;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #4b5563;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition: all 0.15s ease;
+}
+
+.project-filter-options button:hover {
+  background: #f3f8fd;
+  color: #a63d2f;
+}
+
+.project-filter-options button.selected {
+  background: #eaf5ff;
+  color: #a63d2f;
+  font-weight: 700;
+}
+
+@keyframes projectFilterDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.plot-helper-text {
+  margin-top: 2px;
+
+  color: #6b7280;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.plot-helper-text.error {
+  color: #dc2626;
+}
+
+/* =========================================================
+   MODAL SECTION DIVIDERS & ARRAY FIELDS
+========================================================= */
+
+.modal-section-divider {
+  grid-column: 1 / -1;
+  margin: 16px 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eef1f4;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.project-form textarea {
+  width: 100%;
+  min-height: 80px;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border: 1px solid #dfe5eb;
+  border-radius: 9px;
+  outline: none;
+  background: #ffffff;
+  color: #111827;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.project-form textarea:focus {
+  border-color: #a63d2f;
+  box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.08);
+}
+
+.array-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.array-item-row input {
+  flex: 1;
+  height: 43px;
+}
+
+.remove-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 7px;
+  background: #fff3f3;
+  color: #dc2626;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.add-array-btn {
+  grid-column: 1 / -1;
+  height: 38px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 2px dashed #d0d7de;
+  border-radius: 9px;
+  background: transparent;
+  color: #a63d2f;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-array-btn:hover {
+  border-color: #a63d2f;
+  background: #f3f8fd;
+  color: #872e22;
+}
+
+@media (max-width: 600px) {
+  .modal-section-divider {
+    margin: 14px 0 6px;
+  }
+}
+
+/* =========================================================
+   PROJECT APPROVAL STATUS UI (PENDING & REJECTED SECTIONS)
+========================================================= */
+
+.projects-overview-icon.amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.projects-overview-icon.red {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.approval-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.approval-badge.pending {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+.approval-badge.rejected {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.approval-badge.changes-pending {
+  background: #fbf0ec;
+  border: 1px solid #f5d5c7;
+  color: #872e22;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.admin-status-section {
+  margin-top: 32px;
+  margin-bottom: 24px;
+}
+
+.admin-status-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8edf2;
+}
+
+.admin-status-section-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.admin-status-section-header .count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-status-section-header.pending .count-pill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.admin-status-section-header.rejected .count-pill {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-status-section-desc {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.admin-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.admin-status-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  position: relative;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-status-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.admin-status-card.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.admin-status-card.rejected {
+  border-left: 4px solid #ef4444;
+}
+
+.admin-status-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-status-card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.admin-status-card-loc {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.admin-status-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px;
+  color: #475569;
+}
+
+.admin-status-card-meta strong {
+  color: #0f172a;
+}
+
+.admin-status-waiting-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #d97706;
+  font-weight: 600;
+  background: #fffbeb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.admin-status-rejection-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.admin-status-rejection-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #991b1b;
+  margin-bottom: 4px;
+}
+
+.admin-status-rejection-reason {
+  margin: 0;
+  font-size: 12px;
+  color: #b91c1c;
+  line-height: 1.4;
+}
+
+.admin-status-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.admin-status-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.admin-status-action-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.admin-status-action-btn.primary {
+  background: #a63d2f;
+  border-color: #a63d2f;
+  color: #ffffff;
+}
+
+.admin-status-action-btn.primary:hover {
+  background: #872e22;
+  border-color: #872e22;
+}
+
+.admin-status-action-btn.danger {
+  background: #ffffff;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.admin-status-action-btn.danger:hover {
+  background: #fee2e2;
+}

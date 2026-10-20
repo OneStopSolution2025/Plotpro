@@ -1,0 +1,17 @@
+fileType: momentic/test/v2
+id: plotpro-public-exploration
+description: Test Home page, explore projects, filter plots, view details and verify no crashes
+retries: 0
+defaultEnv: web
+disabled: false
+steps:
+  - navigate: http://localhost:5173/
+  - assert: Verify the page heading contains "Find the Perfect Plot" or navigation links are visible
+  - click: Projects navigation link in header
+  - assert: Verify the Projects page loads and project cards are displayed
+  - click: Explore Project button on the first project card
+  - assert: Verify project details page loads showing the project title and overview
+  - scrollDown: 1200
+  - assert: Verify available plots section or plot cards are present on the page
+  - click: View All Plots or back to project plots button
+  - assert: Verify plots listing page displays plot cards without any 404 or crash

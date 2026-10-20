@@ -1,0 +1,758 @@
+/* =========================================================
+   FINAL CTA SECTION
+========================================================= */
+
+.about-final-cta {
+    width: 100%;
+    padding: 90px 40px 20px;
+}
+
+
+/* =========================================================
+   CTA CARD
+========================================================= */
+
+.about-final-cta-card {
+    position: relative;
+
+    width: 100%;
+    height: 300px;
+
+    overflow: hidden;
+
+    border-radius: 70px;
+
+    background: linear-gradient(90deg,
+            #a63d2f 0%,
+            #a63d2f 50%,
+            #ff9b90 100%);
+
+    display: flex;
+    align-items: center;
+
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.25);
+
+    isolation: isolate;
+}
+
+
+/* =========================================================
+   MAIN WRAPPER
+========================================================= */
+
+.final-cta-whole {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+
+    z-index: 3;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.about-final-cta-content {
+    position: relative;
+
+    width: 100%;
+
+    padding: 0 72px;
+
+    margin-top: 35px;
+
+    z-index: 5;
+}
+
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.about-final-cta-label {
+    display: block;
+
+    margin-bottom: 20px;
+
+    color: rgba(255, 255, 255, 0.9);
+
+    font-size: 13px;
+    font-weight: 500;
+
+    letter-spacing: 0.32em;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.about-final-cta-content h2 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: clamp(42px, 4.4vw, 72px);
+
+    font-weight: 700;
+
+    line-height: 0.98;
+
+    letter-spacing: -0.045em;
+}
+
+.about-final-cta-content h2 span {
+    color: #000000;
+}
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.about-final-cta-content p {
+    margin: 28px 0 34px;
+
+    color: rgba(255, 255, 255, 0.92);
+
+    font-size: 17px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   CTA BUTTONS - DESKTOP
+========================================================= */
+
+.about-final-cta-actions {
+    position: absolute;
+
+    top: 35%;
+    right: 5%;
+
+    width: auto;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 18px;
+
+    z-index: 6;
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON
+========================================================= */
+
+.about-cta-primary {
+    min-width: 350px;
+
+    height: 64px;
+
+    padding: 0 10px 0 28px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    border-radius: 999px;
+
+    background: #050505;
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    transition:
+        transform 0.35s ease,
+        background 0.35s ease,
+        color 0.35s ease;
+}
+
+.about-cta-primary:hover {
+    transform: translateY(-3px);
+
+    background: #ffffff;
+
+    color: #000000;
+}
+
+
+/* =========================================================
+   ARROW
+========================================================= */
+
+.about-cta-arrow {
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    color: #111111;
+
+    font-size: 20px;
+
+    transition:
+        transform 0.35s ease,
+        background 0.35s ease,
+        color 0.35s ease;
+}
+
+.about-cta-primary:hover .about-cta-arrow {
+    color: #ffffff;
+
+    background: #000000;
+
+    transform: rotate(45deg);
+}
+
+
+/* =========================================================
+   SECONDARY BUTTON
+========================================================= */
+
+.about-cta-secondary {
+    height: 64px;
+
+    padding: 0 36px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 999px;
+
+    border: 1px solid rgba(255, 255, 255, 0.9);
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.35s ease,
+        color 0.35s ease,
+        transform 0.35s ease;
+}
+
+.about-cta-secondary:hover {
+    background: #ffffff;
+
+    color: #111111;
+
+    transform: translateY(-3px);
+}
+
+
+/* =========================================================
+   CONCENTRIC RINGS
+========================================================= */
+
+.about-cta-rings {
+    position: absolute;
+
+    right: -300px;
+    top: 50%;
+
+    width: 620px;
+    height: 620px;
+
+    transform: translateY(-50%);
+
+    pointer-events: none;
+
+    z-index: 1;
+}
+
+
+/* =========================================================
+   RING BASE
+========================================================= */
+
+.cta-ring {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    border-style: solid;
+}
+
+
+/* =========================================================
+   OUTER RING
+========================================================= */
+
+.ring-1 {
+    width: 620px;
+    height: 620px;
+
+    border-width: 1px;
+
+    border-color: rgba(255, 235, 210, 0.32);
+}
+
+
+/* =========================================================
+   INNER RING
+========================================================= */
+
+.ring-2 {
+    width: 500px;
+    height: 500px;
+
+    border-width: 65px;
+
+    border-color: rgba(255, 221, 184, 0.22);
+}
+
+
+/* =========================================================
+   SOFT LIGHT
+========================================================= */
+
+.about-final-cta-card::after {
+    content: "";
+
+    position: absolute;
+
+    left: 25%;
+    top: -40%;
+
+    width: 500px;
+    height: 500px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.08);
+
+    filter: blur(80px);
+
+    pointer-events: none;
+
+    z-index: 0;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 991px) {
+
+    .about-final-cta {
+        padding: 70px 4vw 60px;
+    }
+
+    .about-final-cta-card {
+        height: 430px;
+
+        border-radius: 50px;
+    }
+
+    .final-cta-whole {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+
+        align-items: center;
+    }
+
+    .about-final-cta-content {
+        width: 100%;
+
+        padding: 0 45px;
+
+        margin-top: 0;
+    }
+
+    .about-final-cta-content h2 {
+        font-size: clamp(40px, 6vw, 60px);
+    }
+
+    .about-final-cta-content p {
+        max-width: 450px;
+
+        font-size: 16px;
+    }
+
+    /* RESET DESKTOP ABSOLUTE POSITION */
+
+    .about-final-cta-actions {
+        position: static;
+
+        width: auto;
+
+        margin-top: 25px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: flex-start;
+
+        gap: 14px;
+    }
+
+    .about-cta-primary {
+        min-width: 300px;
+
+        height: 58px;
+    }
+
+    .about-cta-secondary {
+        height: 58px;
+
+        padding: 0 28px;
+    }
+
+    .about-cta-rings {
+        right: -220px;
+    }
+
+    .ring-1 {
+        width: 520px;
+        height: 520px;
+    }
+
+    .ring-2 {
+        width: 420px;
+        height: 420px;
+
+        border-width: 55px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 767px) {
+
+    .about-final-cta {
+        width: 100%;
+
+        padding: 50px 18px 30px;
+    }
+
+    .about-final-cta-card {
+        width: 100%;
+
+        height: auto;
+
+        min-height: 0;
+
+        border-radius: 28px;
+
+        display: block;
+    }
+
+    .final-cta-whole {
+        width: 100%;
+
+        height: auto;
+
+        display: block;
+    }
+
+    .about-final-cta-content {
+        width: 100%;
+
+        padding: 42px 25px 45px;
+
+        margin: 0;
+
+        box-sizing: border-box;
+    }
+
+    /* LABEL */
+
+    .about-final-cta-label {
+        margin-bottom: 17px;
+
+        font-size: 10px;
+
+        letter-spacing: 0.22em;
+    }
+
+    /* HEADING */
+
+    .about-final-cta-content h2 {
+        width: 100%;
+
+        font-size: clamp(36px, 10.5vw, 50px);
+
+        line-height: 0.98;
+
+        letter-spacing: -0.04em;
+    }
+
+    /* DESCRIPTION */
+
+    .about-final-cta-content p {
+        width: 100%;
+
+        max-width: 330px;
+
+        margin: 22px 0 0;
+
+        font-size: 14px;
+
+        line-height: 1.55;
+    }
+
+    /*
+       IMPORTANT:
+       Desktop absolute positioning
+       completely removed here.
+    */
+
+    .about-final-cta-actions {
+        position: static;
+
+        width: 100%;
+
+        margin: 28px 0 0;
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        justify-content: flex-start;
+
+        gap: 11px;
+    }
+
+    /* PRIMARY */
+
+    .about-cta-primary {
+        width: 100%;
+
+        min-width: 0;
+
+        height: 56px;
+
+        padding: 0 8px 0 20px;
+
+        font-size: 13px;
+
+        box-sizing: border-box;
+    }
+
+    /* SECONDARY */
+
+    .about-cta-secondary {
+        width: 100%;
+
+        height: 56px;
+
+        padding: 0 20px;
+
+        font-size: 13px;
+
+        box-sizing: border-box;
+    }
+
+    /* ARROW */
+
+    .about-cta-arrow {
+        width: 40px;
+        height: 40px;
+
+        font-size: 17px;
+    }
+
+    /* RINGS */
+
+    .about-cta-rings {
+        width: 430px;
+        height: 430px;
+
+        right: -245px;
+
+        top: auto;
+        bottom: -235px;
+
+        transform: none;
+
+        opacity: 0.75;
+    }
+
+    .ring-1 {
+        width: 430px;
+        height: 430px;
+    }
+
+    .ring-2 {
+        width: 350px;
+        height: 350px;
+
+        border-width: 45px;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .about-final-cta {
+        padding: 40px 12px 25px;
+    }
+
+    .about-final-cta-card {
+        border-radius: 24px;
+    }
+
+    .about-final-cta-content {
+        padding: 38px 20px 40px;
+    }
+
+    .about-final-cta-label {
+        margin-bottom: 16px;
+
+        font-size: 9px;
+
+        letter-spacing: 0.18em;
+    }
+
+    .about-final-cta-content h2 {
+        font-size: clamp(33px, 10vw, 44px);
+
+        line-height: 1;
+    }
+
+    .about-final-cta-content p {
+        max-width: 280px;
+
+        margin-top: 20px;
+
+        font-size: 13px;
+
+        line-height: 1.55;
+    }
+
+    .about-final-cta-actions {
+        margin-top: 24px;
+
+        gap: 10px;
+    }
+
+    .about-cta-primary,
+    .about-cta-secondary {
+        height: 54px;
+
+        font-size: 12.5px;
+    }
+
+    .about-cta-primary {
+        padding-left: 18px;
+    }
+
+    .about-cta-secondary {
+        padding: 0 18px;
+    }
+
+    .about-cta-arrow {
+        width: 38px;
+        height: 38px;
+
+        font-size: 16px;
+    }
+
+    .about-cta-rings {
+        width: 370px;
+        height: 370px;
+
+        right: -210px;
+        bottom: -205px;
+    }
+
+    .ring-1 {
+        width: 370px;
+        height: 370px;
+    }
+
+    .ring-2 {
+        width: 300px;
+        height: 300px;
+
+        border-width: 38px;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 360px) {
+
+    .about-final-cta-content {
+        padding: 34px 17px 36px;
+    }
+
+    .about-final-cta-content h2 {
+        font-size: 32px;
+    }
+
+    .about-final-cta-content p {
+        font-size: 12.5px;
+    }
+
+    .about-cta-primary,
+    .about-cta-secondary {
+        height: 52px;
+
+        font-size: 12px;
+    }
+
+    .about-cta-rings {
+        right: -230px;
+        bottom: -210px;
+    }
+}

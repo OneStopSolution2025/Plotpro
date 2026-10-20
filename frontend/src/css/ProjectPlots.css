@@ -1,0 +1,923 @@
+/* =========================================================
+   PROJECT PLOTS PAGE
+   DreamCity Design System
+========================================================= */
+
+.project-plots-page {
+    min-height: 100vh;
+    background: #ffffff;
+    color: #151515;
+}
+
+.project-plots-container {
+    width: min(1380px, calc(100% - 96px));
+    margin: 80px auto 0;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.project-plots-hero {
+    padding: 18px 0 0;
+}
+
+.project-plots-hero-card {
+    position: relative;
+    min-height: 470px;
+    overflow: hidden;
+    border-radius: 28px;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.project-plots-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0.08) 0%,
+            rgba(0, 0, 0, 0.12) 35%,
+            rgba(0, 0, 0, 0.78) 100%
+        );
+}
+
+.project-plots-hero-content {
+    position: relative;
+    z-index: 2;
+
+    min-height: 470px;
+    padding: 28px 34px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.project-plots-back {
+    width: fit-content;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 15px;
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+
+    backdrop-filter: blur(10px);
+
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+
+    transition:
+        background 0.25s ease,
+        transform 0.25s ease;
+}
+
+.project-plots-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-3px);
+}
+
+.project-plots-hero-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.project-plots-hero-label {
+    display: block;
+    margin-bottom: 12px;
+
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.project-plots-hero h1 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: clamp(44px, 6vw, 76px);
+    line-height: 0.95;
+    letter-spacing: -0.055em;
+}
+
+.project-plots-hero p {
+    margin: 17px 0 0;
+
+    color: rgba(255, 255, 255, 0.85);
+
+    font-size: 15px;
+}
+
+.project-plots-hero-badge {
+    min-width: 105px;
+    min-height: 105px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: #ffffff;
+    background: #a63d2f;
+
+    flex-shrink: 0;
+}
+
+.project-plots-hero-badge span {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.project-plots-hero-badge small {
+    margin-top: 6px;
+
+    font-size: 10px;
+    opacity: 0.9;
+}
+
+
+/* =========================================================
+   OVERVIEW
+========================================================= */
+
+.project-plots-overview {
+    padding: 90px 0 70px;
+}
+
+.project-plots-overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+
+    align-items: center;
+}
+
+.section-eyebrow {
+    display: block;
+    margin-bottom: 14px;
+
+    color: #a63d2f;
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.project-plots-overview-intro h2 {
+    margin: 0;
+
+    font-size: clamp(38px, 4.6vw, 64px);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+}
+
+.project-plots-overview-intro h2 span {
+    color: #a63d2f;
+}
+
+.project-plots-overview-intro p {
+    max-width: 510px;
+
+    margin: 25px 0 0;
+
+    color: #6d6d6d;
+
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.project-plots-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+
+    border-top: 1px solid #e8e8e8;
+    border-left: 1px solid #e8e8e8;
+
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.project-plot-stat {
+    min-height: 150px;
+
+    padding: 30px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+
+    background: #ffffff;
+}
+
+.project-plot-stat strong {
+    color: #a63d2f;
+
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.project-plot-stat span {
+    margin-top: 10px;
+
+    color: #777;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   ALL PLOTS SECTION
+========================================================= */
+
+.all-plots-section {
+    padding: 80px 0 110px;
+
+    background: #f7f7f7;
+}
+
+.all-plots-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 30px;
+
+    margin-bottom: 32px;
+}
+
+.all-plots-heading-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 10px;
+
+    color: #a63d2f;
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.all-plots-title h2 {
+    margin: 0;
+
+    font-size: clamp(34px, 4vw, 52px);
+    line-height: 1;
+    letter-spacing: -0.05em;
+}
+
+.all-plots-title p {
+    margin: 13px 0 0;
+
+    color: #777;
+
+    font-size: 13px;
+}
+
+.all-plots-count {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+
+    padding-bottom: 4px;
+
+    color: #777;
+    white-space: nowrap;
+}
+
+.all-plots-count strong {
+    color: #151515;
+
+    font-size: 25px;
+}
+
+.all-plots-count span {
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   FILTERS
+========================================================= */
+
+.plot-status-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+
+    margin-bottom: 30px;
+}
+
+.plot-status-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 10px 15px;
+
+    border: 1px solid #d7d7d7;
+    border-radius: 999px;
+
+    color: #555;
+    background: #ffffff;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+.plot-status-filter:hover {
+    border-color: #a63d2f;
+    color: #a63d2f;
+    transform: translateY(-2px);
+}
+
+.plot-status-filter small {
+    min-width: 20px;
+    height: 20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: #777;
+    background: #f1f1f1;
+
+    font-size: 10px;
+}
+
+.plot-status-filter.active {
+    border-color: #a63d2f;
+
+    color: #ffffff;
+    background: #a63d2f;
+}
+
+.plot-status-filter.active small {
+    color: #a63d2f;
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   PLOT GRID
+========================================================= */
+
+.all-plots-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 22px;
+}
+
+/*
+   PlotCard already contains the visual card design.
+   This page only controls the grid/layout.
+*/
+
+.all-plots-grid .plot-card {
+    min-width: 0;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.plots-empty-state {
+    min-height: 360px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 50px;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 24px;
+
+    text-align: center;
+    background: #ffffff;
+}
+
+.plots-empty-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 18px;
+
+    border-radius: 50%;
+
+    color: #a63d2f;
+    background: #fdf5f4;
+}
+
+.plots-empty-state h3 {
+    margin: 0;
+
+    font-size: 24px;
+    letter-spacing: -0.03em;
+}
+
+.plots-empty-state p {
+    margin: 10px 0 20px;
+
+    color: #777;
+
+    font-size: 13px;
+}
+
+.plots-empty-state button {
+    padding: 11px 18px;
+
+    border: 0;
+    border-radius: 999px;
+
+    color: #ffffff;
+    background: #a63d2f;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: background 0.25s ease;
+}
+
+.plots-empty-state button:hover {
+    background: #8e3327;
+}
+
+
+/* =========================================================
+   CTA
+========================================================= */
+
+.project-plots-cta-section {
+    padding: 80px 0;
+}
+
+.project-plots-cta {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 40px;
+
+    min-height: 250px;
+
+    padding: 45px 55px;
+
+    overflow: hidden;
+
+    border-radius: 28px;
+
+    color: #ffffff;
+    background: #a63d2f;
+
+    box-shadow: 0 25px 55px rgba(166, 61, 47, 0.2);
+}
+
+.project-plots-cta::after {
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+    height: 420px;
+
+    right: -150px;
+    top: -100px;
+
+    border: 70px solid rgba(255, 255, 255, 0.09);
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+.project-plots-cta > div {
+    position: relative;
+    z-index: 2;
+}
+
+.project-plots-cta > div:first-child {
+    max-width: 620px;
+}
+
+.project-plots-cta > div:first-child > span {
+    display: block;
+
+    margin-bottom: 10px;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+
+    opacity: 0.8;
+}
+
+.project-plots-cta h2 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: clamp(32px, 4vw, 50px);
+    line-height: 0.98;
+    letter-spacing: -0.05em;
+}
+
+.project-plots-cta p {
+    max-width: 430px;
+
+    margin: 16px 0 0;
+
+    color: rgba(255, 255, 255, 0.82);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.project-plots-cta-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    flex-shrink: 0;
+}
+
+.project-plots-cta-primary,
+.project-plots-cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    min-height: 44px;
+
+    padding: 0 19px;
+
+    border-radius: 999px;
+
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition:
+        transform 0.25s ease,
+        background 0.25s ease;
+}
+
+.project-plots-cta-primary {
+    color: #111111;
+    background: #ffffff;
+}
+
+.project-plots-cta-primary span {
+    width: 25px;
+    height: 25px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: #ffffff;
+    background: #a63d2f;
+}
+
+.project-plots-cta-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+
+    color: #ffffff;
+    background: transparent;
+}
+
+.project-plots-cta-primary:hover,
+.project-plots-cta-secondary:hover {
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   NOT FOUND
+========================================================= */
+
+.project-plots-not-found {
+    min-height: 70vh;
+
+    display: flex;
+    align-items: center;
+
+    padding: 120px 0 80px;
+}
+
+.project-plots-not-found h1 {
+    margin: 0;
+
+    font-size: clamp(42px, 5vw, 70px);
+    line-height: 1;
+    letter-spacing: -0.05em;
+}
+
+.project-plots-not-found p {
+    margin: 18px 0 25px;
+
+    color: #777;
+}
+
+.project-plots-back-btn {
+    width: fit-content;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 12px 18px;
+
+    border-radius: 999px;
+
+    color: #ffffff;
+    background: #a63d2f;
+
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.25s ease;
+}
+
+.project-plots-back-btn:hover {
+    background: #8e3327;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .project-plots-container {
+        width: min(1100px, calc(100% - 60px));
+    }
+
+    .all-plots-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .project-plots-overview-grid {
+        gap: 50px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE / TABLET
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .project-plots-container {
+        width: calc(100% - 32px);
+    }
+
+    /* Hero */
+
+    .project-plots-hero {
+        padding-top: 12px;
+    }
+
+    .project-plots-hero-card {
+        min-height: 420px;
+        border-radius: 22px;
+    }
+
+    .project-plots-hero-content {
+        min-height: 420px;
+
+        padding: 20px;
+    }
+
+    .project-plots-hero-bottom {
+        align-items: flex-end;
+        gap: 20px;
+    }
+
+    .project-plots-hero h1 {
+        font-size: clamp(40px, 12vw, 60px);
+    }
+
+    .project-plots-hero-badge {
+        width: 78px;
+        min-width: 78px;
+        min-height: 78px;
+    }
+
+    .project-plots-hero-badge span {
+        font-size: 22px;
+    }
+
+    /* Overview */
+
+    .project-plots-overview {
+        padding: 65px 0 50px;
+    }
+
+    .project-plots-overview-grid {
+        grid-template-columns: 1fr;
+        gap: 45px;
+    }
+
+    .project-plots-overview-intro h2 {
+        font-size: clamp(38px, 11vw, 55px);
+    }
+
+    .project-plots-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .project-plot-stat {
+        min-height: 125px;
+        padding: 22px;
+    }
+
+    .project-plot-stat strong {
+        font-size: 28px;
+    }
+
+    /* Plots */
+
+    .all-plots-section {
+        padding: 60px 0 80px;
+    }
+
+    .all-plots-top {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .all-plots-title h2 {
+        font-size: 40px;
+    }
+
+    .all-plots-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    /* CTA */
+
+    .project-plots-cta-section {
+        padding: 50px 0;
+    }
+
+    .project-plots-cta {
+        flex-direction: column;
+        align-items: flex-start;
+
+        padding: 35px 28px;
+
+        border-radius: 24px;
+    }
+
+    .project-plots-cta-actions {
+        width: 100%;
+    }
+
+    .project-plots-cta-primary,
+    .project-plots-cta-secondary {
+        flex: 1;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
+
+    .project-plots-container {
+        width: calc(100% - 24px);
+    }
+
+    .project-plots-hero-card {
+        min-height: 390px;
+    }
+
+    .project-plots-hero-content {
+        min-height: 390px;
+        padding: 16px;
+    }
+
+    .project-plots-hero-bottom {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .project-plots-hero-badge {
+        display: none;
+    }
+
+    .project-plots-hero h1 {
+        font-size: 44px;
+    }
+
+    .project-plots-hero p {
+        font-size: 13px;
+    }
+
+    .project-plots-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .project-plot-stat {
+        min-height: 110px;
+        padding: 18px;
+    }
+
+    .project-plot-stat strong {
+        font-size: 24px;
+    }
+
+    .project-plot-stat span {
+        font-size: 10px;
+    }
+
+    .all-plots-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plot-status-filters {
+        gap: 7px;
+    }
+
+    .plot-status-filter {
+        padding: 9px 12px;
+    }
+
+    .project-plots-cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .project-plots-cta-primary,
+    .project-plots-cta-secondary {
+        width: 100%;
+    }
+}

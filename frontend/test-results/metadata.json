@@ -1,0 +1,36 @@
+{
+  "gitMainBranch": "main",
+  "gitProtectedBranches": [
+    "main"
+  ],
+  "ciProvider": "none",
+  "gitOriginUrl": "origin",
+  "gitLocalEmail": "kishore.k00710@gmail.com",
+  "gitLocalName": "Kishore012-student",
+  "projectName": "dreamcity-frontend",
+  "id": "e250f65b-89a1-426d-81bb-ec31165436d1",
+  "trigger": "CLI",
+  "startedAt": "2026-10-20T05:03:33.160Z",
+  "status": "PASSED",
+  "cliVersion": "3.66.3",
+  "labels": [],
+  "ai": {
+    "useMemory": true,
+    "failureRecovery": true,
+    "agentConfig": {
+      "locator": "v5",
+      "assertion": "v5",
+      "visual-assertion": "v5",
+      "text-extraction": "v3.0",
+      "failure-recovery": "v2.1",
+      "android-locator": "v2",
+      "ios-locator": "v2"
+    }
+  },
+  "browser": {
+    "disableSecondaryCacheResolution": true,
+    "autoExpandIframes": true
+  },
+  "updatedAt": "2026-10-20T05:05:21.156Z",
+  "finishedAt": "2026-10-20T05:05:21.156Z"
+}

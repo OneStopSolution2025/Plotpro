@@ -1,0 +1,623 @@
+.project-plots-admin {
+    padding: 2rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.project-plots-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+    cursor: pointer;
+}
+
+.back-link:hover {
+    color: #333;
+}
+
+.project-info h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.project-location {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.project-meta-pills {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.meta-pill {
+    padding: 0.4rem 0.8rem;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.manage-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border: 1px solid #a63d2f;
+    border-radius: 8px;
+    background: #a63d2f;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.manage-btn:hover {
+    background: #872e22;
+    border-color: #872e22;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+}
+
+
+/* Stats Cards */
+.plots-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.plot-stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.plot-stat-card .stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.plot-stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.plot-stat-card.total { border-left: 4px solid #a63d2f; }
+.plot-stat-card.available { border-left: 4px solid #28a745; }
+.plot-stat-card.reserved { border-left: 4px solid #ffc107; }
+.plot-stat-card.sold { border-left: 4px solid #dc3545; }
+
+/* Filters */
+.plots-controls {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    border: 1px solid #eee;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-wrapper svg {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd;
+}
+
+.search-wrapper input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.filter-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn.active {
+    background: #1a1a1a;
+    color: white;
+    border-color: #1a1a1a;
+}
+
+/* Table */
+.plots-table-container {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    border: 1px solid #eee;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.plots-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+}
+
+.plots-table th {
+    background: #f8f9fa;
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #444;
+    border-bottom: 2px solid #eee;
+}
+
+.plots-table td {
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: #444;
+    border-bottom: 1px solid #eee;
+}
+
+.status-badge {
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.available { background: #e8f5e9; color: #2e7d32; }
+.status-badge.reserved { background: #fff8e1; color: #f57f17; }
+.status-badge.sold { background: #ffebee; color: #c62828; }
+
+.view-btn {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-btn:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.not-found {
+    text-align: center;
+    padding: 4rem;
+}
+
+@media (max-width: 992px) {
+    .plots-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .plots-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 768px) {
+    .project-plots-admin {
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    .project-plots-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .project-meta-pills {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .header-actions {
+        margin-top: 0;
+        width: 100%;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+
+    .manage-btn {
+        width: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+
+    .plots-controls {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .search-wrapper {
+        max-width: 100%;
+    }
+
+    .filter-group {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .plots-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.edit-btn {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 4px;
+    color: #a63d2f;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit-btn:hover {
+    background: #e7f1ff;
+    border-color: #a63d2f;
+    color: #872e22;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 540px;
+    max-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    animation: modalSlideIn 0.2s ease;
+    margin: auto;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid #edf2f7;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.modal-header h3 span {
+    font-weight: 800;
+    color: #a63d2f;
+}
+
+.modal-close {
+    background: transparent;
+    border: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+}
+
+.modal-close:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.625rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: #1e293b;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #a63d2f;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #edf2f7;
+    background: #f8fafc;
+    flex-shrink: 0;
+}
+
+.btn-cancel,
+.btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+}
+
+.btn-cancel:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.btn-save {
+    border: 1px solid #a63d2f;
+    background: #a63d2f;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #872e22;
+    border-color: #872e22;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+}
+
+.btn-save.btn-add {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.btn-save.btn-add:hover {
+    background: #218838;
+    border-color: #1e7e34;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
+
+/* Add Plot Button (Green variant of manage-btn) */
+.manage-btn.add-plot-btn {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.manage-btn.add-plot-btn:hover {
+    background: #218838;
+    border-color: #1e7e34;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
+
+@media (max-width: 600px) {
+    .modal-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+  /* Delete Button */
+  .delete-btn {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 4px;
+    color: #dc3545;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .delete-btn:hover {
+    background: #ffeaea;
+    border-color: #dc3545;
+    color: #c62828;
+  }
+
+  .delete-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Approval Status Pills */
+  .meta-pill.approval-status {
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .meta-pill.approval-status.pending {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffc107;
+  }
+
+  .meta-pill.approval-status.approved {
+    background: #d4edda;
+    color: #155724;
+    border-color: #28a745;
+  }
+
+  .meta-pill.approval-status.rejected {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+  }
+
+  /* Modal Error Message */
+  .modal-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Plot Loading Spinner */
+  .project-plots-admin .loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #a63d2f;
+    border-radius: 50%;
+    animation: plotsSpin 0.8s linear infinite;
+  }
+
+  @keyframes plotsSpin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .not-found.access-denied h2 {
+    color: #dc3545;
+  }
+

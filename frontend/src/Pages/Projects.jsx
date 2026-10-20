@@ -1,0 +1,1015 @@
+import { useMemo, useState, useEffect } from "react";
+
+import Navbar from "../components/Navbar";
+import "../css/Projects.css";
+
+import bgimg from "../assets/bg-img.png";
+import filterimg from "../assets/filter.svg";
+
+import ProjectCard from "../components/ProjectCard";
+
+import { useProjects } from "../context/ProjectContext";
+
+import Footer from '../components/Footer'
+
+function Projects() {
+
+    const { projects, parsePriceLakhs } = useProjects();
+
+
+    const categories = [
+        "All Projects",
+        "Residential",
+        "Commercial",
+    ];
+
+
+    const locationCounts = useMemo(() => {
+        const counts = {};
+        projects.forEach(p => {
+            if (p.city) counts[p.city] = (counts[p.city] || 0) + 1;
+        });
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([city, count]) => ({ city, count }));
+    }, [projects]);
+
+
+    const [locationSearch, setLocationSearch] = useState("");
+    const [showAllLocations, setShowAllLocations] = useState(false);
+
+    const filteredLocations = useMemo(() => {
+        if (!locationSearch) return locationCounts;
+        return locationCounts.filter(loc =>
+            loc.city.toLowerCase().includes(locationSearch.toLowerCase())
+        );
+    }, [locationCounts, locationSearch]);
+
+    const displayLocations = showAllLocations
+        ? filteredLocations
+        : filteredLocations.slice(0, 5);
+
+    const hasMoreLocations = filteredLocations.length > 5;
+
+
+    const plotTypes = [
+        "Residential",
+        "Commercial",
+        "Villa Plot",
+    ];
+
+    const priceRange = useMemo(() => {
+        const prices = projects.map(p => p.priceLakhs).filter(Boolean);
+        if (prices.length === 0) return { min: 0, max: 50 };
+        return {
+            min: Math.min(...prices),
+            max: Math.max(...prices)
+        };
+    }, [projects]);
+
+    const [appliedFilters, setAppliedFilters] = useState({
+        category: "All Projects",
+        locations: [],
+        plotTypes: [],
+        priceRange: { min: 0, max: 100 },
+    });
+
+    const [draftFilters, setDraftFilters] = useState({
+        category: "All Projects",
+        locations: [],
+        plotTypes: [],
+        priceRange: { min: 0, max: 100 },
+    });
+
+    const [mobileFilterOpen, setMobileFilterOpen] =
+        useState(false);
+
+
+    useEffect(() => {
+        setDraftFilters(prev => ({
+            ...prev,
+            priceRange: { ...priceRange }
+        }));
+        setAppliedFilters(prev => ({
+            ...prev,
+            priceRange: { ...priceRange }
+        }));
+    }, [priceRange]);
+
+
+    /* =====================================================
+       TOGGLE CHECKBOX FILTER
+    ===================================================== */
+
+    const toggleFilter = (key, value) => {
+
+        setDraftFilters((previous) => {
+
+            const currentValues = previous[key];
+
+            const alreadySelected =
+                currentValues.includes(value);
+
+
+            if (alreadySelected) {
+
+                return {
+                    ...previous,
+
+                    [key]: currentValues.filter(
+                        (item) => item !== value
+                    ),
+                };
+
+            }
+
+
+            return {
+                ...previous,
+
+                [key]: [
+                    ...currentValues,
+                    value,
+                ],
+            };
+
+        });
+
+    };
+
+
+    const handleDraftCategoryChange = (category) => {
+
+        setDraftFilters((previous) => ({
+            ...previous,
+            category,
+        }));
+
+    };
+
+    const handleTopCategoryChange = (category) => {
+
+        setDraftFilters((previous) => ({
+            ...previous,
+            category,
+        }));
+
+
+        setAppliedFilters((previous) => ({
+            ...previous,
+            category,
+        }));
+
+    };
+
+    const getPercent = (value) => {
+        const range = priceRange.max - priceRange.min;
+        if (range === 0) return 0;
+        return ((value - priceRange.min) / range) * 100;
+    };
+
+    const minPercent = getPercent(draftFilters.priceRange.min);
+    const maxPercent = getPercent(draftFilters.priceRange.max);
+
+    const getValueFromPercent = (percent) => {
+        const range = priceRange.max - priceRange.min;
+        return Math.round((priceRange.min + (percent / 100) * range) * 2) / 2;
+    };
+
+    const handleThumbMouseDown = (e, thumb) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const trackEl = e.currentTarget.closest('.price-track');
+        if (!trackEl) return;
+
+        const handleMouseMove = (moveEvent) => {
+            const trackRect = trackEl.getBoundingClientRect();
+            let percent = ((moveEvent.clientX - trackRect.left) / trackRect.width) * 100;
+            percent = Math.max(0, Math.min(100, percent));
+            const value = getValueFromPercent(percent);
+
+            setDraftFilters(prev => {
+                if (thumb === 'min') {
+                    return {
+                        ...prev,
+                        priceRange: { ...prev.priceRange, min: Math.min(value, prev.priceRange.max) }
+                    };
+                } else {
+                    return {
+                        ...prev,
+                        priceRange: { ...prev.priceRange, max: Math.max(value, prev.priceRange.min) }
+                    };
+                }
+            });
+        };
+
+        const handleMouseUp = () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+    };
+
+    const handleThumbTouchStart = (e, thumb) => {
+        e.stopPropagation();
+        const touch = e.touches[0];
+        const trackEl = e.currentTarget.closest('.price-track');
+        if (!trackEl) return;
+
+        const handleTouchMove = (moveEvent) => {
+            const trackRect = trackEl.getBoundingClientRect();
+            let percent = ((moveEvent.touches[0].clientX - trackRect.left) / trackRect.width) * 100;
+            percent = Math.max(0, Math.min(100, percent));
+            const value = getValueFromPercent(percent);
+
+            setDraftFilters(prev => {
+                if (thumb === 'min') {
+                    return {
+                        ...prev,
+                        priceRange: { ...prev.priceRange, min: Math.min(value, prev.priceRange.max) }
+                    };
+                } else {
+                    return {
+                        ...prev,
+                        priceRange: { ...prev.priceRange, max: Math.max(value, prev.priceRange.min) }
+                    };
+                }
+            });
+        };
+
+        const handleTouchEnd = () => {
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleTouchEnd);
+        };
+
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleTouchEnd);
+    };
+
+    const handleTrackMouseDown = (e) => {
+        if (e.target.classList.contains('price-thumb')) return;
+        const trackRect = e.currentTarget.getBoundingClientRect();
+        let percent = ((e.clientX - trackRect.left) / trackRect.width) * 100;
+        percent = Math.max(0, Math.min(100, percent));
+        const value = getValueFromPercent(percent);
+
+        // Determine which thumb is closer
+        const minPercent = getPercent(draftFilters.priceRange.min);
+        const maxPercent = getPercent(draftFilters.priceRange.max);
+        const distToMin = Math.abs(percent - minPercent);
+        const distToMax = Math.abs(percent - maxPercent);
+        const targetThumb = distToMin <= distToMax ? 'min' : 'max';
+
+        setDraftFilters(prev => {
+            if (targetThumb === 'min') {
+                return {
+                    ...prev,
+                    priceRange: { ...prev.priceRange, min: Math.min(value, prev.priceRange.max) }
+                };
+            } else {
+                return {
+                    ...prev,
+                    priceRange: { ...prev.priceRange, max: Math.max(value, prev.priceRange.min) }
+                };
+            }
+        });
+    };
+
+    const handleTrackTouchStart = (e) => {
+        if (e.target.classList.contains('price-thumb')) return;
+        const touch = e.touches[0];
+        const trackRect = e.currentTarget.getBoundingClientRect();
+        let percent = ((touch.clientX - trackRect.left) / trackRect.width) * 100;
+        percent = Math.max(0, Math.min(100, percent));
+        const value = getValueFromPercent(percent);
+
+        // Determine which thumb is closer
+        const minPercent = getPercent(draftFilters.priceRange.min);
+        const maxPercent = getPercent(draftFilters.priceRange.max);
+        const distToMin = Math.abs(percent - minPercent);
+        const distToMax = Math.abs(percent - maxPercent);
+        const targetThumb = distToMin <= distToMax ? 'min' : 'max';
+
+        setDraftFilters(prev => {
+            if (targetThumb === 'min') {
+                return {
+                    ...prev,
+                    priceRange: { ...prev.priceRange, min: Math.min(value, prev.priceRange.max) }
+                };
+            } else {
+                return {
+                    ...prev,
+                    priceRange: { ...prev.priceRange, max: Math.max(value, prev.priceRange.min) }
+                };
+            }
+        });
+    };
+
+    /* =====================================================
+           PRICE RANGE MATCH (replaces budget match)
+        ===================================================== */
+
+    const priceRangeMatch = (project, range) => {
+        // Use priceLakhs if available, otherwise parse from plotPrice
+        const priceLakhs = project.priceLakhs ?? parsePriceLakhs(project.plotPrice);
+        if (!priceLakhs) return true; // Include project if price can't be determined
+        return priceLakhs >= range.min && priceLakhs <= range.max;
+    };
+
+    const filteredProjects = useMemo(() => {
+
+        return projects.filter((project) => {
+
+            const categoryMatch =
+                appliedFilters.category === "All Projects" ||
+                project.category === appliedFilters.category ||
+                project.plotType === appliedFilters.category;
+
+
+
+
+            const locationMatch =
+                appliedFilters.locations.length === 0 ||
+                appliedFilters.locations.includes(
+                    project.city
+                );
+
+
+            /* ---------------------------------------------
+               PLOT TYPE
+            --------------------------------------------- */
+
+            const plotTypeMatch =
+                appliedFilters.plotTypes.length === 0 ||
+                appliedFilters.plotTypes.includes(
+                    project.plotType
+                );
+
+
+            /* ---------------------------------------------
+               PRICE RANGE
+            --------------------------------------------- */
+
+            const priceMatch = priceRangeMatch(
+                project,
+                appliedFilters.priceRange
+            );
+
+
+            return (
+                categoryMatch &&
+                locationMatch &&
+                plotTypeMatch &&
+                priceMatch
+            );
+
+        });
+
+    }, [projects, appliedFilters]);
+
+    /* =====================================================
+       APPLY FILTERS
+    ===================================================== */
+
+    const applyFilters = () => {
+
+        setAppliedFilters({
+            category: draftFilters.category,
+
+            locations: [
+                ...draftFilters.locations,
+            ],
+
+            plotTypes: [
+                ...draftFilters.plotTypes,
+            ],
+
+            priceRange: {
+                ...draftFilters.priceRange
+            },
+        });
+
+
+        /* Close mobile filter after applying */
+
+        setMobileFilterOpen(false);
+
+    };
+
+
+    /* =====================================================
+       RESET FILTERS
+
+       Only resets the DRAFT.
+       Project results won't change until Apply.
+    ===================================================== */
+
+    const resetFilters = () => {
+
+        setDraftFilters({
+            category: "All Projects",
+            locations: [],
+            plotTypes: [],
+            priceRange: { ...priceRange },
+        });
+
+    };
+
+
+    /* =====================================================
+       CLEAR + APPLY IMMEDIATELY
+
+       Used by "Clear Filters" in no-results state.
+    ===================================================== */
+
+    const clearAllFilters = () => {
+
+        const emptyFilters = {
+            category: "All Projects",
+            locations: [],
+            plotTypes: [],
+            priceRange: { ...priceRange },
+        };
+
+
+        setDraftFilters(emptyFilters);
+
+        setAppliedFilters(emptyFilters);
+
+    };
+
+
+    /* =====================================================
+       MOBILE FILTER TOGGLE
+    ===================================================== */
+
+    const toggleMobileFilter = () => {
+
+        setMobileFilterOpen(
+            (previous) => !previous
+        );
+
+    };
+
+
+    return (
+
+        <main className="home-page">
+
+
+            {/* =================================================
+                TOP CONTAINER
+            ================================================= */}
+
+            <div className="home-container">
+
+                <Navbar />
+
+
+                {/* =================================================
+                    HERO
+                ================================================= */}
+
+                <section className="hero-section1">
+
+                    <img
+                        src={bgimg}
+                        alt="Dream property"
+                        className="hero-img"
+                    />
+
+
+                    <div className="hero-overlay1"></div>
+
+
+                    <div className="hero-content1">
+
+                        <h1>
+                            Explore Our Projects
+                        </h1>
+
+
+                        <p>
+                            Explore verified land projects
+                            and premium plots in prime
+                            locations. Find the right
+                            property for your dream home
+                            or your next investment.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                {/* =================================================
+                    DESKTOP CATEGORY BAR
+
+                    Hidden on mobile.
+                ================================================= */}
+
+                <div className="mid-section1">
+
+                    <div className="plot-sort1">
+
+                        {categories.map((category) => (
+
+                            <button
+                                key={category}
+                                type="button"
+                                className={
+                                    appliedFilters.category === category
+                                        ? "sort-button1 active"
+                                        : "sort-button1"
+                                }
+                                onClick={() =>
+                                    handleTopCategoryChange(
+                                        category
+                                    )
+                                }
+                            >
+
+                                {category}
+
+                            </button>
+
+                        ))}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {/* =====================================================
+                MOBILE FILTER BUTTON
+
+                Only visible on mobile.
+            ===================================================== */}
+
+            <div className="mobile-filter-trigger">
+
+                <button
+                    type="button"
+                    onClick={toggleMobileFilter}
+                    aria-expanded={mobileFilterOpen}
+                >
+
+                    <img
+                        src={filterimg}
+                        alt=""
+                    />
+
+
+                    <span>
+
+                        {mobileFilterOpen
+                            ? "Hide Filters"
+                            : "Filters"}
+
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            {/* =====================================================
+                PROJECT SECTION
+            ===================================================== */}
+
+            <div className="project-section">
+
+
+                {/* =================================================
+                    FILTER SIDEBAR
+                ================================================= */}
+
+                <aside
+                    className={
+                        mobileFilterOpen
+                            ? "filters mobile-filter-visible"
+                            : "filters"
+                    }
+                >
+
+
+                    {/* =================================================
+                        FILTER HEADER
+                    ================================================= */}
+
+                    <div className="fil-reset">
+
+
+                        <div className="fil">
+
+                            <img
+                                src={filterimg}
+                                className="filimg"
+                                alt="Filter"
+                            />
+
+
+                            <p>
+                                Filters
+                            </p>
+
+                        </div>
+
+
+                        <div className="reset-btn">
+
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                            >
+                                Reset
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        MOBILE CATEGORY
+
+                        Hidden on desktop.
+                    ================================================= */}
+
+                    <div className="filter-category-mobile">
+
+                        <div className="title">
+                            Project Type
+                        </div>
+
+
+                        <div className="selection">
+
+                            {categories.map((category) => (
+
+                                <div
+                                    className="loc1"
+                                    key={category}
+                                >
+
+                                    <input
+                                        id={`filter-mobile-category-${category}`}
+                                        type="radio"
+                                        name="mobile-project-category"
+                                        checked={
+                                            draftFilters.category ===
+                                            category
+                                        }
+                                        onChange={() =>
+                                            handleDraftCategoryChange(
+                                                category
+                                            )
+                                        }
+                                    />
+
+
+                                    <label htmlFor={`filter-mobile-category-${category}`}>
+                                        {category}
+                                    </label>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        LOCATION
+                    ================================================= */}
+
+                    <div className="location">
+
+                        <div className="title">
+                            Location
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="location-search">
+                            <input
+                                type="text"
+                                placeholder="Search locations..."
+                                value={locationSearch}
+                                onChange={(e) => setLocationSearch(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="selection">
+
+                            {displayLocations.map((loc) => (
+
+                                <div
+                                    className="loc1"
+                                    key={loc.city}
+                                >
+
+                                    <input
+                                        id={`filter-location-${loc.city}`}
+                                        type="checkbox"
+                                        checked={
+                                            draftFilters.locations.includes(
+                                                loc.city
+                                            )
+                                        }
+                                        onChange={() =>
+                                            toggleFilter(
+                                                "locations",
+                                                loc.city
+                                            )
+                                        }
+                                    />
+
+
+                                    <label htmlFor={`filter-location-${loc.city}`}>
+                                        <span>{loc.city}</span>
+                                        <span className="location-count">({loc.count})</span>
+                                    </label>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        PLOT TYPES
+                    ================================================= */}
+
+                    <div className="location">
+
+                        <div className="title">
+                            Plot Types
+                        </div>
+
+
+                        <div className="selection">
+
+                            {plotTypes.map((type) => (
+
+                                <div
+                                    className="loc1"
+                                    key={type}
+                                >
+
+                                    <input
+                                        id={`filter-plottype-${type}`}
+                                        type="checkbox"
+                                        checked={
+                                            draftFilters.plotTypes.includes(
+                                                type
+                                            )
+                                        }
+                                        onChange={() =>
+                                            toggleFilter(
+                                                "plotTypes",
+                                                type
+                                            )
+                                        }
+                                    />
+
+
+                                    <label htmlFor={`filter-plottype-${type}`}>
+                                        {type}
+                                    </label>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        PRICE RANGE
+                    ================================================= */}
+
+                    <div className="location1">
+
+                        <div className="title">
+                            Price Range (₹ Lakh)
+                        </div>
+
+
+                        <div className="selection price-range-slider">
+                            <div className="price-range-inputs">
+                                <label>
+                                    Min
+                                    <input
+                                        type="number"
+                                        min={priceRange.min}
+                                        max={draftFilters.priceRange.max}
+                                        step="0.5"
+                                        value={draftFilters.priceRange.min}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value) || priceRange.min;
+                                            setDraftFilters(prev => ({
+                                                ...prev,
+                                                priceRange: {
+                                                    ...prev.priceRange,
+                                                    min: Math.min(val, prev.priceRange.max)
+                                                }
+                                            }));
+                                        }}
+                                    />
+                                </label>
+                                <label>
+                                    Max
+                                    <input
+                                        type="number"
+                                        min={draftFilters.priceRange.min}
+                                        max={priceRange.max}
+                                        step="0.5"
+                                        value={draftFilters.priceRange.max}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value) || priceRange.max;
+                                            setDraftFilters(prev => ({
+                                                ...prev,
+                                                priceRange: {
+                                                    ...prev.priceRange,
+                                                    max: Math.max(val, prev.priceRange.min)
+                                                }
+                                            }));
+                                        }}
+                                    />
+                                </label>
+                            </div>
+
+                            <div className="price-track-container">
+                                <div
+                                    className="price-track"
+                                    onMouseDown={(e) => handleTrackMouseDown(e)}
+                                    onTouchStart={(e) => handleTrackTouchStart(e)}
+                                >
+                                    <div
+                                        className="price-range-fill"
+                                        style={{
+                                            left: `${minPercent}%`,
+                                            right: `${100 - maxPercent}%`
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="price-thumb min-thumb"
+                                        style={{ left: `${minPercent}%` }}
+                                        onMouseDown={(e) => handleThumbMouseDown(e, 'min')}
+                                        onTouchStart={(e) => handleThumbTouchStart(e, 'min')}
+                                        aria-label={`Min price: ₹${draftFilters.priceRange.min} Lakh`}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="price-thumb max-thumb"
+                                        style={{ left: `${maxPercent}%` }}
+                                        onMouseDown={(e) => handleThumbMouseDown(e, 'max')}
+                                        onTouchStart={(e) => handleThumbTouchStart(e, 'max')}
+                                        aria-label={`Max price: ₹${draftFilters.priceRange.max} Lakh`}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="price-range-labels">
+                                <span>₹{draftFilters.priceRange.min} L</span>
+                                <span>₹{draftFilters.priceRange.max} L</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        APPLY FILTER
+                    ================================================= */}
+
+                    <button
+                        className="apply-filter"
+                        type="button"
+                        onClick={applyFilters}
+                    >
+
+                        Apply Filters
+
+                    </button>
+
+                </aside>
+
+
+                {/* =================================================
+                    PROJECT RESULTS
+                ================================================= */}
+
+                <section className="project-results-wrapper">
+
+
+                    {/* =================================================
+                        RESULT HEADER
+                    ================================================= */}
+
+                    <div className="project-results-header">
+
+                        <div>
+
+                            <span>
+                                PROJECTS
+                            </span>
+
+
+                            <h2>
+                                {filteredProjects.length}
+                                {" "}
+                                {filteredProjects.length === 1
+                                    ? "Project"
+                                    : "Projects"}{" "}
+                                Found
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        PROJECT CARDS
+                    ================================================= */}
+
+                    {filteredProjects.length > 0 ? (
+
+                        <div className="project-card2">
+
+                            {filteredProjects.map(
+                                (project) => (
+
+                                    <ProjectCard
+                                        key={project.id}
+                                        {...project}
+                                    />
+
+                                )
+                            )}
+
+                        </div>
+
+                    ) : (
+
+                        /* =================================================
+                           NO RESULTS
+                        ================================================= */
+
+                        <div className="no-projects">
+
+                            <h3>
+                                No Projects Found
+                            </h3>
+
+
+                            <p>
+                                Try changing your filters
+                                to find available projects.
+                            </p>
+
+
+                            <button
+                                type="button"
+                                onClick={
+                                    clearAllFilters
+                                }
+                            >
+
+                                Clear Filters
+
+                            </button>
+
+                        </div>
+
+                    )}
+
+                </section>
+
+
+
+            </div>
+            <Footer />
+
+        </main>
+
+    );
+
+}
+
+
+export default Projects;

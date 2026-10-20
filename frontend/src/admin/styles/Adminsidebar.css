@@ -1,0 +1,45 @@
+.admin-nav-title{
+    font-size: 18px !important;
+
+    font-family: 'poppins'; 
+    
+    color: rgb(43, 43, 43) !important; 
+}
+
+.admin-nav-link{
+
+    padding: 20px 10px !important;
+
+    font-size: 14px !important;
+}
+
+.admin-nav{
+    padding: 20px 0 !important;
+}
+
+.admin-header-icon svg{
+    font-size: 22px !important;
+}
+
+@media (min-width: 769px) {
+    .admin-profile {
+        width: 180px !important;
+    }
+}
+
+.admin-profile-avatar svg{
+    font-size: 15px !important;
+}
+
+.admin-profile-info strong{
+
+    font-size: 12px !important;
+}
+
+.admin-profile-info span{
+    font-size: 9px !important;
+
+    font-weight: 600 !important ;
+
+    color: #a63d2f !important;
+}

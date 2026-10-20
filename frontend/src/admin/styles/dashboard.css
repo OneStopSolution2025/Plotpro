@@ -1,0 +1,1537 @@
+/* =========================================================
+   DREAMCITY ADMIN — DASHBOARD
+========================================================= */
+
+.dashboard-page {
+  width: 100%;
+  max-width: 1480px;
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  margin: 0 auto;
+
+  padding: 38px 42px 60px;
+
+  background: #f6f8fb;
+  color: #111827;
+}
+
+
+/* =========================================================
+   WELCOME HEADER
+========================================================= */
+
+.dashboard-welcome {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+/* Allows the heading block to shrink inside the flex row
+   instead of forcing the row wider than the viewport. */
+
+.dashboard-welcome-text {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.dashboard-kicker {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #55708f;
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+}
+
+.dashboard-welcome h1 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 34px;
+  line-height: 1.1;
+
+  font-weight: 800;
+  letter-spacing: -1.5px;
+}
+
+.dashboard-welcome h1 span {
+  color: #a63d2f;
+}
+
+.dashboard-welcome p {
+  margin: 9px 0 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+.dashboard-date {
+  min-width: 165px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  padding: 13px 17px;
+
+  border: 1px solid #e4eaf1;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-date span {
+  color: #94a3b8;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-date strong {
+  color: #1e293b;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.dashboard-stat-card {
+  /* Anchors .stat-arrow to this card.
+     Without it the absolutely-positioned arrow resolves
+     against the viewport and stacks in the page corner. */
+  position: relative;
+
+  min-width: 0;
+
+  min-height: 142px;
+  padding: 24px;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+
+  border: 1px solid #e5eaf0;
+  border-radius: 20px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 5px 20px rgba(15, 23, 42, 0.035);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.07);
+}
+
+
+/* Icon */
+
+.stat-icon {
+  width: 46px;
+  height: 46px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  font-size: 17px;
+}
+
+.stat-icon.blue {
+  background: #e9f3ff;
+  color: #a63d2f;
+}
+
+.stat-icon.green {
+  background: #eaf9f2;
+  color: #18a56b;
+}
+
+.stat-icon.orange {
+  background: #fff5df;
+  color: #e99b00;
+}
+
+.stat-icon.pink {
+  background: #fff0f5;
+  color: #e54b79;
+}
+
+
+/* Content */
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.stat-title {
+  margin-bottom: 7px;
+
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stat-content h2 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 29px;
+  line-height: 1;
+
+  font-weight: 800;
+  letter-spacing: -0.7px;
+}
+
+.stat-content p {
+  margin: 8px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+
+/* Arrow */
+
+.stat-arrow {
+  position: absolute;
+
+  top: 18px;
+  right: 18px;
+
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #edf0f4;
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #64748b;
+
+  font-size: 10px;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.stat-arrow:hover {
+  background: #a63d2f;
+  border-color: #a63d2f;
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   COMMON SECTION
+========================================================= */
+
+.dashboard-section {
+  border: 1px solid #e5eaf0;
+  border-radius: 19px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.035);
+}
+
+.dashboard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 20px 21px 17px;
+}
+
+/* Lets long section titles wrap instead of pushing
+   the header (and its View All button) outside the card. */
+
+.dashboard-section-header > div {
+  min-width: 0;
+}
+
+.dashboard-section-header h2 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 17px;
+  font-weight: 800;
+
+  letter-spacing: -0.4px;
+}
+
+.dashboard-section-header p {
+  margin: 5px 0 0;
+
+  color: #8190a5;
+
+  font-size: 11px;
+}
+
+.dashboard-view-all {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 9px 12px;
+
+  border: 1px solid #e4ebf3;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #a63d2f;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.dashboard-view-all:hover {
+  background: #edf6ff;
+  border-color: #f5d5c7;
+}
+
+/* =========================================================
+   PROJECT CARDS — DREAMCITY STYLE
+========================================================= */
+
+.dashboard-project-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  padding: 0 20px 20px;
+}
+
+.dashboard-project-card {
+  min-width: 0;
+
+  overflow: hidden;
+
+  border: 1px solid #e7edf3;
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.dashboard-project-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 14px 32px rgba(15, 23, 42, 0.09);
+}
+
+
+/* Image */
+
+.project-image {
+  position: relative;
+
+  height: 165px;
+
+  overflow: hidden;
+
+  background: #edf1f5;
+}
+
+.project-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition: transform 0.45s ease;
+}
+
+.dashboard-project-card:hover .project-image img {
+  transform: scale(1.05);
+}
+
+
+/* Status */
+
+.project-status {
+  position: absolute;
+
+  top: 12px;
+  left: 12px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 7px 10px;
+
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  color: #a63d2f;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.project-status span {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+}
+
+.project-status.active {
+  color: #079669;
+}
+
+.project-status.upcoming {
+  color: #a63d2f;
+}
+
+
+/* Three-dot menu */
+
+.project-menu {
+  position: absolute;
+
+  top: 11px;
+  right: 11px;
+
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  color: #475569;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.project-menu:hover {
+  background: #ffffff;
+
+  color: #a63d2f;
+
+  transform: scale(1.05);
+}
+
+
+/* Content */
+
+.project-card-content {
+  padding: 16px 16px 17px;
+}
+
+.project-card-content h3 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 18px;
+  line-height: 1.2;
+
+  font-weight: 800;
+  letter-spacing: -0.45px;
+
+  /* Long project names break instead of widening the card. */
+  overflow-wrap: anywhere;
+}
+
+.project-location {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  min-width: 0;
+
+  margin: 7px 0 16px;
+
+  color: #64748b;
+
+  font-size: 11px;
+
+  overflow-wrap: anywhere;
+}
+
+.project-location svg {
+  color: #a63d2f;
+  font-size: 10px;
+}
+
+
+/* Plot availability */
+
+.project-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-width: 0;
+
+  gap: 10px;
+
+  margin-bottom: 7px;
+
+  color: #64748b;
+
+  font-size: 10px;
+}
+
+.project-progress-header strong {
+  color: #475569;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.project-progress {
+  width: 100%;
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 20px;
+
+  background: #e7edf4;
+}
+
+.project-progress span {
+  display: block;
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: #a63d2f;
+}
+
+.project-progress-count {
+  margin-top: 7px;
+
+  color: #1e293b;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   PROJECT RESPONSIVE
+========================================================= */
+
+@media (max-width: 1250px) {
+
+  .dashboard-project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .dashboard-project-grid {
+    grid-template-columns: 1fr;
+    padding: 0 15px 15px;
+  }
+
+  /* Image stays width:100% / height:100% + object-fit:cover,
+     so reducing this height never distorts it. */
+  .project-image {
+    height: 170px;
+  }
+
+}
+
+
+/* =========================================================
+   BOTTOM GRID
+========================================================= */
+
+.dashboard-bottom-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 2fr) minmax(300px, 0.8fr);
+
+  gap: 18px;
+}
+
+/* =========================================================
+   RECENT ENQUIRIES — DREAMCITY STYLE
+========================================================= */
+
+.enquiries-section {
+  margin-top: 20px;
+  min-width: 0;
+}
+
+/* The 760px min-width table is intentionally contained here,
+   so it scrolls inside the card and never widens the page. */
+
+.dashboard-enquiries-table {
+  width: 100%;
+  max-width: 100%;
+
+  overflow-x: auto;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+
+/* Table header */
+
+.enquiry-table-header,
+.enquiry-table-row {
+  min-width: 760px;
+
+  display: grid;
+
+  grid-template-columns:
+    1.35fr 1.15fr 1.2fr 0.9fr 0.9fr 40px;
+
+  align-items: center;
+}
+
+.enquiry-table-header {
+  padding: 13px 22px;
+
+  background: #f8fafc;
+
+  border-top: 1px solid #edf1f5;
+  border-bottom: 1px solid #edf1f5;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+}
+
+
+/* Rows */
+
+.enquiry-table-row {
+  padding: 14px 22px;
+
+  border-bottom: 1px solid #edf1f5;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  transition:
+    background 0.2s ease;
+}
+
+.enquiry-table-row:last-child {
+  border-bottom: 0;
+}
+
+.enquiry-table-row:hover {
+  background: #fbfdff;
+}
+
+
+/* Customer */
+
+.customer-cell {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 0;
+}
+
+.customer-avatar {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eaf3ff;
+
+  color: #a63d2f;
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.customer-cell strong {
+  color: #1e293b;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* Status */
+
+.enquiry-status {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 10px;
+
+  border-radius: 20px;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.enquiry-status.new {
+  background: #e8f2ff;
+  color: #a63d2f;
+}
+
+.enquiry-status.contacted {
+  background: #e7f8f1;
+  color: #079669;
+}
+
+.enquiry-status.follow-up {
+  background: #fff3df;
+  color: #d98900;
+}
+
+.enquiry-status.closed {
+  background: #edf0f3;
+  color: #64748b;
+}
+
+
+/* Action */
+
+.enquiry-action {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.enquiry-action:hover {
+  background: #edf5ff;
+
+  color: #a63d2f;
+}
+
+
+/* =========================================================
+   ENQUIRY MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .enquiry-table-header {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .enquiry-table-row {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+}
+
+/* =========================================================
+   QUICK ACTIONS — DREAMCITY STYLE
+========================================================= */
+
+.quick-actions-section {
+  min-width: 0;
+}
+
+.quick-actions-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  padding: 0 17px 17px;
+}
+
+.quick-action {
+  min-width: 0;
+
+  min-height: 112px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  padding: 16px;
+
+  border: 1px solid transparent;
+  border-radius: 15px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.quick-action:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.07);
+}
+
+
+/* Icon */
+
+.quick-action>span {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 11px;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+}
+
+
+/* Text */
+
+.quick-action strong {
+  max-width: 100%;
+
+  color: #1e293b;
+
+  font-size: 12px;
+  line-height: 1.3;
+
+  font-weight: 800;
+
+  /* "Schedule Site Visit" / "Manage Customers" wrap freely. */
+  overflow-wrap: anywhere;
+}
+
+.quick-action small {
+  max-width: 100%;
+
+  margin-top: 4px;
+
+  color: #718096;
+
+  font-size: 10px;
+  line-height: 1.4;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   ACTION COLORS
+========================================================= */
+
+.quick-action.blue {
+  background: #edf5ff;
+  border-color: #e2efff;
+}
+
+.quick-action.blue>span {
+  background: #f5d5c7;
+  color: #a63d2f;
+}
+
+
+.quick-action.green {
+  background: #edf9f4;
+  border-color: #e0f3eb;
+}
+
+.quick-action.green>span {
+  background: #d6f2e4;
+  color: #159866;
+}
+
+
+.quick-action.orange {
+  background: #fff6e8;
+  border-color: #fff0d8;
+}
+
+.quick-action.orange>span {
+  background: #ffe8bd;
+  color: #df9200;
+}
+
+
+.quick-action.purple {
+  background: #f5efff;
+  border-color: #eee4ff;
+}
+
+.quick-action.purple>span {
+  background: #e7dbff;
+  color: #805ad5;
+}
+
+
+.quick-action.pink {
+  background: #fff0f5;
+  border-color: #ffe4ed;
+}
+
+.quick-action.pink>span {
+  background: #ffdce9;
+  color: #df4f7b;
+}
+
+
+.quick-action.cyan {
+  background: #ebf9fa;
+  border-color: #dff3f5;
+}
+
+.quick-action.cyan>span {
+  background: #d3f0f3;
+  color: #1595a0;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .quick-actions-grid {
+    gap: 10px;
+    padding: 0 12px 12px;
+  }
+
+  .quick-action {
+    min-height: 100px;
+    padding: 12px;
+  }
+
+  .quick-action > span {
+    margin-bottom: 9px;
+  }
+
+}
+
+/* =========================================================
+   DREAMCITY — CLIENT SITE TYPOGRAPHY
+========================================================= */
+
+/* Main dashboard heading */
+.dashboard-welcome h1 {
+  font-size: 40px;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -1.8px;
+}
+
+.dashboard-welcome p {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.dashboard-kicker {
+  margin-bottom: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+
+/* Date */
+.dashboard-date {
+  padding: 14px 18px;
+}
+
+.dashboard-date span {
+  font-size: 10px;
+}
+
+.dashboard-date strong {
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.stat-title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stat-content h2 {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.stat-content p {
+  margin-top: 9px;
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+========================================================= */
+
+.dashboard-section-header {
+  padding: 23px 24px 19px;
+}
+
+.dashboard-section-header h2 {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.dashboard-section-header p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dashboard-view-all {
+  padding: 10px 14px;
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   PROJECT CARDS
+========================================================= */
+
+.project-card-content {
+  padding: 15px 15px 16px;
+}
+
+.project-card-content h3 {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.project-location {
+  margin: 6px 0 14px;
+  font-size: 11px;
+}
+
+.project-progress-header {
+  margin-bottom: 7px;
+  font-size: 10px;
+}
+
+.project-progress-header strong {
+  font-size: 10px;
+}
+
+.project-progress-count {
+  margin-top: 7px;
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   ENQUIRIES
+========================================================= */
+
+.enquiry-table-header {
+  padding: 13px 20px;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.enquiry-table-row {
+  padding: 13px 20px;
+
+  font-size: 12px;
+}
+
+.customer-cell {
+  gap: 10px;
+}
+
+.customer-avatar {
+  width: 31px;
+  height: 31px;
+
+  font-size: 9px;
+}
+
+.customer-cell strong {
+  font-size: 12px;
+}
+
+.enquiry-status {
+  padding: 6px 10px;
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
+
+.quick-actions-section{
+  margin-top: 20px;
+}
+.quick-action {
+  min-height: 105px;
+  padding: 15px;
+}
+
+.quick-action>span {
+  width: 34px;
+  height: 34px;
+
+  margin-bottom: 10px;
+
+  font-size: 13px;
+}
+
+.quick-action strong {
+  font-size: 12px;
+}
+
+.quick-action small {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .dashboard-welcome h1 {
+    font-size: 32px;
+  }
+
+  .dashboard-welcome p {
+    font-size: 13px;
+  }
+
+  .dashboard-section-header h2 {
+    font-size: 18px;
+  }
+
+  .dashboard-section-header p {
+    font-size: 12px;
+  }
+
+  .stat-content h2 {
+    font-size: 31px;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE FIX
+   ---------------------------------------------------------
+   Breakpoints follow the existing admin convention used in
+   admin-layout.css / admin-plots.css / enquiries.css /
+   customers.css / site-visits.css:
+
+     1100px  ->  tablet
+     700px   ->  mobile
+     480px   ->  small mobile
+
+   These are the three root causes of the horizontal overflow:
+     1. .dashboard-stats   had NO media query  -> 4 columns
+        on every width; the 46px flex-shrink:0 icon gave each
+        card a ~62px min-content, so 4 x 62 + 3 x 20 gap
+        = 308px of content inside a 212px column at 320px.
+     2. .dashboard-bottom-grid had NO media query ->
+        minmax(300px, 0.8fr) has a hard 300px floor, so the
+        Quick Actions column could never shrink below the
+        viewport.
+     3. .dashboard-welcome was a non-wrapping flex row and
+        .dashboard-date had min-width:165px, so the heading
+        and the date card together always exceeded the
+        viewport width.
+   ========================================================= */
+
+
+/* =========================================================
+   TABLET  (<= 1100px)
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  /* KPI cards: 4 -> 2 columns */
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+
+  /* Bottom grid: remove the 300px minmax() floor */
+  .dashboard-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+
+  /* The two sections are now in separate grid rows, so the
+     desktop margin-top would double up with the grid gap. */
+  .enquiries-section,
+  .quick-actions-section {
+    margin-top: 0;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE  (<= 700px)
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  /* 42px side padding is unusable on a phone */
+  .dashboard-page {
+    padding: 26px 18px 40px;
+  }
+
+
+  /* Header stacks vertically; the date card becomes
+     full-width instead of sitting beside the heading. */
+  .dashboard-welcome {
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 16px;
+
+    margin-bottom: 22px;
+  }
+
+  /* Reset the desktop flex:1 — in a column it would stretch
+     the text block vertically. */
+  .dashboard-welcome-text {
+    flex: 0 0 auto;
+  }
+
+  .dashboard-date {
+    width: 100%;
+    min-width: 0;
+  }
+
+
+  /* KPI cards: 2 columns, tightened */
+  .dashboard-stats {
+    gap: 12px;
+  }
+
+  .dashboard-stat-card {
+    min-height: 0;
+
+    padding: 16px;
+
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+
+    font-size: 15px;
+
+    border-radius: 12px;
+  }
+
+  .stat-content h2 {
+    font-size: 27px;
+  }
+
+
+  /* Section headers wrap instead of overflowing */
+  .dashboard-section-header {
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    padding: 18px 16px 14px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE  (<= 480px)
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  .dashboard-page {
+    padding: 22px 14px 34px;
+  }
+
+
+  /* A single column: the 46px icon + 16px gap left only
+     ~25px for the number inside a 2-column grid at 320px. */
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+
+  .project-image {
+    height: 150px;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET  (701px - 1100px)
+   ---------------------------------------------------------
+   Deliberately a RANGE query (min-width AND max-width) so it
+   can never match the already-correct <=700px mobile layout.
+   Placed after the max-width:1100px block so it wins the
+   cascade inside this band, and left of nothing else.
+
+   At this width the 220px admin sidebar (admin-layout.css
+   @media max-width:1100px) is still taking layout space, so
+   the dashboard must not use desktop column counts.
+   ========================================================= */
+
+@media (min-width: 701px) and (max-width: 1100px) {
+
+  /* Recover horizontal room: the desktop 42px side padding
+     eats ~15% of an already-narrow tablet content column. */
+  .dashboard-page {
+    padding: 32px 30px 48px;
+  }
+
+
+  /* KPI grid: 2 columns */
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .dashboard-stat-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+  }
+
+
+  /* Project grid: 2 columns */
+  .dashboard-project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+
+    padding: 0 16px 16px;
+  }
+
+  .dashboard-project-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+  }
+
+
+  /* Welcome header stays a horizontal row (NOT the mobile
+     stacked layout) but is allowed to shrink. */
+  .dashboard-welcome {
+    flex-direction: row;
+    flex-wrap: nowrap;
+
+    gap: 24px;
+
+    min-width: 0;
+  }
+
+  .dashboard-welcome-text {
+    min-width: 0;
+  }
+
+  /* min-width:165px already floors the date card; this keeps
+     it from being squeezed or pushed outside the dashboard. */
+  .dashboard-date {
+    max-width: 100%;
+
+    flex-shrink: 0;
+  }
+
+
+  /* Lower grid: full width, removes the 300px minmax() floor */
+  .dashboard-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET  (1101px - 1250px)
+   ---------------------------------------------------------
+   THE ACTUAL BUG. The KPI grid's only reduction rule was
+   @media (max-width:1100px), so this band fell through to the
+   desktop repeat(4, ...) at 1194px (iPad Pro 11" landscape)
+   and 1180px (iPad Air 10.9" landscape) - while the 248px
+   sidebar was already consuming part of the viewport,
+   producing ~190px cards with almost no room for the text.
+
+   The 1250px ceiling matches the pre-existing
+   @media (max-width:1250px) project breakpoint, so the KPI
+   and project grids now step down together instead of out of
+   phase. Nothing above 1250px is affected.
+   ========================================================= */
+
+@media (min-width: 1101px) and (max-width: 1250px) {
+
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page {
+    padding: 34px 34px 52px;
+  }
+
+}
+
+/* =========================================================
+   DASHBOARD EMPTY STATE
+   ========================================================= */
+
+.dashboard-empty-state {
+  padding: 38px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+}

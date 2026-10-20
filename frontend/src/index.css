@@ -1,0 +1,29 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: "Poppins", sans-serif;
+}
+
+/* Global input placeholder text sizing */
+input::placeholder,
+textarea::placeholder,
+.form-control::placeholder,
+.form-control::-webkit-input-placeholder,
+.form-control::-moz-placeholder,
+.form-control:-ms-input-placeholder {
+    font-size: 11px !important;
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.1px !important;
+    opacity: 0.85 !important;
+}

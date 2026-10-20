@@ -1,0 +1,1072 @@
+import { useEffect, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { useProjects, findProjectByIdentifier, getProjectRouteSlug, normalizeProject } from "../context/ProjectContext";
+import { usePlots } from "../context/PlotContext";
+import { useAuth } from "../context/AuthContext";
+import { userApi, publicApi } from "../services/api";
+
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+import "../css/PlotDetails.css";
+
+import {
+    MapPin,
+    Heart,
+    Share2,
+    Ruler,
+    Compass,
+    FileCheck,
+    Road,
+    Droplets,
+    Waves,
+    Zap,
+    ArrowRight,
+    ExternalLink,
+    Phone,
+    CalendarDays,
+    Check,
+    MapPinned,
+} from "lucide-react";
+
+import hospital from '../assets/Plotdetails/hospital.png'
+import shoppingmall from '../assets/Plotdetails/shoppingmall.png'
+import road from '../assets/Plotdetails/road.png'
+import bus from '../assets/Plotdetails/bus.png'
+import train from '../assets/Plotdetails/train.png'
+import school from '../assets/Plotdetails/school.png'
+
+gsap.registerPlugin(ScrollTrigger);
+
+function PlotDetails() {
+
+    const { projectName, plotNumber, id } = useParams();
+    const navigate = useNavigate();
+    const { plots, fetchPlotsForProject } = usePlots();
+    const { projects, isLoading: isLoadingProjects } = useProjects();
+    const [isFetchingPlots, setIsFetchingPlots] = useState(false);
+
+    // 1. Resolve project
+    const matchedProject = projectName ? findProjectByIdentifier(projects, projectName) : null;
+    const [fetchedProject, setFetchedProject] = useState(null);
+
+    // Fallback if not found in local memory
+    useEffect(() => {
+        if (!matchedProject && projectName) {
+            let isMounted = true;
+            publicApi.getProjectById(projectName)
+                .then((res) => {
+                    if (isMounted && res?.success && res.data) {
+                        setFetchedProject(normalizeProject(res.data));
+                    }
+                })
+                .catch(() => {});
+            return () => { isMounted = false; };
+        } else if (matchedProject) {
+            setFetchedProject(null);
+        }
+    }, [matchedProject, projectName]);
+
+    let project = matchedProject || fetchedProject;
+
+    if (!project && id) {
+        const directPlot = plots.find(
+            (item) => String(item.id) === String(id) || String(item.customId) === String(id) || String(item._id) === String(id)
+        );
+        if (directPlot) {
+            project = projects.find(
+                (p) =>
+                    String(p.id) === String(directPlot.projectId) ||
+                    String(p.customId) === String(directPlot.projectCustomId) ||
+                    String(p._id) === String(directPlot.projectMongoId)
+            );
+        }
+    }
+
+    // 2. Fetch plots for resolved project
+    useEffect(() => {
+        const targetId = project?.customId || project?.id || project?._id;
+        if (!targetId) return;
+        let isMounted = true;
+        setIsFetchingPlots(true);
+        fetchPlotsForProject(targetId).finally(() => {
+            if (isMounted) setIsFetchingPlots(false);
+        });
+        return () => {
+            isMounted = false;
+        };
+    }, [project?.customId, project?.id, project?._id, fetchPlotsForProject]);
+
+    // 3. Resolve plot
+    let plot = null;
+    if (project && plotNumber) {
+        const decodedPlotNum = decodeURIComponent(plotNumber).trim().toLowerCase();
+        plot = plots.find((item) => {
+            const matchesProject =
+                String(item.projectId) === String(project.id) ||
+                String(item.projectCustomId) === String(project.customId) ||
+                String(item.projectMongoId) === String(project._id) ||
+                String(item.projectId) === String(project._id) ||
+                String(item.projectId) === String(project.customId);
+            if (!matchesProject) return false;
+
+            const pNum = String(item.plotNumber || "").trim().toLowerCase();
+            const pNumClean = pNum.replace(/^plot\s*[-#]?\s*/i, "");
+            const decodedClean = decodedPlotNum.replace(/^plot\s*[-#]?\s*/i, "");
+
+            return (
+                pNum === decodedPlotNum ||
+                pNumClean === decodedClean ||
+                String(item.id).toLowerCase() === decodedPlotNum ||
+                String(item.customId).toLowerCase() === decodedPlotNum ||
+                String(item._id).toLowerCase() === decodedPlotNum
+            );
+        });
+    }
+
+    // Fallback resolution for legacy /plot-details/:id
+    if (!plot && id) {
+        plot = plots.find(
+            (item) => String(item.id) === String(id) || String(item.customId) === String(id) || String(item._id) === String(id)
+        );
+        if (plot && !project) {
+            project = projects.find(
+                (p) =>
+                    String(p.id) === String(plot.projectId) ||
+                    String(p.customId) === String(plot.projectCustomId) ||
+                    String(p._id) === String(plot.projectMongoId)
+            );
+        }
+    }
+
+    const plotImages =
+        (plot?.images && plot.images.length > 0)
+            ? plot.images
+            : plot?.image
+                ? [plot.image]
+                : project?.defaultPlotImage
+                    ? [project.defaultPlotImage]
+                    : project?.image
+                        ? [project.image]
+                        : [];
+
+    const [selectedImage, setSelectedImage] = useState(null);
+    const activeImage = selectedImage || plotImages[0] || "";
+
+    const { isAuthenticated } = useAuth();
+    const location = useLocation();
+    const [isSaved, setIsSaved] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (!isAuthenticated || !plot) return;
+        let isMounted = true;
+        userApi.getWishlist()
+            .then((res) => {
+                if (!isMounted) return;
+                const savedPlots = res?.data?.plots || [];
+                const found = savedPlots.some(
+                    (p) => String(p._id) === String(plot._id) || String(p.customId) === String(plot.id) || String(p._id) === String(plot.id)
+                );
+                setIsSaved(found);
+            })
+            .catch(() => { });
+        return () => {
+            isMounted = false;
+        };
+    }, [isAuthenticated, plot]);
+
+    const handleToggleWishlist = async () => {
+        if (!isAuthenticated) {
+            navigate("/login", { state: { from: location.pathname } });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            const targetId = plot._id || plot.id;
+            const res = await userApi.toggleSavePlot(targetId);
+            if (res?.success) {
+                setIsSaved(res.saved);
+            }
+        } catch (err) {
+            console.error("Failed to toggle wishlist plot:", err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!plot) return;
+
+        const ctx = gsap.context(() => {
+
+            gsap.from(".plot-hero > *", {
+                opacity: 0,
+                y: 30,
+                duration: 0.8,
+                stagger: 0.12,
+                ease: "power3.out",
+            });
+
+
+            gsap.utils.toArray(".plot-reveal").forEach((section) => {
+
+                gsap.from(section, {
+                    opacity: 0,
+                    y: 45,
+                    duration: 0.8,
+                    ease: "power3.out",
+
+                    scrollTrigger: {
+                        trigger: section,
+                        start: "top 85%",
+                        once: true,
+                    },
+                });
+
+            });
+
+
+            gsap.from(".spec-row", {
+                opacity: 0,
+                x: -20,
+                duration: 0.5,
+                stagger: 0.07,
+                ease: "power2.out",
+
+                scrollTrigger: {
+                    trigger: ".specifications-card",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+
+            gsap.from(".landmark-card", {
+                opacity: 0,
+                y: 25,
+                duration: 0.5,
+                stagger: 0.08,
+                ease: "power2.out",
+
+                scrollTrigger: {
+                    trigger: ".landmarks-grid",
+                    start: "top 85%",
+                    once: true,
+                },
+            });
+
+        });
+
+        return () => ctx.revert();
+
+    }, [plot]);
+
+    if (!plot || !project) {
+        if (isLoadingProjects || isFetchingPlots) {
+            return (
+                <>
+                    <Navbar />
+                    <div className="plot-not-found" style={{ textAlign: "center", padding: "100px 20px" }}>
+                        <h2>Loading Plot Details...</h2>
+                    </div>
+                    <Footer />
+                </>
+            );
+        }
+        return (
+            <>
+                <Navbar />
+
+                <div className="plot-not-found">
+                    <h2>Plot Not Found</h2>
+                </div>
+
+                <Footer />
+            </>
+        );
+    }
+
+
+    return (
+        <main className="plot-details-page">
+
+            <Navbar />
+
+
+            <div className="project-breadcrumb1">
+                <Link to="/">Home</Link>
+
+                <ArrowRight />
+
+                <Link to="/projects">Projects</Link>
+
+                <ArrowRight />
+
+                <Link to={`/project-details/${getProjectRouteSlug(project, projects) || project.slug || project.id}`}>
+                    {project.title}
+                </Link>
+
+                <ArrowRight />
+
+                <strong>Plot {plot.plotNumber}</strong>
+            </div>
+
+
+            {/* =================================================
+                HERO
+            ================================================= */}
+
+            <section className="plot-hero plot-reveal">
+
+                {/* Gallery */}
+
+                <div className="plot-gallery">
+
+                    <div className="plot-main-image">
+
+                        <img
+                            src={activeImage}
+                            alt={`Green Valley Plot ${plot.plotNumber}`}
+                        />
+
+                        <div className="plot-image-gradient"></div>
+
+                    </div>
+
+
+                    {/* Thumbnails */}
+
+                    <div className="plot-thumbnails">
+
+                        {plotImages.map((image, index) => (
+
+                            <button
+                                key={index}
+                                type="button"
+                                className={
+                                    activeImage === image
+                                        ? "plot-thumb active"
+                                        : "plot-thumb"
+                                }
+                                onClick={() =>
+                                    setSelectedImage(image)
+                                }
+                            >
+
+                                <img
+                                    src={image}
+                                    alt={`Plot view ${index + 1}`}
+                                />
+
+                            </button>
+
+                        ))}
+
+                    </div>
+
+                </div>
+
+
+                {/* Details */}
+
+                <div className="plot-summary">
+
+                    <div className="plot-summary-top">
+
+                        <span className="plot-label">
+                            PLOT DETAILS
+                        </span>
+
+
+                        <div className="plot-actions">
+
+                            <button
+                                type="button"
+                                onClick={handleToggleWishlist}
+                                disabled={isSaving}
+                                title={isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
+                                style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5", } : {}}
+                            >
+                                <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
+                                <span>{isSaved ? "In Wishlist" : "Add to Wishlist"}</span>
+                            </button>
+
+                            <button>
+                                <Share2 />
+                                Share
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <h1>
+                        Plot No. {plot.plotNumber}
+                    </h1>
+
+
+                    <div className="plot-location">
+
+                        <MapPin />
+
+                        <span>
+                            {project?.location}
+                        </span>
+
+                    </div>
+
+
+                    <p className="plot-short-description">
+                        A premium  {plot.facing} Facing plot in a
+                        well-planned community, developed
+                        for a better tomorrow.
+                    </p>
+
+
+                    {/* Price */}
+
+                    <div className="plot-total-price">
+
+                        <span>
+                            TOTAL PRICE
+                        </span>
+
+                        <strong>
+                            {plot.price}
+                        </strong>
+
+                    </div>
+
+
+                    {/* Quick specs */}
+
+                    <div className="plot-quick-specs">
+
+                        <div className="quick-spec">
+
+                            <div className="quick-icon">
+                                <Ruler />
+                            </div>
+
+                            <strong>
+                                {plot.size}
+                            </strong>
+
+                            <span>
+                                Plot Size
+                            </span>
+
+                        </div>
+
+
+                        <div className="quick-divider"></div>
+
+
+                        <div className="quick-spec">
+
+                            <div className="quick-icon">
+                                <Compass />
+                            </div>
+
+                            <strong>
+                                {plot.facing}
+                            </strong>
+
+                            <span>
+                                Facing
+                            </span>
+
+                        </div>
+
+
+                        <div className="quick-divider"></div>
+
+
+                        <div className="quick-spec">
+
+                            <div className="quick-icon">
+                                <FileCheck />
+                            </div>
+
+                            <strong>
+                                DTCP Approved
+                            </strong>
+
+                            <span>
+                                Legal Status
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* CTA */}
+
+                    <div className="plot-hero-actions">
+                        <button
+                            type="button"
+                            className="primary-plot-btn"
+                            onClick={() => navigate(`/site-visit/${project.id}?plot=${plot.plotNumber}`, {
+                                state: {
+                                    from: location.pathname
+                                }
+                            })}
+                        >
+                            <span>
+                                Book a Site Visit
+                            </span>
+
+                            <ArrowRight />
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            className="secondary-plot-btn"
+                            onClick={() => navigate(`/enquiry/${project.id}?plot=${plot.plotNumber}`, {
+                                state: {
+                                    from: location.pathname
+                                }
+                            })}
+                        >
+                            <Phone />
+
+                            <span>
+                                Enquiry
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {/* =================================================
+                LOCATION + SPECIFICATIONS
+            ================================================= */}
+
+            <section className="plot-two-column plot-reveal">
+
+                {/* Location */}
+
+                <div className="plot-info-card location-card">
+
+                    <div className="info-card-heading">
+
+                        <div className="info-heading-icon">
+                            <MapPin />
+                        </div>
+
+                        <div>
+
+                            <h2>
+                                Plot <span>Location</span>
+                            </h2>
+
+                            <p>
+                                Strategically located with easy
+                                access to key destinations.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="plot-map">
+
+                        <iframe
+                            src="https://www.google.com/maps?q=Chettinayakanpatti,Dindigul&output=embed"
+                            title="Green Valley Plot Location"
+                            loading="lazy"
+                        ></iframe>
+
+
+                        <div className="map-location-label">
+
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        href="https://www.google.com/maps/search/?api=1&query=Chettinayakanpatti,Dindigul"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="map-button"
+                    >
+
+                        View on Google Maps
+
+                        <ExternalLink />
+
+                    </a>
+
+                </div>
+
+
+                {/* Specifications */}
+
+                <div className="plot-info-card specifications-card">
+
+                    <div className="info-card-heading">
+
+                        <div className="info-heading-icon">
+                            <FileCheck />
+                        </div>
+
+                        <div>
+
+                            <h2>
+                                Plot <span>Specifications</span>
+                            </h2>
+
+                            <p>
+                                Everything you need to know
+                                about this plot.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="specifications-list">
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Ruler />
+                                <span>Plot Number</span>
+                            </div>
+
+                            <strong>
+                                {plot.plotNumber}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Ruler />
+                                <span>Plot Size</span>
+                            </div>
+
+                            <strong>
+                                {plot.size}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Compass />
+                                <span>Facing</span>
+                            </div>
+
+                            <strong>
+                                {plot.facing} Facing
+                            </strong>
+
+                        </div>
+
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Road />
+                                <span>Road Width</span>
+                            </div>
+
+                            <strong>
+                                30 ft Blacktop Road
+                            </strong>
+
+                        </div>
+
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Droplets />
+                                <span>Water Supply</span>
+                            </div>
+
+                            <strong>
+                                Available
+                            </strong>
+
+                        </div>
+
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Waves />
+                                <span>Drainage</span>
+                            </div>
+
+                            <strong>
+                                Underground Drainage
+                            </strong>
+
+                        </div>
+
+
+                        <div className="spec-row">
+
+                            <div>
+                                <Zap />
+                                <span>Electricity</span>
+                            </div>
+
+                            <strong>
+                                Available
+                            </strong>
+
+                        </div>
+
+                        <div className="spec-row">
+
+                            <div>
+                                <FileCheck />
+                                <span>Legal Status</span>
+                            </div>
+
+                            <strong>
+                                DTCP Approved
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {/* =================================================
+                NEARBY LANDMARKS
+            ================================================= */}
+
+            <section className="landmarks-section plot-reveal">
+
+                <div className="landmarks-heading">
+
+                    <div className="landmark-title">
+
+                        <div className="info-heading-icon">
+                            <MapPinned />
+                        </div>
+
+                        <div>
+
+                            <h2>
+                                Nearby Landmarks
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div className="landmarks-grid">
+
+                    {/* SCHOOL */}
+                    <div className="landmark-card">
+
+                        <div className="landmark-card-title">
+                            Schools
+                        </div>
+
+                        <div className="landmark-image">
+                            <img
+                                src={school}
+                                alt="Schools near Green Valley"
+                            />
+                        </div>
+
+                        <div className="landmark-blue"></div>
+
+                        <div className="landmark-arrow">
+                            <ArrowRight />
+                        </div>
+
+                    </div>
+
+
+                    {/* HOSPITAL */}
+                    <div className="landmark-card">
+
+                        <div className="landmark-card-title">
+                            Hospitals
+                        </div>
+
+                        <div className="landmark-image">
+                            <img
+                                src={hospital}
+                                alt="Hospitals near Green Valley"
+                            />
+                        </div>
+
+                        <div className="landmark-blue"></div>
+
+                        <div className="landmark-arrow">
+                            <ArrowRight />
+                        </div>
+
+                    </div>
+
+
+                    {/* SHOPPING */}
+                    <div className="landmark-card">
+
+                        <div className="landmark-card-title">
+                            Shopping <br /> Mall
+                        </div>
+
+                        <div className="landmark-image">
+                            <img
+                                src={shoppingmall}
+                                alt="Shopping near Green Valley"
+                            />
+                        </div>
+
+                        <div className="landmark-blue"></div>
+
+                        <div className="landmark-arrow">
+                            <ArrowRight />
+                        </div>
+
+                    </div>
+
+
+                    {/* BUS STAND */}
+                    <div className="landmark-card">
+
+                        <div className="landmark-card-title">
+                            Bus Stand
+                        </div>
+
+                        <div className="landmark-image">
+                            <img
+                                src={bus}
+                                alt="Bus Stand near Green Valley"
+                            />
+                        </div>
+
+                        <div className="landmark-blue"></div>
+
+                        <div className="landmark-arrow">
+                            <ArrowRight />
+                        </div>
+
+                    </div>
+
+
+                    {/* NH 44 */}
+                    <div className="landmark-card">
+
+                        <div className="landmark-card-title">
+                            Highway
+                        </div>
+
+                        <div className="landmark-image">
+                            <img
+                                src={road}
+                                alt="NH-44 near Green Valley"
+                            />
+                        </div>
+
+                        <div className="landmark-blue"></div>
+
+                        <div className="landmark-arrow">
+                            <ArrowRight />
+                        </div>
+
+                    </div>
+
+
+                    {/* RAILWAY */}
+                    <div className="landmark-card">
+
+                        <div className="landmark-card-title">
+                            Railway <br />Station
+                        </div>
+
+                        <div className="landmark-image">
+                            <img
+                                src={train}
+                                alt="Railway Station near Green Valley"
+                            />
+                        </div>
+
+                        <div className="landmark-blue"></div>
+
+                        <div className="landmark-arrow">
+                            <ArrowRight />
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {/* =================================================
+                ABOUT + CTA
+            ================================================= */}
+
+            <section className="plot-about-section plot-reveal">
+
+                <div className="about-plot-card">
+
+                    <div className="about-plot-heading">
+
+                        <div className="info-heading-icon1">
+                            <FileCheck />
+                        </div>
+
+                        <h2>
+                            About <br /> <span>This Plot</span>
+                        </h2>
+
+                    </div>
+
+                    <div className="para">
+                        <p>
+                            Plot No- {plot.plotNumber} is a thoughtfully positioned {plot.facing} Facing
+                            plot in Green Valley, offering
+                            the perfect balance of location, connectivity,
+                            and modern infrastructure.
+                        </p>
+
+                        <p>
+                            Ideal for building your dream home or as a
+                            long-term investment, this plot provides
+                            excellent value in a fast-growing location.
+                        </p>
+                    </div>
+
+
+                    <div className="about-checks">
+
+                        <div>
+                            <Check />
+                            <span>
+                                Ready for construction
+                            </span>
+                        </div>
+
+                        <div>
+                            <Check />
+                            <span>
+                                Peaceful and green environment
+                            </span>
+                        </div>
+
+                        <div>
+                            <Check />
+                            <span>
+                                High appreciation potential
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {/* Contact CTA */}
+
+                <div className="plot-contact-card">
+
+                    <span className="contact-small-title">
+                        HAVE QUESTIONS?
+                    </span>
+
+                    <h2>
+                        Let's talk about
+                        <br />
+                        this plot.
+                    </h2>
+
+                    <p>
+                        Our team is here to help you with
+                        site visits, pricing and more details.
+                    </p>
+
+
+                    <div className="contact-card-bottom">
+
+                        <button
+                            onClick={() => navigate(`/enquiry/${project.id}?plot=${plot.plotNumber}`, {
+                                state: {
+                                    from: location.pathname
+                                }
+                            })}
+                            type="button"
+                        >
+
+                            <span>Contact Us</span>
+
+                            <ArrowRight />
+
+                        </button>
+
+
+                        <div className="contact-big-icon">
+                            <Phone />
+                        </div>
+
+                    </div>
+
+                    <div
+                        className="schedule"
+                        onClick={() => navigate(`/site-visit/${project.id}?plot=${plot.plotNumber}`, {
+                            state: {
+                                from: location.pathname
+                            }
+                        })}
+                        style={{ cursor: "pointer" }}
+                    >
+
+                        <CalendarDays />
+
+                        <span>
+                            Schedule a
+                            <br />
+                            Site Visit
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <Footer />
+
+        </main>
+    );
+}
+
+export default PlotDetails;

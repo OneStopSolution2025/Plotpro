@@ -1,0 +1,46 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>probe</title>
+<style>body{margin:0;background:#111;color:#0f0;font:12px/1.6 Consolas,monospace}
+ .w{position:relative;height:420px;overflow:hidden;border:1px solid #0f0;display:inline-block;vertical-align:top}
+ iframe{border:0;background:#fff;position:absolute;left:0}
+ #out{position:fixed;top:0;left:0;right:0;z-index:99;background:#000;padding:8px;white-space:pre}</style>
+</head><body>
+<div id="out">measuring…</div>
+<div style="position:absolute;top:200px;left:0">
+ <div class="w"><iframe id="p390" src="/projects" width="390" height="3000" style="top:-400px"></iframe></div>
+ <div class="w"><iframe id="p360" src="/projects" width="360" height="3000" style="top:-400px"></iframe></div>
+ <div class="w"><iframe id="h390" src="/" width="390" height="5000" style="top:-1250px"></iframe></div>
+ <div class="w"><iframe id="h360" src="/" width="360" height="5000" style="top:-1250px"></iframe></div>
+</div>
+<script>
+const L=[];
+function run(fr,label,gridSel,cardSel){
+  const d=fr.contentDocument, W=fr.contentWindow;
+  L.push('=== '+label+' ===');
+  const grid=d.querySelector(gridSel);
+  L.push('grid cols='+W.getComputedStyle(grid).gridTemplateColumns);
+  const card=d.querySelector(cardSel);
+  if(!card){L.push('NO CARD');return;}
+  const cr=card.getBoundingClientRect();
+  L.push('card w='+Math.round(cr.width)+' h='+Math.round(cr.height));
+  const info=card.querySelector('.project-info');
+  L.push('info cols='+W.getComputedStyle(info).gridTemplateColumns.split(' ').length+' track(s)');
+  const act=card.querySelector('.project-actions');
+  L.push('actions cols='+W.getComputedStyle(act).gridTemplateColumns);
+  const val=card.querySelector('.info-text strong');
+  L.push('spec value font='+W.getComputedStyle(val).fontSize+' trunc='+(val.scrollWidth>val.clientWidth+1?'YES('+val.scrollWidth+'>'+val.clientWidth+')':'no'));
+  const btn=card.querySelector('.explore-btn'), bb=btn.getBoundingClientRect();
+  L.push('btn w='+Math.round(bb.width)+' font='+W.getComputedStyle(btn).fontSize+' radius='+W.getComputedStyle(btn).borderTopLeftRadius);
+  L.push('btn label trunc='+(btn.scrollWidth>btn.clientWidth+1?'YES':'no')+'  clipped='+(bb.bottom>cr.bottom+0.5?'YES':'no'));
+  const cont=card.querySelector('.project-content');
+  L.push('content h='+Math.round(cont.getBoundingClientRect().height)+' overflowsCard='+(cont.getBoundingClientRect().height>cr.height?'YES':'no'));
+  L.push('');
+}
+const jobs=[['p390','/projects 390','.project-card2','.project-card2 .project-card'],
+            ['p360','/projects 360','.project-card2','.project-card2 .project-card'],
+            ['h390','HOME 390','.plot-cards','.plot-cards .project-card'],
+            ['h360','HOME 360','.plot-cards','.plot-cards .project-card']];
+let n=0;
+jobs.forEach(([id,label,gs,cs])=>{const fr=document.getElementById(id);
+ fr.addEventListener('load',()=>{run(fr,label,gs,cs); if(++n===jobs.length) document.getElementById('out').textContent=L.join('\n');});});
+</script></body></html>

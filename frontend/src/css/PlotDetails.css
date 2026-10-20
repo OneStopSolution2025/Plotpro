@@ -1,0 +1,1869 @@
+.plot-details-page {
+    width: 100%;
+    min-height: 100vh;
+
+    background: #ffffff;
+    color: #151515;
+
+    overflow-x: hidden;
+}
+
+.plot-details-page h1,
+.plot-details-page h2,
+.plot-details-page h3,
+.plot-details-page p {
+    margin-top: 0;
+}
+.project-breadcrumb1 {
+    width: calc(100% - 100px);
+    margin: 110px 0 20px 100px;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: #8a8f98;
+    font-size: 13px;
+}
+
+.project-breadcrumb1 a {
+    color: #8a8f98;
+    text-decoration: none;
+    transition: color 0.25s ease;
+}
+
+.project-breadcrumb1 a:hover {
+    color: #151515;
+}
+
+.project-breadcrumb1 svg {
+    width: 12px;
+    height: 12px;
+}
+
+.project-breadcrumb1 strong {
+    color: #151515;
+}
+/* =========================================================
+   HERO
+========================================================= */
+
+.plot-hero {
+    width: min(1340px, calc(100% - 90px));
+
+    margin: 0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.16fr) minmax(430px, 0.84fr);
+
+    gap: 45px;
+
+    align-items: center;
+}
+
+
+.plot-gallery {
+    min-width: 0;
+}
+
+.plot-main-image {
+    position: relative;
+
+    width: 100%;
+    height: 530px;
+
+    overflow: hidden;
+
+    border-radius: 28px;
+
+    background: #edf3f8;
+}
+
+.plot-main-image img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    transition:
+        transform 0.8s cubic-bezier(0.22,
+            1,
+            0.36,
+            1);
+}
+
+.plot-image-gradient {
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(180deg,
+            rgba(0, 0, 0, 0.02),
+            transparent 55%,
+            rgba(0, 0, 0, 0.25));
+}
+
+/* =========================================================
+   THUMBNAILS
+========================================================= */
+
+.plot-thumbnails {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 10px;
+
+    margin-top: 12px;
+}
+
+.plot-thumb {
+    height: 78px;
+
+    padding: 0;
+
+    overflow: hidden;
+
+    border: 2px solid transparent;
+
+    border-radius: 14px;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.3s ease,
+        border-color 0.3s ease,
+        opacity 0.3s ease;
+}
+
+.plot-thumb img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.plot-thumb:hover {
+    transform: translateY(-2px);
+}
+
+.plot-thumb.active {
+    border-color: #a63d2f;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.plot-summary {
+    min-width: 0;
+}
+
+
+/* =========================================================
+   TOP
+========================================================= */
+
+.plot-summary-top {
+
+    transform: translateY(-45px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.plot-label {
+
+    background-color: #a63d2f;
+
+    padding: 10px;
+
+    border-radius: 20px;
+
+    color: white;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 2.5px;
+}
+
+.plot-actions {
+    display: flex;
+
+    gap: 16px;
+}
+
+.plot-actions button {
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+
+    border: none;
+
+    background: transparent;
+
+    color: rgb(54, 54, 54);
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+}
+
+.plot-actions button svg {
+    width: 30px;
+    height: 30px;
+
+    padding: 5px;
+
+    border-radius: 50%;
+}
+
+/* =========================================================
+   MAIN TITLE
+========================================================= */
+
+.plot-summary h1 {
+    margin:
+        0px 0 30px;
+
+    color: #111111;
+
+    font-size: clamp(55px,
+            5.4vw,
+            82px);
+
+    line-height: 0.92;
+
+    letter-spacing: -4px;
+
+    font-weight: 750;
+}
+
+
+.plot-location {
+
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    color: #222b3c;
+
+    font-size: 15px;
+
+    font-weight: 500;
+}
+
+.plot-location svg {
+    width: 19px;
+    height: 19px;
+
+    color: #a63d2f;
+}
+
+
+.plot-short-description {
+    max-width: 550px;
+
+    margin:
+        20px 5px 0;
+
+    color: #707785;
+
+    font-size: 14px;
+
+    line-height: 1.8;
+}
+
+
+/* =========================================================
+   PRICE
+========================================================= */
+
+.plot-total-price {
+    margin-top: 28px;
+
+    padding:
+        20px 23px;
+
+    border-radius: 18px;
+
+    border: 1px solid #a63d2f;
+
+    background:
+        #a63d2f;
+
+    color: white;
+}
+
+.plot-total-price span {
+    display: block;
+
+    margin-bottom: 4px;
+
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 2px;
+}
+
+.plot-total-price strong {
+    display: block;
+
+    font-size: 48px;
+
+    line-height: 0.95;
+
+    letter-spacing: -2px;
+}
+
+
+/* =========================================================
+   QUICK SPECS
+========================================================= */
+
+.plot-quick-specs {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1px 1fr 1px 1.3fr;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin-top: 23px;
+}
+
+.quick-spec {
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
+    text-align: center;
+
+    gap: 6px;
+}
+
+.quick-icon {
+    width: 46px;
+    height: 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(166, 61, 47, 0.08);
+
+    color: #a63d2f;
+}
+
+.quick-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.quick-spec strong {
+    color: #151b29;
+
+    font-size: 15px;
+
+    line-height: 1.1;
+}
+
+.quick-spec span {
+    color: #7b8390;
+
+    font-size: 10px;
+}
+
+.quick-divider {
+    width: 1px;
+    height: 55px;
+
+    background: #e2e6eb;
+}
+
+
+/* =========================================================
+   HERO CTA
+========================================================= */
+
+.plot-hero-actions {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 12px;
+
+    margin-top: 25px;
+}
+
+.primary-plot-btn,
+.secondary-plot-btn {
+    min-height: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    border-radius: 30px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
+}
+
+.primary-plot-btn {
+    border: none;
+
+    background: #a63d2f;
+
+    color: #ffffff;
+
+    font-size: 15px;
+}
+
+.primary-plot-btn:hover {
+
+    box-shadow:
+        0 14px 30px rgba(166, 61, 47,
+            0.2);
+}
+
+.primary-plot-btn:hover .lucide-arrow-right {
+    transform: translateX(10px);
+}
+
+.secondary-plot-btn {
+    border: 1px solid #a63d2f;
+
+    background: #ffffff;
+
+    color: #a63d2f;
+
+    font-size: 15px;
+
+}
+
+.secondary-plot-btn:hover {
+    background: #a63d2f;
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   SECTION CONTAINER
+========================================================= */
+
+.plot-two-column,
+.landmarks-section,
+.plot-about-section {
+    width: min(1340px, calc(100% - 90px));
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* =========================================================
+   LOCATION + SPECIFICATIONS
+========================================================= */
+
+.plot-two-column {
+    margin-top: 70px;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 20px;
+}
+
+
+.plot-info-card {
+    padding: 32px;
+
+    border-radius: 30px;
+
+    background: rgba(0, 0, 0, 0.03);
+
+    border: none;
+}
+
+
+.info-card-heading {
+    display: flex;
+
+
+    align-items: flex-start;
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.info-heading-icon {
+    width: 45px;
+    height: 45px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #eaf5ff;
+
+    color: #a63d2f;
+}
+
+.info-heading-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.info-card-heading h2 {
+    margin: 0;
+
+    color: #151515;
+
+    font-size: 30px;
+
+    font-weight: 600;
+
+    transform: translateY(8px);
+
+    line-height: 1;
+    letter-spacing: -1.1px;
+
+    margin-bottom: 15px;
+}
+
+.info-card-heading h2 span {
+    color: #a63d2f;
+}
+
+.info-card-heading p {
+    max-width: 400px;
+
+    margin: 8px 0 0;
+
+    color: #4e4f50;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+.plot-map {
+    position: relative;
+
+    width: 100%;
+    height: 320px;
+
+    overflow: hidden;
+
+    border-radius: 20px;
+
+    background: #eaf1f7;
+}
+
+.plot-map iframe {
+    width: 100%;
+    height: 100%;
+
+    border: 0;
+}
+
+.map-button {
+    min-height: 44px;
+
+    margin-top: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    border-radius: 12px;
+
+    border: 1px solid #e1e6eb;
+
+    background: #ffffff;
+
+    color: #a63d2f;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition:
+        background 0.3s ease,
+        color 0.3s ease;
+}
+
+.map-button:hover {
+    background: #a63d2f;
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   SPECIFICATIONS
+========================================================= */
+
+.specifications-list {
+    overflow: hidden;
+
+    border-radius: 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e9edf1;
+}
+
+.spec-row {
+    min-height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding:
+        0 18px;
+
+    border-bottom: 1px solid #edf0f3;
+}
+
+.spec-row:last-child {
+    border-bottom: none;
+}
+
+.spec-row>div {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    color: rgba(0, 0, 0, 0.90);
+
+    font-weight: 600;
+
+    font-size: 15px;
+}
+
+.spec-row>div svg {
+
+    width: 16px;
+    height: 16px;
+
+    color: #a63d2f;
+}
+
+.spec-row strong {
+
+    color: #a63d2f;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    text-align: right;
+}
+
+
+/*Landmark-section*/
+
+.landmarks-section {
+    margin-top: 20px;
+
+    padding: 32px;
+
+    border-radius: 30px;
+
+    background: #f7f8f9;
+}
+
+.landmarks-heading {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+}
+
+.landmark-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+.landmark-title h2 {
+    margin: 0;
+
+    color: #151515;
+
+    font-size: 35px;
+
+    font-weight: 600;
+
+    letter-spacing: -1.2px;
+}
+
+.landmark-title p {
+    margin: 7px 0 0;
+
+    color: #777e8b;
+
+    font-size: 12px;
+}
+
+.landmarks-heading>button {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    border: none;
+
+    background: transparent;
+
+    color: #a63d2f;
+
+    font-size: 11px;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   LANDMARK GRID
+========================================================= */
+/* =========================================================
+   NEARBY LANDMARK CARDS
+========================================================= */
+
+.landmarks-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 18px;
+
+    margin-top: 30px;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.landmark-card {
+    position: relative;
+
+    width: 85%;
+    height: 350px;
+
+    overflow: hidden;
+
+    border-radius: 30px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    isolation: isolate;
+
+    transition:
+        transform 0.45s cubic-bezier(0.22,
+            1,
+            0.36,
+            1),
+        box-shadow 0.45s ease;
+}
+
+
+/* =========================================================
+   BLUE CIRCLE
+   IMPORTANT:
+   This is BEHIND everything.
+========================================================= */
+
+.landmark-blue {
+    position: absolute;
+
+    width: 0;
+    height: 0;
+
+    top: 0;
+    right: 0;
+
+    z-index: 1;
+
+    border-radius: 50%;
+
+    background: #a63d2f;
+
+    transform: translate(45%,
+            -50%);
+
+    transition:
+        width 0.85s cubic-bezier(0.76,
+            0,
+            0.24,
+            1),
+        height 0.85s cubic-bezier(0.76,
+            0,
+            0.24,
+            1);
+}
+
+
+/* =========================================================
+   CARD TITLE
+========================================================= */
+
+.landmark-card-title {
+    position: absolute;
+
+    top: 40px;
+    left: 40px;
+
+    z-index: 6;
+
+    max-width: 240px;
+
+    color: #050505;
+
+    font-size: 31px;
+
+    line-height: 0.98;
+
+    letter-spacing: -1.2px;
+
+    font-weight: 700;
+
+    transition:
+        color 0.45s ease,
+        transform 0.45s ease;
+}
+
+
+/* =========================================================
+   IMAGE
+   Normal state = bottom-left
+========================================================= */
+
+.landmark-image {
+    position: absolute;
+
+    left: -14px;
+    bottom: -33px;
+
+    width: 78%;
+    height: 60%;
+
+    z-index: 3;
+
+    overflow: hidden;
+
+    border-radius:
+        0 78px 0 30px;
+
+    background: transparent;
+}
+
+.landmark-image img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: contain;
+
+    object-position: left bottom;
+
+    transform: scale(1);
+
+    transition:
+        transform 0.75s cubic-bezier(0.22,
+            1,
+            0.36,
+            1),
+        filter 0.6s ease;
+}
+
+
+/* =========================================================
+   TOP RIGHT CIRCLE
+========================================================= */
+
+.landmark-arrow {
+    position: absolute;
+
+    top: -6px;
+    right: -6px;
+
+    z-index: 10;
+
+    width: 100px;
+    height: 100px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    color: #111111;
+
+    transition:
+        transform 0.45s cubic-bezier(0.22,
+            1,
+            0.36,
+            1),
+        background 0.4s ease,
+        color 0.4s ease;
+}
+
+
+.landmark-arrow svg {
+    width: 25px;
+    height: 25px;
+
+    transition:
+        transform 0.4s ease;
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+.landmark-card:hover {
+    transform:
+        translateY(-6px);
+
+    box-shadow:
+        0 24px 50px rgba(0,
+            0,
+            0,
+            0.12);
+}
+
+
+/* =========================================================
+   BLUE REVEAL
+========================================================= */
+
+.landmark-card:hover .landmark-blue {
+    width: 300%;
+    height: 300%;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.landmark-card:hover .landmark-card-title {
+    color: #ffffff;
+
+    transform:
+        translateY(-3px);
+}
+
+
+/* =========================================================
+   IMAGE HOVER
+========================================================= */
+
+.landmark-card:hover .landmark-image img {
+    transform: translateY(-4px);
+
+    filter:
+        saturate(1.08) brightness(0.90);
+}
+
+
+/* =========================================================
+   TIME
+========================================================= */
+
+.landmark-card:hover .landmark-time {
+    opacity: 1;
+
+    transform:
+        translateY(0);
+
+    color:
+        rgba(255,
+            255,
+            255,
+            0.9);
+}
+
+
+/* =========================================================
+   ARROW
+========================================================= */
+
+.landmark-card:hover .landmark-arrow {
+    color: #a63d2f;
+
+    transform:
+        rotate(-5deg);
+}
+
+
+.landmark-card:hover .landmark-arrow svg {
+    transform:
+        rotate(-45deg);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .landmarks-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    .landmark-card {
+        height: 230px;
+
+        border-radius: 22px;
+    }
+
+
+    .landmark-card-title {
+        top: 24px;
+        left: 23px;
+
+        max-width: 150px;
+
+        font-size: 21px;
+
+        letter-spacing: -0.7px;
+    }
+
+
+    .landmark-image {
+        width: 80%;
+        height: 68%;
+
+        border-radius:
+            0 56px 0 22px;
+    }
+
+
+    .landmark-arrow {
+        width: 52px;
+        height: 52px;
+    }
+
+
+    .landmark-arrow svg {
+        width: 15px;
+        height: 15px;
+    }
+
+
+    .landmark-time {
+        left: 23px;
+        bottom: 17px;
+
+        font-size: 8px;
+    }
+
+
+    .landmark-card:hover .landmark-blue {
+        width: 240%;
+        height: 240%;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .landmarks-grid {
+        gap: 9px;
+    }
+
+
+    .landmark-card {
+        height: 200px;
+
+        border-radius: 18px;
+    }
+
+
+    .landmark-card-title {
+        top: 20px;
+        left: 18px;
+
+        font-size: 17px;
+    }
+
+
+    .landmark-image {
+        width: 82%;
+        height: 67%;
+
+        border-radius:
+            0 45px 0 18px;
+    }
+
+
+    .landmark-arrow {
+        width: 44px;
+        height: 44px;
+    }
+
+
+    .landmark-arrow svg {
+        width: 13px;
+        height: 13px;
+    }
+
+
+    .landmark-time {
+        left: 18px;
+        bottom: 13px;
+
+        font-size: 7px;
+    }
+}
+
+/* =========================================================
+   ABOUT SECTION
+========================================================= */
+
+.plot-about-section {
+    margin-top: 20px;
+    margin-bottom: 90px;
+
+    display: grid;
+
+    grid-template-columns:
+        1.3fr 0.7fr;
+
+    gap: 20px;
+}
+
+
+/* =========================================================
+   ABOUT CARD
+========================================================= */
+
+.about-plot-card {
+    padding: 38px;
+
+    border-radius: 30px;
+
+    background: #f7f8f9;
+}
+
+.info-heading-icon1 {
+    width: 80px;
+    height: 80px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #eaf5ff;
+
+    color: #a63d2f;
+}
+
+.info-heading-icon1 svg {
+    width: 45px;
+    height: 45px;
+}
+
+.about-plot-heading {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.about-plot-heading h2 {
+    transform: translateY(30px);
+
+    margin: 0;
+
+    color: #151515;
+
+    font-size: 70px;
+
+    font-weight: 600;
+
+    line-height: 0.98;
+
+    letter-spacing: -1.7px;
+}
+
+.about-plot-heading h2 span {
+    color: #a63d2f;
+}
+
+.about-plot-card .para {
+
+    margin-left: 101px;
+    padding: 30px 0;
+    width: 85%;
+}
+
+
+.about-plot-card .para p {
+
+    max-width: 780px;
+
+    color: #464b52;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    line-height: 1.8;
+}
+
+.about-checks {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr 1fr;
+
+    gap: 15px;
+
+    margin-top: 25px;
+}
+
+.about-checks>div {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    color: #3e4655;
+
+    font-size: 12.5px;
+
+    font-weight: 600;
+}
+
+.about-checks svg {
+    transform: translateY(-2px);
+    width: 25px;
+    height: 25px;
+
+    padding: 3px;
+
+    border-radius: 50%;
+
+    background: #a63d2f;
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   CONTACT
+========================================================= */
+
+.plot-contact-card {
+    position: relative;
+
+    overflow: hidden;
+
+    padding: 38px;
+
+    border-radius: 30px;
+
+    background:
+        linear-gradient(135deg,
+            #a63d2f,
+            #872e22);
+
+    color: #ffffff;
+}
+
+.plot-contact-card::after {
+    content: "";
+
+    position: absolute;
+
+    width: 300px;
+    height: 300px;
+
+    right: -140px;
+    bottom: -170px;
+
+    border-radius: 50%;
+
+    border:
+        35px solid rgba(255,
+            255,
+            255,
+            0.08);
+}
+
+.contact-small-title {
+    position: relative;
+
+    z-index: 2;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+.plot-contact-card h2 {
+    position: relative;
+
+    z-index: 2;
+
+    margin:
+        20px 0 12px;
+
+    font-size: 42px;
+
+    line-height: 0.95;
+
+    letter-spacing: -1.8px;
+}
+
+.plot-contact-card>p {
+    position: relative;
+
+    z-index: 2;
+
+    max-width: 330px;
+
+    color:
+        rgba(255,
+            255,
+            255,
+            0.85);
+
+    font-size: 12px;
+
+    line-height: 1.7;
+}
+
+.contact-card-bottom {
+    position: relative;
+
+    transform: translateY(110px);
+
+    z-index: 3;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 30px;
+}
+
+.contact-card-bottom button {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    padding:
+        12px 17px;
+
+    border: none;
+
+    border-radius: 30px;
+
+    background: #ffffff;
+
+    color: #a63d2f;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.contact-big-icon {
+    width: 62px;
+    height: 62px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    color: #a63d2f;
+}
+
+.contact-big-icon svg {
+    width: 26px;
+}
+
+.schedule {
+    position: absolute;
+
+    right: 25px;
+    bottom: 20px;
+
+    z-index: 3;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   LARGE DESKTOP
+========================================================= */
+
+@media (min-width: 1400px) {
+
+    .plot-summary h1 {
+        font-size: 86px;
+    }
+
+    .plot-main-image {
+        height: 570px;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .plot-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .plot-summary {
+        padding-bottom: 20px;
+    }
+
+    .plot-main-image {
+        height: 500px;
+    }
+
+    .landmarks-grid {
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+    .plot-about-section {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .plot-breadcrumb,
+    .plot-hero,
+    .plot-two-column,
+    .landmarks-section,
+    .plot-about-section {
+        width: calc(100% - 40px);
+    }
+
+    .plot-two-column {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .plot-breadcrumb {
+        width: calc(100% - 28px);
+
+        margin:
+            90px auto 20px;
+
+        overflow-x: auto;
+
+        white-space: nowrap;
+
+        scrollbar-width: none;
+
+        font-size: 10px;
+    }
+
+    .plot-breadcrumb::-webkit-scrollbar {
+        display: none;
+    }
+
+
+    /* Hero */
+
+    .plot-hero {
+        width: calc(100% - 28px);
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 30px;
+    }
+
+
+    /* Gallery */
+
+    .plot-main-image {
+        height: 310px;
+
+        border-radius: 20px;
+    }
+
+    .prime-pick {
+        top: 12px;
+        left: 12px;
+
+        padding: 8px 12px;
+
+        font-size: 9px;
+    }
+
+    .plot-thumbnails {
+        gap: 7px;
+    }
+
+    .plot-thumb {
+        height: 55px;
+
+        border-radius: 9px;
+    }
+
+
+    /* Summary */
+
+    .plot-label {
+        font-size: 9px;
+
+        letter-spacing: 1.7px;
+    }
+
+    .plot-summary h1 {
+        margin:
+            14px 0 12px;
+
+        font-size: 48px;
+
+        line-height: 0.94;
+
+        letter-spacing: -2px;
+    }
+
+    .plot-location {
+        font-size: 12px;
+    }
+
+    .plot-short-description {
+        font-size: 12px;
+
+        line-height: 1.7;
+    }
+
+
+    /* Price */
+
+    .plot-total-price {
+        margin-top: 18px;
+
+        padding: 17px;
+    }
+
+    .plot-total-price strong {
+        font-size: 37px;
+    }
+
+
+    /* Specs */
+
+    .plot-quick-specs {
+        gap: 9px;
+    }
+
+    .quick-spec strong {
+        font-size: 11px;
+    }
+
+    .quick-spec span {
+        font-size: 7px;
+    }
+
+
+    /* CTA */
+
+    .plot-hero-actions {
+        grid-template-columns: 1fr;
+
+        margin-top: 20px;
+    }
+
+
+    /* Section */
+
+    .plot-two-column,
+    .landmarks-section,
+    .plot-about-section {
+        width: calc(100% - 28px);
+    }
+
+    .plot-two-column {
+        margin-top: 65px;
+    }
+
+    .plot-info-card,
+    .landmarks-section,
+    .about-plot-card,
+    .plot-contact-card {
+        border-radius: 22px;
+    }
+
+
+    /* Section headings */
+
+    .info-card-heading h2 {
+        font-size: 26px;
+    }
+
+    .info-card-heading p {
+        font-size: 10px;
+    }
+
+
+    /* Map */
+
+    .plot-map {
+        height: 230px;
+    }
+
+
+    /* Specs */
+
+    .spec-row {
+        min-height: 46px;
+    }
+
+    .spec-row>div {
+        font-size: 10px;
+    }
+
+    .spec-row strong {
+        font-size: 9px;
+    }
+
+
+    /* Landmarks */
+
+    .landmarks-section {
+        margin-top: 14px;
+
+        padding: 20px;
+    }
+
+    .landmark-title h2 {
+        font-size: 26px;
+    }
+
+    .landmarks-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 8px;
+    }
+
+
+    /* About */
+
+    .plot-about-section {
+        margin-top: 14px;
+        margin-bottom: 50px;
+
+        grid-template-columns: 1fr;
+    }
+
+    .about-plot-card {
+        padding: 24px;
+    }
+
+    .about-plot-heading h2 {
+        font-size: 34px;
+    }
+
+    .about-plot-card>p {
+        font-size: 11px;
+    }
+
+    .about-checks {
+        grid-template-columns: 1fr;
+
+        gap: 9px;
+    }
+
+
+    /* Contact */
+
+    .plot-contact-card {
+        min-height: 320px;
+
+        padding: 25px;
+    }
+
+    .plot-contact-card h2 {
+        font-size: 36px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .plot-main-image {
+        height: 255px;
+    }
+
+    .plot-summary h1 {
+        font-size: 42px;
+
+        letter-spacing: -1.7px;
+    }
+
+    .plot-total-price strong {
+        font-size: 34px;
+    }
+
+    .plot-quick-specs {
+        grid-template-columns:
+            1fr 1px 1fr 1px 1fr;
+    }
+
+    .quick-spec strong {
+        font-size: 9px;
+    }
+
+    .quick-spec span {
+        font-size: 6px;
+    }
+
+    .info-card-heading h2 {
+        font-size: 23px;
+    }
+
+    .landmark-title h2 {
+        font-size: 23px;
+    }
+
+    .about-plot-heading h2 {
+        font-size: 30px;
+    }
+
+    .plot-contact-card h2 {
+        font-size: 32px;
+    }
+
+}

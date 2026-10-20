@@ -1,0 +1,891 @@
+.project-card {
+    position: relative;
+
+    width: 100%;
+    height: 500px;
+
+    min-width: 0;
+    min-height: 0;
+
+    overflow: hidden;
+
+    border-radius: 24px;
+
+    background: #17240f;
+
+    isolation: isolate;
+
+    box-sizing: border-box;
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.12);
+
+    transition:
+        transform 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+.project-card .project-img {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+    object-position: center;
+
+    z-index: 0;
+}
+
+/* =========================================================
+   DARK IMAGE GRADIENT
+========================================================= */
+
+.project-card .project-overlay {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 1;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(to bottom,
+            rgba(0, 0, 0, 0.02) 0%,
+            rgba(0, 0, 0, 0.03) 25%,
+            rgba(0, 0, 0, 0.12) 40%,
+            rgba(8, 18, 6, 0.55) 62%,
+            rgba(7, 18, 5, 0.90) 80%,
+            rgba(7, 18, 5, 0.98) 100%);
+}
+
+/* =========================================================
+   LOCATION BADGE
+========================================================= */
+
+.project-card .project-location {
+    position: absolute;
+
+    top: 18px;
+    right: 18px;
+
+    max-width: calc(100% - 36px);
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 9px 14px;
+
+    border-radius: 50px;
+
+    background: rgba(45, 54, 43, 0.78);
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    color: #fff;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+    z-index: 5;
+}
+
+.project-card .project-location svg {
+    width: 13px;
+    height: 13px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.project-card .project-content {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    width: 100%;
+
+    padding: 26px 22px 20px;
+
+    box-sizing: border-box;
+
+    color: #fff;
+
+    z-index: 2;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.project-card .project-heading {
+    width: 100%;
+
+    margin: 0 0 18px;
+}
+
+.project-card .project-title {
+    margin: 0 0 6px;
+
+    color: #fff;
+
+    font-size: 25px;
+    font-weight: 600;
+
+    line-height: 1.15;
+
+    letter-spacing: -0.7px;
+}
+
+.project-card .project-description {
+    width: 100%;
+    max-width: 100%;
+
+    margin: 0;
+
+    color: rgba(255, 255, 255, 0.70);
+
+    font-size: 11px;
+    font-weight: 400;
+
+    line-height: 1.5;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   PROJECT INFO
+========================================================= */
+
+.project-card .project-info {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr) 1px minmax(0, 1fr) 1px minmax(0, 1fr);
+
+    align-items: center;
+
+    margin: 0 0 20px;
+
+    padding: 0;
+}
+
+.project-card .info-item {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+.project-card .info-icon {
+    width: 27px;
+    height: 27px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    color: #fff;
+
+    font-size: 15px;
+}
+
+.project-card .info-text {
+    min-width: 0;
+
+    /* `flex: 1 1 0` is required, not just `min-width: 0`.
+       With the default `flex-basis: auto` the flex item is sized to
+       its max-content width and never shrinks, so a long value like
+       "600 - 2400 Sq.ft" (94px) overflowed its 77px grid track and
+       bled across the divider into the neighbouring column.
+       A zero basis makes the item take only the leftover space, so
+       the existing overflow/ellipsis on the value actually engages. */
+    flex: 1 1 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.project-card .info-label {
+    display: block;
+
+    color: rgba(255, 255, 255, 0.55);
+
+    font-size: 9px;
+    font-weight: 400;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+    align-self: center;
+}
+
+.project-card .info-text strong {
+    display: block;
+
+    max-width: 100%;
+
+    color: #fff;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    align-self: center;
+}
+
+.project-card .info-divider {
+    width: 1px;
+    height: 32px;
+
+    background: rgba(255, 255, 255, 0.24);
+}
+
+
+/* =========================================================
+   BOTTOM ACTION
+========================================================= */
+
+.project-card .project-actions {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 0.82fr) minmax(0, 1.5fr);
+
+    gap: 9px;
+
+    align-items: stretch;
+    
+}
+
+
+/* =========================================================
+   PRICE
+========================================================= */
+
+.project-card .project-price {
+    width: auto;
+
+    min-height: 54px;
+
+    align-items:center ;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding: 8px 17px;
+
+    box-sizing: border-box;
+
+    border-radius: 50px;
+
+    background: rgba(82, 94, 73, 0.62);
+
+    border: 1px solid rgba(255, 255, 255, 0.10);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.project-card .project-price span {
+    display: block;
+
+    margin: 0 0 2px;
+
+    color: rgba(255, 255, 255, 0.58);
+
+    font-size: 8px;
+    font-weight: 500;
+
+    line-height: 1.2;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.6px;
+
+    white-space: nowrap;
+}
+
+.project-card .project-price strong {
+    display: block;
+
+    min-width: 0;
+
+    color: #fff;
+
+    font-size: 14px !important;
+    font-weight: 600;
+
+    line-height: 1.15;
+
+    letter-spacing: -0.3px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   EXPLORE BUTTON
+========================================================= */
+
+.project-card .explore-btn {
+
+    transform: translateY(18px);
+    min-width: 0;
+
+    max-height: 50px !important;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    border: none;
+    border-radius: 50px;
+
+    background: #fff;
+
+    color: #111;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.3s ease,
+        transform 0.3s ease,
+        gap 0.3s ease;
+}
+
+.project-card .explore-btn span {
+    min-width: 0;
+
+    white-space: nowrap;
+}
+
+.project-card .explore-btn svg {
+    width: 12px;
+    height: 12px;
+
+    flex-shrink: 0;
+
+    transition: transform 0.3s ease;
+}
+
+.project-card .explore-btn:hover {
+    background: #f1f3ed;
+
+    gap: 15px;
+
+}
+
+.project-card .explore-btn:hover svg {
+    transform: translateX(3px);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 992px) {
+
+    .project-card {
+        height: 470px;
+
+        border-radius: 21px;
+    }
+
+    .project-card .project-location {
+        top: 15px;
+        right: 15px;
+
+        padding: 8px 12px;
+
+        font-size: 10px;
+    }
+
+    .project-card .project-content {
+        padding: 22px 18px 17px;
+    }
+
+    .project-card .project-heading {
+        margin-bottom: 15px;
+    }
+
+    .project-card .project-title {
+        font-size: 21px;
+    }
+
+    .project-card .project-description {
+        font-size: 10px;
+    }
+
+    .project-card .project-info {
+        margin-bottom: 16px;
+    }
+
+    .project-card .info-item {
+        gap: 6px;
+    }
+
+    .project-card .info-icon {
+        width: 24px;
+        height: 24px;
+
+        font-size: 13px;
+    }
+
+    .project-card .info-label {
+        font-size: 8px;
+    }
+
+    .project-card .info-text strong {
+        font-size: 10px;
+    }
+
+    .project-card .info-divider {
+        height: 28px;
+    }
+
+    .project-card .project-price,
+    .project-card .explore-btn {
+        min-height: 49px;
+    }
+
+    .project-card .project-price {
+        padding: 7px 13px;
+    }
+
+    .project-card .project-price strong {
+        font-size: 15px;
+    }
+
+    .project-card .explore-btn {
+        padding: 8px 12px;
+
+        font-size: 11px;
+    }
+}
+
+
+/* =========================================================
+   577 - 768px
+========================================================= */
+
+@media (max-width: 768px) and (min-width: 577px) {
+
+    .project-card {
+        height: 450px;
+    }
+
+    .project-card .project-content {
+        padding: 20px 15px 15px;
+    }
+
+    .project-card .project-title {
+        font-size: 19px;
+    }
+
+    .project-card .project-description {
+        font-size: 9px;
+    }
+
+    .project-card .info-icon {
+        width: 21px;
+        height: 21px;
+
+        font-size: 12px;
+    }
+
+    .project-card .info-label {
+        font-size: 7px;
+    }
+
+    .project-card .info-text strong {
+        font-size: 9px;
+    }
+
+    .project-card .project-price span {
+        font-size: 7px;
+    }
+
+    .project-card .project-price strong {
+        font-size: 13px;
+    }
+
+    .project-card .explore-btn {
+        font-size: 9px;
+
+        gap: 6px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 576px) {
+
+    .project-card {
+        height: 380px;
+
+        border-radius: 20px;
+    }
+
+    .project-card .project-location {
+        top: 14px;
+        right: 14px;
+
+        max-width: calc(100% - 28px);
+
+        padding: 7px 11px;
+
+        font-size: 10px;
+
+        overflow: hidden;
+    }
+
+    .project-card .project-location span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* ---------- OVERLAY / LEGIBILITY ---------- */
+    .project-card .project-overlay {
+        background:
+            linear-gradient(to bottom,
+                rgba(0, 0, 0, 0.04) 0%,
+                rgba(0, 0, 0, 0.18) 25%,
+                rgba(8, 18, 6, 0.65) 45%,
+                rgba(7, 18, 5, 0.88) 65%,
+                rgba(7, 18, 5, 0.98) 100%);
+    }
+
+    .project-card .project-content {
+        padding: 18px 14px 14px;
+    }
+
+    .project-card .project-heading {
+        margin-bottom: 12px;
+    }
+
+    .project-card .project-title {
+        font-size: 18px;
+        line-height: 1.25;
+        margin: 0 0 5px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .project-card .project-description {
+        font-size: 10.5px;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.86);
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .project-card .project-info {
+        gap: 5px;
+        margin-bottom: 14px;
+    }
+
+    .project-card .info-item {
+        gap: 5px;
+    }
+
+    .project-card .info-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+    }
+
+    .project-card .info-label {
+        font-size: 7px;
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .project-card .info-text strong {
+        font-size: 7px;
+    }
+
+    .project-card .info-divider {
+        height: 26px;
+    }
+
+    /* Mobile CTA: Stacked in normal document flow */
+    .project-card .project-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    /* Price: Compact pill */
+    .project-card .project-price {
+        width: fit-content;
+        max-width: 100%;
+        min-height: auto;
+        padding: 5px 12px;
+        border-radius: 50px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .project-card .project-price span {
+        margin: 0;
+        font-size: 8px;
+        line-height: 1;
+    }
+
+    .project-card .project-price strong {
+        font-size: 12.5px !important;
+        line-height: 1;
+    }
+
+    /* Explore Project Button: full width below price, normal flow */
+    .project-card .explore-btn {
+        display: flex;
+        width: 100%;
+        min-height: 40px;
+        max-height: none !important;
+        padding: 8px 12px;
+        font-size: 11px;
+        gap: 8px;
+        transform: none !important;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE (425px and below)
+========================================================= */
+
+@media (max-width: 425px) {
+
+    .project-card {
+        height: 350px;
+        width: 170px;
+        border-radius: 18px;
+    }
+
+    .project-card .project-content {
+        padding: 16px 12px 12px;
+    }
+
+    .project-card .project-title {
+        font-size: 16.5px;
+    }
+
+    .project-card .project-description {
+        font-size: 10px;
+    }
+
+    .project-card .info-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 11px;
+    }
+
+    .project-card .info-label {
+        font-size: 6px;
+    }
+
+    .project-card .info-text strong {
+        font-size: 6px;
+    }
+
+    .project-card .info-divider {
+        height: 24px;
+    }
+
+    .project-card .project-actions {
+        gap: 7px;
+    }
+
+    .project-card .project-price {
+        padding: 5px 10px;
+        gap: 5px;
+    }
+
+    .project-card .project-price span {
+        font-size: 7.5px;
+    }
+
+    .project-card .project-price strong {
+        font-size: 11.5px !important;
+    }
+
+    .project-card .explore-btn {
+        min-height: 38px;
+        padding: 7px 10px;
+        font-size: 10.5px;
+        gap: 7px;
+        transform: none !important;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE (360px and below)
+   ========================================================= */
+
+@media (max-width: 360px) {
+
+    .project-card {
+        height: 450px;
+        border-radius: 16px;
+    }
+
+    .project-card .project-location {
+        top: 10px;
+        right: 10px;
+        max-width: calc(100% - 20px);
+        padding: 5px 8px;
+        gap: 4px;
+        font-size: 9px;
+    }
+
+    .project-card .project-location svg {
+        width: 10px;
+        height: 10px;
+    }
+
+    .project-card .project-content {
+        padding: 14px 10px 10px;
+    }
+
+    .project-card .project-heading {
+        margin-bottom: 10px;
+    }
+
+    .project-card .project-title {
+        font-size: 15px;
+    }
+
+    .project-card .project-description {
+        font-size: 9px;
+    }
+
+    .project-card .project-info {
+        gap: 4px;
+        margin-bottom: 12px;
+    }
+
+    .project-card .info-item {
+        gap: 4px;
+    }
+
+    .project-card .info-icon {
+        width: 15px;
+        height: 15px;
+        font-size: 9px;
+    }
+
+    .project-card .info-label {
+        font-size: 7.5px;
+    }
+
+    .project-card .info-text strong {
+        font-size: 9.5px;
+    }
+
+    .project-card .info-divider {
+        height: 22px;
+    }
+
+    .project-card .project-actions {
+        gap: 6px;
+    }
+
+    .project-card .project-price {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+
+    .project-card .project-price span {
+        font-size: 7px;
+    }
+
+    .project-card .project-price strong {
+        font-size: 10.5px !important;
+    }
+
+    .project-card .explore-btn {
+        min-height: 36px;
+        padding: 6px 8px;
+        font-size: 10px;
+        gap: 5px;
+        transform: none !important;
+    }
+
+    .project-card .explore-btn svg {
+        width: 10px;
+        height: 10px;
+    }
+}

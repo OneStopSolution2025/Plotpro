@@ -1,0 +1,16 @@
+{
+  "mcp": {
+    "momentic": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "momentic",
+        "mcp",
+        "--config",
+        "momentic.config.yaml"
+      ],
+      "enabled": true
+    }
+  }
+}

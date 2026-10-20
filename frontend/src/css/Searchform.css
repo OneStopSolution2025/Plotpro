@@ -1,0 +1,912 @@
+/* =====================================================
+   MAIN SEARCH FORM
+===================================================== */
+
+.inpagesearch {
+
+    position: absolute;
+
+    z-index: 10;
+
+    bottom: 0;
+
+    left: 50%;
+
+    transform: translate(-50%, 50%);
+
+    width: 80%;
+
+    min-height: 180px;
+
+    padding: 25px;
+
+    border-radius: 30px;
+
+    background: rgba(255, 255, 255, 0.20);
+
+    backdrop-filter: blur(30px);
+
+    -webkit-backdrop-filter: blur(30px);
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.20);
+}
+
+
+/* =====================================================
+   DESKTOP
+===================================================== */
+
+.desktop-search {
+    display: block;
+}
+
+
+.wholebox {
+
+    width: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 20px;
+}
+
+
+.searchbar {
+
+    width: 100%;
+
+    height: 55px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 0 15px;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.70);
+}
+
+
+.search-icon {
+
+    font-size: 20px;
+
+    color: #000;
+}
+
+
+.searchbar input {
+
+    width: 100%;
+
+    height: 100%;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: #fff;
+
+    font-size: 17px;
+}
+
+
+.searchbar input::placeholder {
+
+    color: rgba(0, 0, 0, 0.9);
+}
+
+
+/* =====================================================
+   DESKTOP FILTERS
+===================================================== */
+
+.searchbyselect {
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+
+.desktop-filter {
+
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.desktop-filter select {
+
+    width: 100%;
+
+    height: 45px;
+
+    padding: 0 10px;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: #000;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+
+.desktop-filter select:focus {
+
+    box-shadow: none;
+}
+
+
+.search-btn {
+
+    min-width: 130px;
+
+    height: 45px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    border: none;
+
+    border-radius: 25px;
+
+    background: #fff;
+
+    color: #111;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.3s ease;
+}
+
+
+.search-btn:hover {
+
+    background: #a63d2f;
+
+    color: #fff;
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   MOBILE HIDDEN BY DEFAULT
+===================================================== */
+
+.mobile-search {
+
+    display: none;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 992px) {
+
+    .inpagesearch {
+
+        width: 90%;
+
+        min-height: 190px;
+    }
+
+    .searchbyselect {
+
+        flex-wrap: wrap;
+    }
+
+    .desktop-filter {
+
+        min-width: 180px;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 576px) {
+
+    .inpagesearch {
+
+        width: 92%;
+
+        min-height: 0;
+
+        padding: 10px;
+
+        border-radius: 20px;
+
+        transform: translate(-50%, 50%);
+    }
+
+
+    /* Hide desktop */
+
+    .desktop-search {
+
+        display: none;
+    }
+
+
+    /* Show mobile */
+
+    .mobile-search {
+
+        display: block;
+
+        width: 100%;
+    }
+
+
+    /* =================================================
+       SEARCH SCREEN
+    ================================================= */
+
+    .mobile-search-screen {
+
+        width: 100%;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+    }
+
+
+    .mobile-searchbar {
+
+        flex: 1;
+
+        height: 46px;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+        padding: 0 12px;
+
+        border-radius: 13px;
+
+        background: rgba(255, 255, 255, 0.55);
+
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+
+    .mobile-searchbar svg {
+
+        flex-shrink: 0;
+
+        width: 15px;
+
+        height: 15px;
+
+        color: #222;
+    }
+
+
+    .mobile-searchbar input {
+
+        width: 100%;
+
+        min-width: 0;
+
+        border: none;
+
+        outline: none;
+
+        background: transparent;
+
+        color: #111;
+
+        font-size: 12px;
+    }
+
+
+    .mobile-searchbar input::placeholder {
+
+        color: #555;
+    }
+
+
+    .mobile-filter-trigger {
+
+        width: 46px;
+
+        height: 46px;
+
+        flex-shrink: 0;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border: none;
+
+        border-radius: 13px;
+
+        background: #111;
+
+        color: #fff;
+
+        cursor: pointer;
+    }
+
+
+    .mobile-filter-trigger svg {
+
+        width: 15px;
+
+        height: 15px;
+    }
+
+
+    .mobile-filter-trigger span {
+
+        display: none;
+    }
+
+
+    /* =================================================
+       FILTER SCREEN
+    ================================================= */
+
+    .mobile-filter-screen {
+
+        width: 100%;
+
+        padding: 5px 3px 4px;
+    }
+
+
+    .mobile-filter-header {
+
+        width: 100%;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        margin-bottom: 22px;
+    }
+
+
+    .mobile-filter-header h3 {
+
+        margin: 0;
+
+        color: #111;
+
+        font-size: 18px;
+
+        font-weight: 600;
+    }
+
+
+    .mobile-back-btn,
+    .mobile-close-btn {
+
+        width: 34px;
+
+        height: 34px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border: none;
+
+        border-radius: 9px;
+
+        background: rgba(0, 0, 0, 0.06);
+
+        color: #111;
+
+        cursor: pointer;
+    }
+
+
+    .mobile-back-btn svg,
+    .mobile-close-btn svg {
+
+        width: 13px;
+
+        height: 13px;
+    }
+
+
+    .mobile-reset-btn {
+
+        padding: 0;
+
+        border: none;
+
+        background: transparent;
+
+        color: #a63d2f;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+
+    /* =================================================
+       FILTER GROUP
+    ================================================= */
+
+    .mobile-filter-group {
+
+        margin-bottom: 20px;
+    }
+
+
+    .mobile-filter-group label {
+
+        display: block;
+
+        margin-bottom: 9px;
+
+        color: #222;
+
+        font-size: 11px;
+
+        font-weight: 600;
+    }
+
+
+    .filter-options {
+
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 7px;
+    }
+
+
+    .filter-option {
+
+        min-width: 0;
+
+        min-height: 40px;
+
+        padding: 7px 8px;
+
+        border: 1px solid #e1e5ea;
+
+        border-radius: 9px;
+
+        background: #fff;
+
+        color: #333;
+
+        font-family: inherit;
+
+        font-size: 10px;
+
+        font-weight: 500;
+
+        line-height: 1.2;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+
+    .filter-option.active {
+
+        border-color: #a63d2f;
+
+        background: #a63d2f;
+
+        color: #fff;
+    }
+
+
+    /* =================================================
+       APPLY
+    ================================================= */
+
+    .apply-filter-btn {
+
+        width: 100%;
+
+        height: 44px;
+
+        margin-top: 3px;
+
+        border: none;
+
+        border-radius: 11px;
+
+        background: #111;
+
+        color: #fff;
+
+        font-family: inherit;
+
+        font-size: 12px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            transform 0.2s ease;
+    }
+
+
+    .apply-filter-btn:active {
+
+        transform: scale(0.98);
+    }
+
+
+    /* =================================================
+       RESULTS
+    ================================================= */
+
+    .mobile-results-screen {
+
+        width: 100%;
+
+        padding: 5px 3px;
+    }
+
+
+    .mobile-results-header {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        margin-bottom: 15px;
+    }
+
+
+    .mobile-results-header>div {
+
+        flex: 1;
+
+        min-width: 0;
+    }
+
+
+    .mobile-results-header span {
+
+        display: block;
+
+        margin-bottom: 3px;
+
+        color: #777;
+
+        font-size: 7px;
+
+        font-weight: 600;
+
+        letter-spacing: 0.15em;
+    }
+
+
+    .mobile-results-header h3 {
+
+        margin: 0;
+
+        color: #111;
+
+        font-size: 17px;
+
+        font-weight: 600;
+    }
+
+
+    /* =================================================
+       SELECTED FILTERS
+    ================================================= */
+
+    .selected-filters {
+
+        display: flex;
+
+        flex-wrap: wrap;
+
+        gap: 6px;
+
+        margin-bottom: 18px;
+    }
+
+
+    .selected-filters span {
+
+        padding: 5px 8px;
+
+        border-radius: 999px;
+
+        background: #eef6ff;
+
+        color: #a63d2f;
+
+        font-size: 9px;
+
+        font-weight: 500;
+    }
+
+
+    /* =================================================
+       RESULT PLACEHOLDER
+    ================================================= */
+
+    /* =====================================================
+   FILTERED PROJECT RESULTS
+===================================================== */
+
+    .mobile-filtered-projects {
+
+        width: 100%;
+
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+
+        max-height: 420px;
+
+        overflow-y: auto;
+
+        padding: 2px;
+
+        scrollbar-width: none;
+    }
+
+
+    .mobile-filtered-projects::-webkit-scrollbar {
+
+        display: none;
+    }
+
+
+    /* ProjectCard inside search results */
+
+    .mobile-filtered-projects .project-card {
+
+        width: 100% !important;
+
+        min-width: 0 !important;
+
+        max-width: 100% !important;
+
+        height: 360px !important;
+
+        margin: 0 !important;
+    }
+
+
+    /* =====================================================
+   NO RESULTS
+===================================================== */
+
+    .mobile-no-results {
+
+        width: 100%;
+
+        min-height: 170px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+
+        text-align: center;
+
+        border: 1px dashed #d8dde4;
+
+        border-radius: 14px;
+
+        padding: 20px;
+    }
+
+
+    .mobile-no-results svg {
+
+        width: 20px;
+
+        height: 20px;
+
+        margin-bottom: 10px;
+
+        color: #a63d2f;
+    }
+
+
+    .mobile-no-results h4 {
+
+        margin: 0 0 5px;
+
+        color: #111;
+
+        font-size: 14px;
+
+        font-weight: 600;
+    }
+
+
+    .mobile-no-results p {
+
+        margin: 0 0 12px;
+
+        color: #777;
+
+        font-size: 9px;
+    }
+
+
+    .mobile-no-results button {
+
+        border: none;
+
+        border-radius: 8px;
+
+        padding: 8px 14px;
+
+        background: #111;
+
+        color: #fff;
+
+        font-size: 9px;
+
+        cursor: pointer;
+    }
+
+
+    .mobile-result-placeholder svg {
+
+        width: 18px;
+
+        height: 18px;
+
+        color: #a63d2f;
+    }
+
+
+    .mobile-result-placeholder p {
+
+        max-width: 220px;
+
+        margin: 0;
+
+        color: #777;
+
+        font-size: 10px;
+
+        line-height: 1.5;
+    }
+
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 425px) {
+
+    .inpagesearch {
+
+        width: 94%;
+
+        padding: 8px;
+    }
+
+
+    .mobile-searchbar {
+
+        height: 43px;
+
+        padding: 0 10px;
+    }
+
+
+    .mobile-searchbar input {
+
+        font-size: 11px;
+    }
+
+
+    .mobile-filter-trigger {
+
+        width: 43px;
+
+        height: 43px;
+    }
+
+
+    .mobile-filter-group {
+
+        margin-bottom: 17px;
+    }
+
+
+    .filter-option {
+
+        min-height: 38px;
+
+        font-size: 9px;
+
+        padding: 6px;
+    }
+
+
+    .mobile-filter-group label {
+
+        font-size: 10px;
+    }
+
+
+    .apply-filter-btn {
+
+        height: 42px;
+
+        font-size: 11px;
+    }
+
+}
