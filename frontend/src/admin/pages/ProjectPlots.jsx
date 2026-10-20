@@ -108,13 +108,13 @@ const ProjectPlots = () => {
     setPlotsError(null);
     try {
       await fetchPlotsForProject(targetProjectId);
-      setLoadingPlots(false);
     } catch (err) {
       console.error("Failed to load project plots:", err);
       setPlotsError({
         status: err.status || (err.message?.includes("403") || err.message?.includes("Forbidden") ? 403 : (err.message?.includes("404") || err.message?.includes("not found") ? 404 : 500)),
         message: err.message || "Failed to load plots",
       });
+    } finally {
       setLoadingPlots(false);
     }
   }, [targetProjectId, fetchPlotsForProject]);
@@ -128,9 +128,6 @@ const ProjectPlots = () => {
       setLoadingPlots(false);
       return;
     }
-
-    setLoadingPlots(true);
-    setPlotsError(null);
 
     const runFetch = async () => {
       try {
@@ -155,7 +152,13 @@ const ProjectPlots = () => {
     return () => {
       isCancelled = true;
     };
-  }, [targetProjectId, project, projectsLoading, fetchPlotsForProject]);
+  }, [targetProjectId, fetchPlotsForProject, projectsLoading]);
+
+  // When changing projects (e.g. navigation to another project), reset loading state
+  useEffect(() => {
+    setLoadingPlots(true);
+    setPlotsError(null);
+  }, [targetProjectId]);
 
   // Get only plots belonging to this project.
   const projectPlots = project
@@ -499,8 +502,8 @@ const ProjectPlots = () => {
     );
   }
 
-  // 4. Plots still loading for resolved project
-  if (loadingPlots) {
+  // 4. Plots still loading for resolved project (only if no plots are loaded yet)
+  if (loadingPlots && projectPlots.length === 0) {
     return (
       <div className="project-plots-admin" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <div style={{ textAlign: "center", color: "#64748b" }}>

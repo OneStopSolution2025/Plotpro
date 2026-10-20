@@ -15,7 +15,7 @@ import {
 
 import { useProjects } from "../../context/ProjectContext";
 import { usePlots } from "../../context/PlotContext";
-import { adminApi, superAdminApi } from "../../services/api";
+import { adminApi, superAdminApi, publicApi } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminProfile } from "../context/AdminProfileContext";
 import CustomDropdown from "../components/CustomDropdown";
@@ -307,11 +307,49 @@ const SiteVisits = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     if (!validateForm()) return;
 
-    const selectedProject = projects.find((p) => p.id === formData.projectId);
+    const selectedProject = projects.find((p) => String(p.id) === String(formData.projectId) || String(p._id) === String(formData.projectId));
     const projectTitle = selectedProject ? selectedProject.title : formData.project;
+    const projectIdentifier = selectedProject ? (selectedProject._id || selectedProject.id) : formData.projectId;
+
+    const formattedDate = formatDateForDisplay(formData.date);
+    const formattedTime = formatTimeForDisplay(formData.time);
+
+    if (!editingVisitId) {
+      try {
+        const payload = {
+          fullName: formData.name.trim(),
+          mobile: formData.phone.trim(),
+          projectId: projectIdentifier,
+          plot: formData.plot.trim() || "",
+          preferredDate: formattedDate,
+          preferredTime: formattedTime,
+          message: "Created via Admin Portal",
+        };
+        const res = await publicApi.submitSiteVisit(payload);
+        if (res?.success && res.data) {
+          const created = {
+            id: res.data._id,
+            _id: res.data._id,
+            name: res.data.fullName,
+            phone: res.data.mobile,
+            project: projectTitle || "Direct Visit",
+            plot: res.data.plot ? `Plot ${res.data.plot}` : "—",
+            date: res.data.preferredDate || formattedDate,
+            time: res.data.preferredTime || formattedTime,
+            status: res.data.status || "Scheduled",
+            message: res.data.message || "",
+          };
+          setVisits((prev) => [created, ...prev]);
+          closeForm();
+          return;
+        }
+      } catch (err) {
+        console.warn("Failed to persist site visit to backend:", err);
+      }
+    }
 
     const newVisit = {
       id: editingVisitId ? editingVisitId : Date.now(),
@@ -319,8 +357,8 @@ const SiteVisits = () => {
       phone: formData.phone.trim(),
       project: projectTitle,
       plot: formData.plot.trim() || "—",
-      date: formatDateForDisplay(formData.date),
-      time: formatTimeForDisplay(formData.time),
+      date: formattedDate,
+      time: formattedTime,
       status: formData.status,
     };
 
@@ -465,7 +503,9 @@ const SiteVisits = () => {
             </div>
 
             {/* Rows */}
-            {visits.map((visit) => (
+            {visits.map((visit, index) => {
+              const openUp = visits.length > 2 && index >= visits.length - 2;
+              return (
               <div className="site-visits-table-row" key={visit.id}>
                 {/* Customer */}
                 <div className="site-visit-customer">
@@ -526,7 +566,8 @@ const SiteVisits = () => {
                     </button>
 
                     {selectedId === visit.id && (
-                      <div className="site-visit-more-menu">
+                      <div className={`site-visit-more-menu ${openUp ? "site-visit-more-menu-up" : ""}`}>
+
                         <button
                           className="more-menu-item"
                           onClick={() => handleViewDetails(visit.id)}
@@ -556,7 +597,8 @@ const SiteVisits = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

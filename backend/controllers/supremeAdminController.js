@@ -755,22 +755,25 @@ export const togglePlanStatus = async (req, res, next) => {
 export const getSubscriptions = async (req, res, next) => {
   try {
     const { status } = req.query;
-    const query = {};
-    if (status) query.status = status;
 
-    const subscriptions = await Subscription.find(query)
+    const subscriptions = await Subscription.find({})
       .populate("subscriberId", "name email phone businessName status")
       .populate("planId", "name price durationDays maxAdminSeats")
       .sort({ createdAt: -1 });
 
     const now = new Date();
-    const evaluated = subscriptions.map((sub) => {
-      const isExpired = new Date(sub.expiryDate) <= now;
+    let evaluated = subscriptions.map((sub) => {
+      const isExpired = Boolean(sub.expiryDate && new Date(sub.expiryDate) <= now);
       return {
         ...sub.toObject(),
         effectiveStatus: isExpired ? "EXPIRED" : sub.status,
       };
     });
+
+    if (status) {
+      const targetStatus = status.toUpperCase();
+      evaluated = evaluated.filter((sub) => sub.effectiveStatus === targetStatus);
+    }
 
     res.status(200).json({
       success: true,

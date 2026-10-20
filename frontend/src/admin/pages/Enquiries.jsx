@@ -42,6 +42,7 @@ const Enquiries = () => {
   const { role, user, isAuthenticated } = useAuth();
   const { isSubscriptionExpired } = useAdminProfile();
   const [enquiries, setEnquiries] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [changeStatusId, setChangeStatusId] = useState(null);
@@ -198,6 +199,19 @@ const Enquiries = () => {
 
   const getStatusClass = (status) => status.toLowerCase().replace(" ", "-");
 
+  const filteredEnquiries = enquiries.filter((e) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase().trim();
+    return (
+      e.name?.toLowerCase().includes(term) ||
+      e.project?.toLowerCase().includes(term) ||
+      e.email?.toLowerCase().includes(term) ||
+      e.phone?.toLowerCase().includes(term) ||
+      e.interest?.toLowerCase().includes(term) ||
+      e.message?.toLowerCase().includes(term)
+    );
+  });
+
   const selectedEnquiry = enquiries.find((e) => e.id === viewDetailsId);
   const changeStatusEnquiry = enquiries.find((e) => e.id === changeStatusId);
   const deleteEnquiry = enquiries.find((e) => e.id === deleteConfirmId);
@@ -246,6 +260,8 @@ const Enquiries = () => {
             <input
               type="text"
               placeholder="Search customer or project..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
@@ -263,98 +279,120 @@ const Enquiries = () => {
             </div>
 
             {/* Rows */}
-            {enquiries.map((enquiry) => (
-              <div className="enquiries-table-row" key={enquiry.id}>
-                <div className="enquiry-customer">
-                  <span className="enquiry-avatar">
-                    {enquiry.name
-                      .split(" ")
-                      .map((word) => word[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </span>
-                  <div>
-                    <strong>{enquiry.name}</strong>
-                    <small>{isSubscriptionExpired ? maskPhone(enquiry.phone) : enquiry.phone}</small>
+            {filteredEnquiries.length === 0 ? (
+              <div
+                style={{
+                  padding: "48px 24px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  gridColumn: "1 / -1",
+                }}
+              >
+                <p style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: 600, color: "#475569" }}>
+                  {searchTerm.trim() ? `No enquiries matching "${searchTerm.trim()}"` : "No enquiries found"}
+                </p>
+                <small style={{ color: "#94a3b8" }}>
+                  {searchTerm.trim() ? "Try searching with a different customer name, project, or phone number." : "Customer enquiries will appear here."}
+                </small>
+              </div>
+            ) : (
+              filteredEnquiries.map((enquiry, index) => {
+                const openUp = filteredEnquiries.length > 2 && index >= filteredEnquiries.length - 2;
+                return (
+                <div className="enquiries-table-row" key={enquiry.id}>
+                  <div className="enquiry-customer">
+                    <span className="enquiry-avatar">
+                      {enquiry.name
+                        .split(" ")
+                        .map((word) => word[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </span>
+                    <div>
+                      <strong>{enquiry.name}</strong>
+                      <small>{isSubscriptionExpired ? maskPhone(enquiry.phone) : enquiry.phone}</small>
+                    </div>
                   </div>
-                </div>
 
-                <div className="enquiry-project">{enquiry.project}</div>
-                <div className="enquiry-interest">{enquiry.interest}</div>
-                <div className="enquiry-date">{enquiry.date}</div>
+                  <div className="enquiry-project">{enquiry.project}</div>
+                  <div className="enquiry-interest">{enquiry.interest}</div>
+                  <div className="enquiry-date">{enquiry.date}</div>
 
-                <div>
-                  <span className={`enquiry-badge ${getStatusClass(enquiry.status)}`}>
-                    {enquiry.status}
-                  </span>
-                </div>
+                  <div>
+                    <span className={`enquiry-badge ${getStatusClass(enquiry.status)}`}>
+                      {enquiry.status}
+                    </span>
+                  </div>
 
-                <div className="enquiry-actions">
-                  <button
-                    title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : `Call ${enquiry.name}`}
-                    aria-label={`Call ${enquiry.name}`}
-                    onClick={() => handleCall(enquiry.phone)}
-                    disabled={isSubscriptionExpired}
-                    style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
-                  >
-                    <FaPhone />
-                  </button>
-
-                  <button
-                    title={isSubscriptionExpired ? "WhatsApp disabled (Subscription expired)" : `WhatsApp ${enquiry.name}`}
-                    aria-label={`WhatsApp ${enquiry.name}`}
-                    onClick={() => handleWhatsApp(enquiry.phone, enquiry.name)}
-                    disabled={isSubscriptionExpired}
-                    style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
-                  >
-                    <FaWhatsapp />
-                  </button>
-
-                  <button
-                    title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : `Email ${enquiry.name}`}
-                    aria-label={`Email ${enquiry.name}`}
-                    onClick={() => handleEmail(enquiry.email)}
-                    disabled={isSubscriptionExpired}
-                    style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
-                  >
-                    <FaEnvelope />
-                  </button>
-
-                  <div className="enquiry-more-wrapper" data-more-menu>
+                  <div className="enquiry-actions">
                     <button
-                      title={`More actions for ${enquiry.name}`}
-                      aria-label={`More actions for ${enquiry.name}`}
-                      onClick={(e) => toggleMoreMenu(enquiry.id, e)}
+                      title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : `Call ${enquiry.name}`}
+                      aria-label={`Call ${enquiry.name}`}
+                      onClick={() => handleCall(enquiry.phone)}
+                      disabled={isSubscriptionExpired}
+                      style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
                     >
-                      <FaEllipsisH />
+                      <FaPhone />
                     </button>
 
-                    {selectedId === enquiry.id && (
-                      <div className="enquiry-more-menu">
-                        <button
-                          className="more-menu-item"
-                          onClick={() => handleViewDetails(enquiry.id)}
-                        >
-                          <FaEye /> View Details
-                        </button>
-                        <button
-                          className="more-menu-item"
-                          onClick={() => handleChangeStatus(enquiry.id)}
-                        >
-                          <FaEdit /> Change Status
-                        </button>
-                        <button
-                          className="more-menu-item more-menu-item-danger"
-                          onClick={() => handleDelete(enquiry.id)}
-                        >
-                          <FaTrash /> Delete
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      title={isSubscriptionExpired ? "WhatsApp disabled (Subscription expired)" : `WhatsApp ${enquiry.name}`}
+                      aria-label={`WhatsApp ${enquiry.name}`}
+                      onClick={() => handleWhatsApp(enquiry.phone, enquiry.name)}
+                      disabled={isSubscriptionExpired}
+                      style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
+                    >
+                      <FaWhatsapp />
+                    </button>
+
+                    <button
+                      title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : `Email ${enquiry.name}`}
+                      aria-label={`Email ${enquiry.name}`}
+                      onClick={() => handleEmail(enquiry.email)}
+                      disabled={isSubscriptionExpired}
+                      style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
+                    >
+                      <FaEnvelope />
+                    </button>
+
+                    <div className="enquiry-more-wrapper" data-more-menu>
+                      <button
+                        title={`More actions for ${enquiry.name}`}
+                        aria-label={`More actions for ${enquiry.name}`}
+                        onClick={(e) => toggleMoreMenu(enquiry.id, e)}
+                      >
+                        <FaEllipsisH />
+                      </button>
+
+                      {selectedId === enquiry.id && (
+                        <div className={`enquiry-more-menu ${openUp ? "enquiry-more-menu-up" : ""}`}>
+
+                          <button
+                            className="more-menu-item"
+                            onClick={() => handleViewDetails(enquiry.id)}
+                          >
+                            <FaEye /> View Details
+                          </button>
+                          <button
+                            className="more-menu-item"
+                            onClick={() => handleChangeStatus(enquiry.id)}
+                          >
+                            <FaEdit /> Change Status
+                          </button>
+                          <button
+                            className="more-menu-item more-menu-item-danger"
+                            onClick={() => handleDelete(enquiry.id)}
+                          >
+                            <FaTrash /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         </div>
       </section>

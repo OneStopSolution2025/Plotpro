@@ -221,6 +221,9 @@
 .site-visits-table-wrapper {
   width: 100%;
   overflow-x: auto;
+  min-height: 260px;
+  padding-bottom: 120px;
+  margin-bottom: -120px;
 }
 
 .site-visits-table {
@@ -490,6 +493,26 @@
   z-index: 50;
 
   animation: siteVisitMenuIn .15s ease;
+}
+
+.site-visit-more-menu.site-visit-more-menu-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 6px;
+  box-shadow: 0 -10px 30px rgba(15, 23, 42, .12);
+  animation: siteVisitMenuUpIn .15s ease;
+}
+
+@keyframes siteVisitMenuUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes siteVisitMenuIn {

@@ -16,59 +16,6 @@ import { adminApi, superAdminApi } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminProfile } from "../context/AdminProfileContext";
 
-const initialCustomers = [
-  {
-    id: 1,
-    name: "Arun Kumar",
-    phone: "+91 98765 43210",
-    email: "arun@example.com",
-    location: "Dindigul",
-    project: "Green Valley",
-    visits: 2,
-    status: "Interested",
-  },
-  {
-    id: 2,
-    name: "Priya S",
-    phone: "+91 98765 12345",
-    email: "priya@example.com",
-    location: "Madurai",
-    project: "Sunrise City",
-    visits: 1,
-    status: "Follow Up",
-  },
-  {
-    id: 3,
-    name: "Ramesh J",
-    phone: "+91 98432 67890",
-    email: "ramesh@example.com",
-    location: "Trichy",
-    project: "Lake View",
-    visits: 3,
-    status: "Negotiation",
-  },
-  {
-    id: 4,
-    name: "Meena K",
-    phone: "+91 97890 11223",
-    email: "meena@example.com",
-    location: "Dindigul",
-    project: "Green Valley",
-    visits: 1,
-    status: "New",
-  },
-  {
-    id: 5,
-    name: "Senthil V",
-    phone: "+91 96543 22110",
-    email: "senthil@example.com",
-    location: "Coimbatore",
-    project: "Sunrise City",
-    visits: 2,
-    status: "Booked",
-  },
-];
-
 const CUSTOMER_STATUSES = ["New", "Interested", "Follow Up", "Negotiation", "Booked"];
 const STORAGE_KEY = "dreamcity-customers";
 
@@ -94,6 +41,7 @@ const Customers = () => {
   const { role, user, isAuthenticated } = useAuth();
   const { isSubscriptionExpired } = useAdminProfile();
   const [customers, setCustomers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [changeStatusId, setChangeStatusId] = useState(null);
@@ -259,6 +207,19 @@ const Customers = () => {
 
   const getStatusClass = (status) => status.toLowerCase().replace(" ", "-");
 
+  const filteredCustomers = customers.filter((c) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase().trim();
+    return (
+      c.name?.toLowerCase().includes(term) ||
+      c.project?.toLowerCase().includes(term) ||
+      c.location?.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term) ||
+      c.phone?.toLowerCase().includes(term) ||
+      c.status?.toLowerCase().includes(term)
+    );
+  });
+
   const selectedCustomer = customers.find((c) => c.id === viewDetailsId);
   const changeStatusCustomer = customers.find((c) => c.id === changeStatusId);
   const deleteCustomer = customers.find((c) => c.id === deleteConfirmId);
@@ -313,6 +274,8 @@ const Customers = () => {
             <input
               type="text"
               placeholder="Search customer or project..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
@@ -330,96 +293,117 @@ const Customers = () => {
             </div>
 
             {/* Rows */}
-            {customers.map((customer) => (
-              <div className="customers-table-row" key={customer.id}>
-                {/* Customer */}
-                <div className="customer-profile">
-                  <span className="customer-profile-avatar">
-                    {customer.name
-                      .split(" ")
-                      .map((word) => word[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </span>
-                  <div>
-                    <strong>{customer.name}</strong>
-                    <small>{isSubscriptionExpired ? maskPhone(customer.phone) : customer.phone}</small>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="customer-location">{customer.location}</div>
-
-                {/* Project */}
-                <div className="customer-project">{customer.project}</div>
-
-                {/* Visits */}
-                <div className="customer-visits">{customer.visits}</div>
-
-                {/* Status */}
-                <div>
-                  <span className={`customer-status ${getStatusClass(customer.status)}`}>
-                    {customer.status}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                <div className="customer-actions">
-                  <button
-                    title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : `Call ${customer.name}`}
-                    aria-label={`Call ${customer.name}`}
-                    onClick={() => handleCall(customer.phone)}
-                    disabled={isSubscriptionExpired}
-                    style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
-                  >
-                    <FaPhone />
-                  </button>
-
-                  <button
-                    title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : `Email ${customer.name}`}
-                    aria-label={`Email ${customer.name}`}
-                    onClick={() => handleEmail(customer.email)}
-                    disabled={isSubscriptionExpired}
-                    style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
-                  >
-                    <FaEnvelope />
-                  </button>
-
-                  <div className="customer-more-wrapper" data-more-menu>
-                    <button
-                      title={`More actions for ${customer.name}`}
-                      aria-label={`More actions for ${customer.name}`}
-                      onClick={(e) => toggleMoreMenu(customer.id, e)}
-                    >
-                      <FaEllipsisH />
-                    </button>
-
-                    {selectedId === customer.id && (
-                      <div className="customer-more-menu">
-                        <button
-                          className="more-menu-item"
-                          onClick={() => handleViewDetails(customer.id)}
-                        >
-                          <FaEye /> View Details
-                        </button>
-                        <button
-                          className="more-menu-item"
-                          onClick={() => handleChangeStatus(customer.id)}
-                        >
-                          <FaEdit /> Change Status
-                        </button>
-                        <button
-                          className="more-menu-item more-menu-item-danger"
-                          onClick={() => handleDelete(customer.id)}
-                        >
-                          <FaTrash /> Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {filteredCustomers.length === 0 ? (
+              <div
+                style={{
+                  padding: "48px 24px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  gridColumn: "1 / -1",
+                }}
+              >
+                <p style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: 600, color: "#475569" }}>
+                  {searchTerm.trim() ? `No customers matching "${searchTerm.trim()}"` : "No customers found"}
+                </p>
+                <small style={{ color: "#94a3b8" }}>
+                  {searchTerm.trim() ? "Try searching with a different customer name, project, or location." : "Registered customers will appear here."}
+                </small>
               </div>
-            ))}
+            ) : (
+              filteredCustomers.map((customer, index) => {
+                const openUp = filteredCustomers.length > 2 && index >= filteredCustomers.length - 2;
+                return (
+                  <div className="customers-table-row" key={customer.id}>
+                    {/* Customer */}
+                    <div className="customer-profile">
+                      <span className="customer-profile-avatar">
+                        {customer.name
+                          .split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .slice(0, 2)}
+                      </span>
+                      <div>
+                        <strong>{customer.name}</strong>
+                        <small>{isSubscriptionExpired ? maskPhone(customer.phone) : customer.phone}</small>
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <div className="customer-location">{customer.location}</div>
+
+                    {/* Project */}
+                    <div className="customer-project">{customer.project}</div>
+
+                    {/* Visits */}
+                    <div className="customer-visits">{customer.visits}</div>
+
+                    {/* Status */}
+                    <div>
+                      <span className={`customer-status ${getStatusClass(customer.status)}`}>
+                        {customer.status}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="customer-actions">
+                      <button
+                        title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : `Call ${customer.name}`}
+                        aria-label={`Call ${customer.name}`}
+                        onClick={() => handleCall(customer.phone)}
+                        disabled={isSubscriptionExpired}
+                        style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
+                      >
+                        <FaPhone />
+                      </button>
+
+                      <button
+                        title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : `Email ${customer.name}`}
+                        aria-label={`Email ${customer.name}`}
+                        onClick={() => handleEmail(customer.email)}
+                        disabled={isSubscriptionExpired}
+                        style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
+                      >
+                        <FaEnvelope />
+                      </button>
+
+                      <div className="customer-more-wrapper" data-more-menu>
+                        <button
+                          title={`More actions for ${customer.name}`}
+                          aria-label={`More actions for ${customer.name}`}
+                          onClick={(e) => toggleMoreMenu(customer.id, e)}
+                        >
+                          <FaEllipsisH />
+                        </button>
+
+                        {selectedId === customer.id && (
+                          <div className={`customer-more-menu ${openUp ? "customer-more-menu-up" : ""}`}>
+                            <button
+                              className="more-menu-item"
+                              onClick={() => handleViewDetails(customer.id)}
+                            >
+                              <FaEye /> View Details
+                            </button>
+                            <button
+                              className="more-menu-item"
+                              onClick={() => handleChangeStatus(customer.id)}
+                            >
+                              <FaEdit /> Change Status
+                            </button>
+                            <button
+                              className="more-menu-item more-menu-item-danger"
+                              onClick={() => handleDelete(customer.id)}
+                            >
+                              <FaTrash /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
