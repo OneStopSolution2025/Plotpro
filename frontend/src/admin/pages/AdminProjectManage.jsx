@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProjects, findProjectByIdentifier, getProjectRouteSlug } from "../../context/ProjectContext";
 import { usePlots } from "../../context/PlotContext";
@@ -18,6 +18,7 @@ const AdminProjectManage = () => {
   const { addNotification } = useNotifications();
 
   const project = findProjectByIdentifier(projects, id);
+  const loadedProjectIdRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [applyingPlotImage, setApplyingPlotImage] = useState(false);
   const [confirmApplyModal, setConfirmApplyModal] = useState(false);
@@ -38,8 +39,11 @@ const AdminProjectManage = () => {
     locationConnectivity: [{ name: "", distance: "" }],
   });
 
+  // Only initialize form fields when project first loads or route id changes,
+  // preventing 7-second background polling from overwriting user edits.
   useEffect(() => {
-    if (project) {
+    if (project && (!loadedProjectIdRef.current || String(loadedProjectIdRef.current) !== String(project.id))) {
+      loadedProjectIdRef.current = project.id;
       const primaryImg = project.image || (Array.isArray(project.images) && project.images[0]) || "";
       const allImgs = Array.isArray(project.images) && project.images.length > 0
         ? project.images
@@ -60,7 +64,7 @@ const AdminProjectManage = () => {
           : [{ name: "", distance: "" }],
       });
     }
-  }, [project]);
+  }, [project, id]);
 
   if (!project) {
     if (projectsLoading) {
@@ -156,10 +160,20 @@ const AdminProjectManage = () => {
 
       const res = await updateProject(project.id, updatePayload);
 
+      // Keep local form state in sync with saved values
+      setForm((prev) => ({
+        ...prev,
+        image: coverImage,
+        defaultPlotImage: updatePayload.defaultPlotImage,
+        images: updatedImages,
+      }));
+
       // Local state fallback update
       setProjects((prev) =>
         prev.map((p) =>
-          String(p.id) === String(project.id) || String(p._id) === String(project.id)
+          String(p.id) === String(project.id) ||
+          String(p._id) === String(project.id) ||
+          String(p.customId) === String(project.id)
             ? { ...p, ...updatePayload }
             : p
         )
@@ -545,7 +559,8 @@ const AdminProjectManage = () => {
         {activeTab === "gallery" && (
           <section className="form-section">
             <h2>Gallery & Cover Images</h2>
-            <label className="full-width" style={{ marginBottom: "1.25rem" }}> (Shows on Project Card)
+            <label className="full-width" style={{ marginBottom: "1.25rem" }}>
+              Project Cover Image URL (Shows on Project Card)
               <input
                 type="url"
                 placeholder="e.g. https://images.unsplash.com/..."

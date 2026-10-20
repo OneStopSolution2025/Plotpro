@@ -827,11 +827,11 @@ const ProjectPlots = () => {
 
                         <button
                           className="view-btn"
-                          onClick={() =>
-                            navigate(
-                              `/plot-details/${plot.id}`
-                            )
-                          }
+                          onClick={() => {
+                            const projectSlug = getProjectRouteSlug(project, projects) || project.slug || project.id;
+                            const plotSlug = plot.plotNumber ? encodeURIComponent(plot.plotNumber) : plot.id;
+                            navigate(projectSlug ? `/plot-details/${projectSlug}/${plotSlug}` : `/plot-details/${plot.id}`);
+                          }}
                         >
                           View
                         </button>

@@ -208,6 +208,7 @@ export const normalizeProject = (p) => {
           ? p.images
           : (p.pendingUpdates?.image ? [p.pendingUpdates.image] : (p.image ? [p.image] : []))),
     image: p.pendingUpdates?.image || (Array.isArray(p.pendingUpdates?.images) && p.pendingUpdates.images[0]) || p.image || (Array.isArray(p.images) && p.images[0]) || "",
+    defaultPlotImage: p.defaultPlotImage || "",
     adminId: p.adminId?._id ? String(p.adminId._id) : (p.adminId ? String(p.adminId) : null),
     assignedAdmin: p.adminId && typeof p.adminId === "object" ? p.adminId : null,
     approvalStatus: p.approvalStatus || "APPROVED",
@@ -491,7 +492,9 @@ export const ProjectProvider = ({ children }) => {
         // Update in adminProjects
         setAdminProjects((prev) =>
           prev.map((p) =>
-            String(p.id) === String(projectId) || String(p._id) === String(projectId)
+            String(p.id) === String(projectId) ||
+            String(p._id) === String(projectId) ||
+            String(p.customId) === String(projectId)
               ? normalized
               : p
           )

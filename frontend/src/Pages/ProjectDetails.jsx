@@ -113,10 +113,14 @@ function ProjectDetails() {
         }
     }, [project?.customId, project?.id, project?._id, fetchPlotsForProject]);
 
-    const projectImages = project?.images || (project?.image ? [project.image] : []);
+    const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
+    const rawProjectImages = project?.images && project.images.length > 0
+        ? project.images
+        : (project?.image ? [project.image] : []);
+    const projectImages = rawProjectImages.length > 0 ? rawProjectImages : [DEFAULT_PROJECT_IMAGE];
 
     const [selectedImage, setSelectedImage] = useState(null);
-    const activeImage = selectedImage || projectImages[0] || "";
+    const activeImage = selectedImage || projectImages[0] || DEFAULT_PROJECT_IMAGE;
 
     const { isAuthenticated } = useAuth();
     const location = useLocation();
@@ -222,6 +226,12 @@ function ProjectDetails() {
                                 className="big-image"
                                 src={activeImage}
                                 alt={project.title}
+                                onError={(e) => {
+                                    if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
+                                        e.target.onerror = null;
+                                        e.target.src = DEFAULT_PROJECT_IMAGE;
+                                    }
+                                }}
                             />
 
                         </div>
@@ -239,6 +249,12 @@ function ProjectDetails() {
                                     onClick={() =>
                                         setSelectedImage(image)
                                     }
+                                    onError={(e) => {
+                                        if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
+                                            e.target.onerror = null;
+                                            e.target.src = DEFAULT_PROJECT_IMAGE;
+                                        }
+                                    }}
                                 />
 
                             ))}
@@ -647,7 +663,7 @@ function ProjectDetails() {
                             key={plot.id}
                             plotId={plot.id}
                             plotNumber={plot.plotNumber}
-                            image={plot.image || project.defaultPlotImage || project.image}
+                            image={plot.image || project.defaultPlotImage || project.image || "/assets/plot.png"}
                             size={plot.size}
                             facing={plot.facing}
                             price={plot.price}

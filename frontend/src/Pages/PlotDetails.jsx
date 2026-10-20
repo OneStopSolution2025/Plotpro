@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useProjects, findProjectByIdentifier, getProjectRouteSlug, normalizeProject } from "../context/ProjectContext";
-import { usePlots } from "../context/PlotContext";
+import { usePlots, normalizePlot } from "../context/PlotContext";
 import { useAuth } from "../context/AuthContext";
 import { userApi, publicApi } from "../services/api";
 
@@ -48,9 +48,42 @@ function PlotDetails() {
     const { projects, isLoading: isLoadingProjects } = useProjects();
     const [isFetchingPlots, setIsFetchingPlots] = useState(false);
 
-    // 1. Resolve project
+    // 1. Resolve project and direct plot
     const matchedProject = projectName ? findProjectByIdentifier(projects, projectName) : null;
     const [fetchedProject, setFetchedProject] = useState(null);
+    const [fetchedPlot, setFetchedPlot] = useState(null);
+    const [isFetchingDirectPlot, setIsFetchingDirectPlot] = useState(false);
+
+    // Direct plot fetch for legacy / direct /plot-details/:id
+    useEffect(() => {
+        if (id) {
+            let isMounted = true;
+            setIsFetchingDirectPlot(true);
+            publicApi.getPlotById(id)
+                .then(async (res) => {
+                    if (isMounted && res?.success && res.data) {
+                        const norm = normalizePlot(res.data);
+                        setFetchedPlot(norm);
+                        const projId = norm.projectId || norm.projectCustomId || norm.projectMongoId;
+                        if (projId) {
+                            try {
+                                const pRes = await publicApi.getProjectById(projId);
+                                if (isMounted && pRes?.success && pRes.data) {
+                                    setFetchedProject(normalizeProject(pRes.data));
+                                }
+                            } catch {}
+                        }
+                    }
+                })
+                .catch(() => {})
+                .finally(() => {
+                    if (isMounted) setIsFetchingDirectPlot(false);
+                });
+            return () => { isMounted = false; };
+        } else {
+            setFetchedPlot(null);
+        }
+    }, [id]);
 
     // Fallback if not found in local memory
     useEffect(() => {
@@ -72,7 +105,7 @@ function PlotDetails() {
     let project = matchedProject || fetchedProject;
 
     if (!project && id) {
-        const directPlot = plots.find(
+        const directPlot = fetchedPlot || plots.find(
             (item) => String(item.id) === String(id) || String(item.customId) === String(id) || String(item._id) === String(id)
         );
         if (directPlot) {
@@ -81,7 +114,7 @@ function PlotDetails() {
                     String(p.id) === String(directPlot.projectId) ||
                     String(p.customId) === String(directPlot.projectCustomId) ||
                     String(p._id) === String(directPlot.projectMongoId)
-            );
+            ) || fetchedProject;
         }
     }
 
@@ -128,7 +161,7 @@ function PlotDetails() {
 
     // Fallback resolution for legacy /plot-details/:id
     if (!plot && id) {
-        plot = plots.find(
+        plot = fetchedPlot || plots.find(
             (item) => String(item.id) === String(id) || String(item.customId) === String(id) || String(item._id) === String(id)
         );
         if (plot && !project) {
@@ -137,11 +170,14 @@ function PlotDetails() {
                     String(p.id) === String(plot.projectId) ||
                     String(p.customId) === String(plot.projectCustomId) ||
                     String(p._id) === String(plot.projectMongoId)
-            );
+            ) || fetchedProject;
         }
     }
 
-    const plotImages =
+    const DEFAULT_PLOT_IMAGE = "/assets/plot.png";
+    const FALLBACK_PLOT_IMAGE = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80";
+
+    const rawPlotImages =
         (plot?.images && plot.images.length > 0)
             ? plot.images
             : plot?.image
@@ -152,8 +188,10 @@ function PlotDetails() {
                         ? [project.image]
                         : [];
 
+    const plotImages = rawPlotImages.length > 0 ? rawPlotImages : [DEFAULT_PLOT_IMAGE];
+
     const [selectedImage, setSelectedImage] = useState(null);
-    const activeImage = selectedImage || plotImages[0] || "";
+    const activeImage = selectedImage || plotImages[0] || DEFAULT_PLOT_IMAGE;
 
     const { isAuthenticated } = useAuth();
     const location = useLocation();
@@ -265,7 +303,7 @@ function PlotDetails() {
     }, [plot]);
 
     if (!plot || !project) {
-        if (isLoadingProjects || isFetchingPlots) {
+        if (isLoadingProjects || isFetchingPlots || isFetchingDirectPlot) {
             return (
                 <>
                     <Navbar />
@@ -329,7 +367,13 @@ function PlotDetails() {
 
                         <img
                             src={activeImage}
-                            alt={`Green Valley Plot ${plot.plotNumber}`}
+                            alt={`${project?.title || "Plot"} Plot ${plot.plotNumber}`}
+                            onError={(e) => {
+                                if (e.target.src !== FALLBACK_PLOT_IMAGE) {
+                                    e.target.onerror = null;
+                                    e.target.src = FALLBACK_PLOT_IMAGE;
+                                }
+                            }}
                         />
 
                         <div className="plot-image-gradient"></div>
@@ -359,6 +403,12 @@ function PlotDetails() {
                                 <img
                                     src={image}
                                     alt={`Plot view ${index + 1}`}
+                                    onError={(e) => {
+                                        if (e.target.src !== FALLBACK_PLOT_IMAGE) {
+                                            e.target.onerror = null;
+                                            e.target.src = FALLBACK_PLOT_IMAGE;
+                                        }
+                                    }}
                                 />
 
                             </button>

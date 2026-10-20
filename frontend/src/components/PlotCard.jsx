@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { useProjects, getProjectRouteSlug } from "../context/ProjectContext";
 import "../css/PlotCard.css";
 
+export const DEFAULT_PLOT_IMAGE = "/assets/plot.png";
+export const FALLBACK_PLOT_IMAGE = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80";
+
 function PlotCard({
     plotNumber,
     image,
@@ -27,14 +30,27 @@ function PlotCard({
     const plotSlug = plotNumber ? encodeURIComponent(plotNumber) : plotId;
     const plotUrl = projectSlug ? `/plot-details/${projectSlug}/${plotSlug}` : `/plot-details/${plotId}`;
 
+    const resolvedImage =
+        image ||
+        plot?.image ||
+        resolvedProject?.defaultPlotImage ||
+        resolvedProject?.image ||
+        DEFAULT_PLOT_IMAGE;
+
     return (
         <article className="plot-card">
 
             <div className="plot-image">
 
                 <img
-                    src={image}
+                    src={resolvedImage}
                     alt={`Plot ${plotNumber}`}
+                    onError={(e) => {
+                        if (e.target.src !== FALLBACK_PLOT_IMAGE) {
+                            e.target.onerror = null;
+                            e.target.src = FALLBACK_PLOT_IMAGE;
+                        }
+                    }}
                 />
 
                 <div className="plot-image-overlay"></div>
