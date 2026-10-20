@@ -36,6 +36,12 @@ const isAllowedOrigin = (origin) => {
 
   // Allow explicit CLIENT_URL from .env
   if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) return true;
+  // Allow deployed Railway frontend
+if (
+  origin === "https://plotpro-production-5000.up.railway.app"
+) {
+  return true;
+}
 
   return false;
 };
