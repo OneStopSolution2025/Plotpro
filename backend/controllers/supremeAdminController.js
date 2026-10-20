@@ -113,8 +113,8 @@ export const getSubscribers = async (req, res, next) => {
 
     const query = { role: "SUPER_ADMIN" };
 
-    if (status && ["ACTIVE", "INACTIVE"].includes(status)) {
-      query.status = status;
+    if (status && status.toUpperCase() === "SUSPENDED") {
+      query.status = "INACTIVE";
     }
 
     if (search) {
@@ -124,6 +124,7 @@ export const getSubscribers = async (req, res, next) => {
 
     const subscribers = await User.find(query).select("-passwordHash").sort({ createdAt: -1 });
 
+    const now = new Date();
     const subscribersWithDetails = await Promise.all(
       subscribers.map(async (sub) => {
         const subscription = await Subscription.findOne({ subscriberId: sub._id })
@@ -150,19 +151,37 @@ export const getSubscribers = async (req, res, next) => {
 
         const effectiveSeats = subscription ? subscription.getEffectiveSeats() : 3;
 
+        let subSubStatus = null;
+        if (subscription) {
+          const isExp = Boolean(subscription.expiryDate && new Date(subscription.expiryDate) <= now);
+          subSubStatus = isExp ? "EXPIRED" : subscription.status;
+        }
+
+        // Determine unified effectiveStatus for the subscriber
+        let effectiveStatus = "ACTIVE";
+        if (sub.status === "INACTIVE") {
+          effectiveStatus = "SUSPENDED";
+        } else if (subSubStatus === "EXPIRED") {
+          effectiveStatus = "EXPIRED";
+        } else if (subSubStatus === "TRIAL") {
+          effectiveStatus = "TRIAL";
+        } else if (!subscription) {
+          effectiveStatus = "NO_PLAN";
+        } else {
+          effectiveStatus = "ACTIVE";
+        }
+
         return {
           ...sub.toObject(),
           id: String(sub._id),
           businessName: sub.businessName || "Registered Business",
           ownerName: sub.name,
+          effectiveStatus,
           subscription: subscription
             ? {
                 id: subscription._id,
                 planName: subscription.planId ? subscription.planId.name : "Custom",
-                status:
-                  new Date(subscription.expiryDate) <= new Date()
-                    ? "EXPIRED"
-                    : subscription.status,
+                status: subSubStatus,
                 startDate: subscription.startDate,
                 expiryDate: subscription.expiryDate,
                 assignedSeats: effectiveSeats,
@@ -178,11 +197,22 @@ export const getSubscribers = async (req, res, next) => {
       })
     );
 
-    // Optional filter by subscription status in memory if provided
     let filtered = subscribersWithDetails;
+
+    // Filter by unified status if provided
+    if (status) {
+      const targetStatus = status.toUpperCase();
+      if (["ACTIVE", "EXPIRED", "SUSPENDED", "TRIAL", "NO_PLAN"].includes(targetStatus)) {
+        filtered = filtered.filter((s) => s.effectiveStatus === targetStatus);
+      } else if (targetStatus === "INACTIVE") {
+        filtered = filtered.filter((s) => s.effectiveStatus === "SUSPENDED");
+      }
+    }
+
+    // Optional filter by subscription status in memory if provided
     if (subscriptionStatus) {
       filtered = filtered.filter(
-        (s) => s.subscription && s.subscription.status === subscriptionStatus
+        (s) => s.subscription && s.subscription.status === subscriptionStatus.toUpperCase()
       );
     }
 

@@ -438,7 +438,7 @@ const SubscriberManagement = () => {
               style={{ paddingLeft: "38px" }}
             />
           </div>
-          <div style={{ width: "160px" }}>
+          <div style={{ width: "180px" }}>
             <CustomDropdown
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -446,7 +446,9 @@ const SubscriberManagement = () => {
             >
               <option value="">All Statuses</option>
               <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Suspended</option>
+              <option value="EXPIRED">Expired</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="TRIAL">Trial</option>
             </CustomDropdown>
           </div>
         </div>
@@ -493,27 +495,45 @@ const SubscriberManagement = () => {
                         </div>
                       </td>
                       <td>
-                        {sub.subscription?.status === "TRIAL" ? (
-                          <span
-                            className="badge"
-                            style={{
-                              backgroundColor: "#ffedd5",
-                              color: "#c2410c",
-                              border: "1px solid #fed7aa",
-                              fontWeight: 700,
-                            }}
-                          >
-                            Trial
-                          </span>
-                        ) : (
-                          <span
-                            className={`badge ${
-                              sub.status === "ACTIVE" ? "bg-success" : "bg-danger"
-                            }`}
-                          >
-                            {sub.status === "ACTIVE" ? "Active" : "Suspended"}
-                          </span>
-                        )}
+                        {(() => {
+                          const effStatus = sub.effectiveStatus || (
+                            sub.status === "INACTIVE"
+                              ? "SUSPENDED"
+                              : sub.subscription?.status === "EXPIRED" || (sub.subscription?.expiryDate && new Date(sub.subscription.expiryDate) <= new Date())
+                              ? "EXPIRED"
+                              : sub.subscription?.status === "TRIAL"
+                              ? "TRIAL"
+                              : !sub.subscription
+                              ? "NO_PLAN"
+                              : "ACTIVE"
+                          );
+
+                          if (effStatus === "EXPIRED") {
+                            return <span className="badge bg-danger">Expired</span>;
+                          }
+                          if (effStatus === "SUSPENDED") {
+                            return <span className="badge bg-danger">Suspended</span>;
+                          }
+                          if (effStatus === "TRIAL") {
+                            return (
+                              <span
+                                className="badge"
+                                style={{
+                                  backgroundColor: "#ffedd5",
+                                  color: "#c2410c",
+                                  border: "1px solid #fed7aa",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                Trial
+                              </span>
+                            );
+                          }
+                          if (effStatus === "NO_PLAN") {
+                            return <span className="badge bg-secondary">No Plan</span>;
+                          }
+                          return <span className="badge bg-success">Active</span>;
+                        })()}
                       </td>
                       <td>
                         {sub.subscription ? (
@@ -530,6 +550,10 @@ const SubscriberManagement = () => {
                               >
                                 ⚡ Trial ({sub.subscription.planName || "Trial Plan"})
                               </span>
+                            ) : sub.subscription.status === "EXPIRED" || (sub.subscription.expiryDate && new Date(sub.subscription.expiryDate) <= new Date()) ? (
+                              <span className="badge bg-light text-danger" style={{ border: "1px solid #fca5a5" }}>
+                                {sub.subscription.planName} (Expired)
+                              </span>
                             ) : (
                               <span className="badge bg-light text-dark" style={{ border: "1px solid #cbd5e1" }}>
                                 {sub.subscription.planName}
@@ -540,7 +564,14 @@ const SubscriberManagement = () => {
                                 Override
                               </span>
                             )}
-                            <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: (sub.subscription.status === "EXPIRED" || (sub.subscription.expiryDate && new Date(sub.subscription.expiryDate) <= new Date())) ? "#dc2626" : "#64748b",
+                                marginTop: "2px",
+                                fontWeight: (sub.subscription.status === "EXPIRED" || (sub.subscription.expiryDate && new Date(sub.subscription.expiryDate) <= new Date())) ? "600" : "normal",
+                              }}
+                            >
                               Expires: {new Date(sub.subscription.expiryDate).toLocaleDateString()}
                             </div>
                           </div>

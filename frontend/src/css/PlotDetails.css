@@ -14,6 +14,7 @@
 .plot-details-page p {
     margin-top: 0;
 }
+
 .project-breadcrumb1 {
     width: calc(100% - 100px);
     margin: 110px 0 20px 100px;
@@ -44,6 +45,7 @@
 .project-breadcrumb1 strong {
     color: #151515;
 }
+
 /* =========================================================
    HERO
 ========================================================= */
@@ -809,18 +811,20 @@
 .landmark-card {
     position: relative;
 
-    width: 85%;
-    height: 350px;
+    width: 100%;
+    height: 320px;
 
     overflow: hidden;
 
-    border-radius: 30px;
+    border-radius: 26px;
 
     background: #ffffff;
 
     cursor: pointer;
 
     isolation: isolate;
+
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 
     transition:
         transform 0.45s cubic-bezier(0.22,
@@ -874,20 +878,20 @@
 .landmark-card-title {
     position: absolute;
 
-    top: 40px;
-    left: 40px;
+    top: 28px;
+    left: 28px;
 
     z-index: 6;
 
-    max-width: 240px;
+    max-width: 200px;
 
-    color: #050505;
+    color: #0f172a;
 
-    font-size: 31px;
+    font-size: 26px;
 
-    line-height: 0.98;
+    line-height: 1.05;
 
-    letter-spacing: -1.2px;
+    letter-spacing: -0.8px;
 
     font-weight: 700;
 
@@ -905,8 +909,8 @@
 .landmark-image {
     position: absolute;
 
-    left: -14px;
-    bottom: -33px;
+    left: -10px;
+    bottom: -15px;
 
     width: 78%;
     height: 60%;
@@ -916,7 +920,7 @@
     overflow: hidden;
 
     border-radius:
-        0 78px 0 30px;
+        0 60px 0 26px;
 
     background: transparent;
 }
@@ -949,13 +953,13 @@
 .landmark-arrow {
     position: absolute;
 
-    top: -6px;
-    right: -6px;
+    top: 20px;
+    right: 20px;
 
     z-index: 10;
 
-    width: 100px;
-    height: 100px;
+    width: 48px;
+    height: 48px;
 
     display: flex;
 
@@ -964,9 +968,11 @@
 
     border-radius: 50%;
 
-    background: #ffffff;
+    background: #f1f5f9;
 
-    color: #111111;
+    color: #1e293b;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
     transition:
         transform 0.45s cubic-bezier(0.22,
@@ -979,8 +985,8 @@
 
 
 .landmark-arrow svg {
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
 
     transition:
         transform 0.4s ease;
@@ -1073,129 +1079,7 @@
 }
 
 
-/* =========================================================
-   MOBILE
-========================================================= */
 
-@media (max-width: 768px) {
-
-    .landmarks-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 12px;
-    }
-
-
-    .landmark-card {
-        height: 230px;
-
-        border-radius: 22px;
-    }
-
-
-    .landmark-card-title {
-        top: 24px;
-        left: 23px;
-
-        max-width: 150px;
-
-        font-size: 21px;
-
-        letter-spacing: -0.7px;
-    }
-
-
-    .landmark-image {
-        width: 80%;
-        height: 68%;
-
-        border-radius:
-            0 56px 0 22px;
-    }
-
-
-    .landmark-arrow {
-        width: 52px;
-        height: 52px;
-    }
-
-
-    .landmark-arrow svg {
-        width: 15px;
-        height: 15px;
-    }
-
-
-    .landmark-time {
-        left: 23px;
-        bottom: 17px;
-
-        font-size: 8px;
-    }
-
-
-    .landmark-card:hover .landmark-blue {
-        width: 240%;
-        height: 240%;
-    }
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media (max-width: 480px) {
-
-    .landmarks-grid {
-        gap: 9px;
-    }
-
-
-    .landmark-card {
-        height: 200px;
-
-        border-radius: 18px;
-    }
-
-
-    .landmark-card-title {
-        top: 20px;
-        left: 18px;
-
-        font-size: 17px;
-    }
-
-
-    .landmark-image {
-        width: 82%;
-        height: 67%;
-
-        border-radius:
-            0 45px 0 18px;
-    }
-
-
-    .landmark-arrow {
-        width: 44px;
-        height: 44px;
-    }
-
-
-    .landmark-arrow svg {
-        width: 13px;
-        height: 13px;
-    }
-
-
-    .landmark-time {
-        left: 18px;
-        bottom: 13px;
-
-        font-size: 7px;
-    }
-}
 
 /* =========================================================
    ABOUT SECTION
@@ -1517,7 +1401,7 @@
 
 
 /* =========================================================
-   TABLET
+   TABLET (1100px)
 ========================================================= */
 
 @media (max-width: 1100px) {
@@ -1531,12 +1415,35 @@
     }
 
     .plot-main-image {
-        height: 500px;
+        height: 480px;
     }
 
     .landmarks-grid {
         grid-template-columns:
-            repeat(3, 1fr);
+            repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .landmark-card {
+        height: 290px;
+    }
+
+    .landmark-card-title {
+        font-size: 22px;
+        top: 24px;
+        left: 24px;
+    }
+
+    .landmark-arrow {
+        top: 18px;
+        right: 18px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .landmark-arrow svg {
+        width: 18px;
+        height: 18px;
     }
 
     .plot-about-section {
@@ -1547,11 +1454,12 @@
 
 
 /* =========================================================
-   TABLET
+   TABLET (900px)
 ========================================================= */
 
 @media (max-width: 900px) {
 
+    .project-breadcrumb1,
     .plot-breadcrumb,
     .plot-hero,
     .plot-two-column,
@@ -1560,8 +1468,43 @@
         width: calc(100% - 40px);
     }
 
+    .project-breadcrumb1 {
+        margin: 95px auto 16px;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+    }
+
     .plot-two-column {
         grid-template-columns: 1fr;
+    }
+
+    .landmarks-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .landmark-card {
+        height: 270px;
+    }
+
+    .landmark-card-title {
+        font-size: 22px;
+        top: 22px;
+        left: 22px;
+    }
+
+    .landmark-arrow {
+        top: 16px;
+        right: 16px;
+        width: 42px;
+        height: 42px;
+    }
+
+    .landmark-arrow svg {
+        width: 17px;
+        height: 17px;
     }
 
 }
@@ -1573,11 +1516,12 @@
 
 @media (max-width: 768px) {
 
+    .project-breadcrumb1,
     .plot-breadcrumb {
-        width: calc(100% - 28px);
+        width: calc(100% - 32px);
 
         margin:
-            90px auto 20px;
+            90px auto 16px;
 
         overflow-x: auto;
 
@@ -1585,9 +1529,10 @@
 
         scrollbar-width: none;
 
-        font-size: 10px;
+        font-size: 11px;
     }
 
+    .project-breadcrumb1::-webkit-scrollbar,
     .plot-breadcrumb::-webkit-scrollbar {
         display: none;
     }
@@ -1636,31 +1581,50 @@
 
     /* Summary */
 
-    .plot-label {
-        font-size: 9px;
+    .plot-summary-top {
+        transform: translateY(0);
+        margin-top: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
 
-        letter-spacing: 1.7px;
+    .plot-actions button {
+        font-size: 13px;
+    }
+
+    .plot-actions button svg {
+        width: 24px;
+        height: 24px;
+        padding: 4px;
+    }
+
+    .plot-label {
+        font-size: 10px;
+        padding: 7px 12px;
+        border-radius: 14px;
+        letter-spacing: 1.5px;
     }
 
     .plot-summary h1 {
         margin:
-            14px 0 12px;
+            10px 0 10px;
 
-        font-size: 48px;
+        font-size: 42px;
 
-        line-height: 0.94;
+        line-height: 0.96;
 
-        letter-spacing: -2px;
+        letter-spacing: -1.5px;
     }
 
     .plot-location {
-        font-size: 12px;
+        font-size: 13px;
     }
 
     .plot-short-description {
-        font-size: 12px;
+        font-size: 13px;
 
-        line-height: 1.7;
+        line-height: 1.6;
     }
 
 
@@ -1669,26 +1633,46 @@
     .plot-total-price {
         margin-top: 18px;
 
-        padding: 17px;
+        padding: 16px 20px;
     }
 
     .plot-total-price strong {
-        font-size: 37px;
+        font-size: 38px;
     }
 
 
     /* Specs */
 
     .plot-quick-specs {
-        gap: 9px;
+        gap: 8px;
+        margin-top: 20px;
+        padding: 14px 10px;
+        background: #f8fafc;
+        border-radius: 16px;
+    }
+
+    .quick-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .quick-icon svg {
+        width: 17px;
+        height: 17px;
     }
 
     .quick-spec strong {
-        font-size: 11px;
+        font-size: 13px;
+        font-weight: 700;
     }
 
     .quick-spec span {
-        font-size: 7px;
+        font-size: 10px;
+        color: #64748b;
+    }
+
+    .quick-divider {
+        height: 40px;
     }
 
 
@@ -1759,7 +1743,7 @@
     .landmarks-section {
         margin-top: 14px;
 
-        padding: 20px;
+        padding: 24px 18px;
     }
 
     .landmark-title h2 {
@@ -1770,48 +1754,131 @@
         grid-template-columns:
             repeat(2, 1fr);
 
-        gap: 8px;
+        gap: 12px;
+    }
+
+    .landmark-card {
+        width: 100%;
+        height: 240px;
+    }
+
+    .landmark-card-title {
+        top: 24px;
+        left: 20px;
+        font-size: 20px;
+        line-height: 1.1;
+    }
+
+    .landmark-arrow {
+        top: 20px;
+        right: 20px;
     }
 
 
     /* About */
 
     .plot-about-section {
-        margin-top: 14px;
+        margin-top: 20px;
         margin-bottom: 50px;
 
         grid-template-columns: 1fr;
+        gap: 24px;
     }
 
     .about-plot-card {
-        padding: 24px;
+        padding: 24px 20px;
+    }
+
+    .about-plot-heading {
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .info-heading-icon1 {
+        width: 52px;
+        height: 52px;
+    }
+
+    .info-heading-icon1 svg {
+        width: 26px;
+        height: 26px;
     }
 
     .about-plot-heading h2 {
-        font-size: 34px;
+        transform: translateY(0);
+        font-size: 32px;
+        line-height: 1.05;
+        letter-spacing: -1px;
     }
 
-    .about-plot-card>p {
-        font-size: 11px;
+    .about-plot-card .para {
+        margin-left: 0;
+        padding: 10px 0 16px;
+        width: 100%;
+    }
+
+    .about-plot-card .para p {
+        font-size: 13.5px;
+        line-height: 1.65;
+        color: #4b5563;
     }
 
     .about-checks {
         grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 16px;
+    }
 
-        gap: 9px;
+    .about-checks>div {
+        font-size: 13px;
     }
 
 
     /* Contact */
 
     .plot-contact-card {
-        min-height: 320px;
-
-        padding: 25px;
+        min-height: auto;
+        padding: 30px 24px;
     }
 
     .plot-contact-card h2 {
-        font-size: 36px;
+        font-size: 34px;
+        margin: 14px 0 10px;
+    }
+
+    .plot-contact-card>p {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+
+    .contact-card-bottom {
+        transform: translateY(0);
+        margin-top: 20px;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .contact-card-bottom button {
+        padding: 12px 22px;
+        font-size: 13px;
+    }
+
+    .contact-big-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .contact-big-icon svg {
+        width: 22px;
+    }
+
+    .schedule {
+        position: static;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 12px;
     }
 
 }
@@ -1823,47 +1890,89 @@
 
 @media (max-width: 480px) {
 
+    .project-breadcrumb1,
+    .plot-breadcrumb {
+        width: calc(100% - 24px);
+        margin: 85px auto 14px;
+        font-size: 10.5px;
+    }
+
+    .plot-hero,
+    .plot-two-column,
+    .landmarks-section,
+    .plot-about-section {
+        width: calc(100% - 24px);
+    }
+
     .plot-main-image {
-        height: 255px;
+        height: 260px;
+        border-radius: 18px;
     }
 
     .plot-summary h1 {
-        font-size: 42px;
+        font-size: 36px;
+        letter-spacing: -1.2px;
+    }
 
-        letter-spacing: -1.7px;
+    .plot-total-price {
+        padding: 14px 18px;
     }
 
     .plot-total-price strong {
-        font-size: 34px;
+        font-size: 32px;
     }
 
     .plot-quick-specs {
-        grid-template-columns:
-            1fr 1px 1fr 1px 1fr;
+        gap: 6px;
+        padding: 12px 6px;
+    }
+
+    .quick-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .quick-icon svg {
+        width: 15px;
+        height: 15px;
     }
 
     .quick-spec strong {
-        font-size: 9px;
+        font-size: 11.5px;
     }
 
     .quick-spec span {
-        font-size: 6px;
+        font-size: 9px;
     }
 
     .info-card-heading h2 {
-        font-size: 23px;
+        font-size: 22px;
     }
 
     .landmark-title h2 {
-        font-size: 23px;
+        font-size: 22px;
+    }
+
+    .landmarks-grid {
+        gap: 10px;
+    }
+
+    .landmark-card {
+        height: 210px;
+    }
+
+    .landmark-card-title {
+        font-size: 17px;
+        top: 18px;
+        left: 16px;
     }
 
     .about-plot-heading h2 {
-        font-size: 30px;
+        font-size: 28px;
     }
 
     .plot-contact-card h2 {
-        font-size: 32px;
+        font-size: 30px;
     }
 
 }
