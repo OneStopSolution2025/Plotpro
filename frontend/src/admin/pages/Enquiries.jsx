@@ -68,6 +68,7 @@ const Enquiries = () => {
             name: e.fullName,
             phone: e.mobile,
             email: e.email || "",
+            contactMethod: e.contactMethod || "phone",
             project: e.projectId?.title || "Direct Enquiry",
             interest: e.plot ? `Plot ${e.plot}` : "General Enquiry",
             date: new Date(e.createdAt).toLocaleDateString("en-IN", {
@@ -96,8 +97,16 @@ const Enquiries = () => {
 
     fetchEnquiries();
 
+    // Auto-sync enquiries every 8 seconds
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && isAuthenticated) {
+        fetchEnquiries();
+      }
+    }, 8000);
+
     return () => {
       isMounted = false;
+      clearInterval(pollInterval);
     };
   }, [role, user?._id, isAuthenticated]);
 
@@ -311,6 +320,12 @@ const Enquiries = () => {
                     <div>
                       <strong>{enquiry.name}</strong>
                       <small>{isSubscriptionExpired ? maskPhone(enquiry.phone) : enquiry.phone}</small>
+                      <span className={`contact-pref-pill pref-${enquiry.contactMethod || 'phone'}`} title={`Preferred Contact Method: ${enquiry.contactMethod === "whatsapp" ? "WhatsApp" : enquiry.contactMethod === "email" ? "Email" : "Phone Call"}`}>
+                        {enquiry.contactMethod === "whatsapp" && <FaWhatsapp />}
+                        {enquiry.contactMethod === "email" && <FaEnvelope />}
+                        {(!enquiry.contactMethod || enquiry.contactMethod === "phone") && <FaPhone />}
+                        <span>{enquiry.contactMethod === "whatsapp" ? "WhatsApp" : enquiry.contactMethod === "email" ? "Email" : "Call"}</span>
+                      </span>
                     </div>
                   </div>
 
@@ -326,7 +341,8 @@ const Enquiries = () => {
 
                   <div className="enquiry-actions">
                     <button
-                      title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : `Call ${enquiry.name}`}
+                      className={(!enquiry.contactMethod || enquiry.contactMethod === "phone") ? "enquiry-action-preferred phone-preferred" : ""}
+                      title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : (!enquiry.contactMethod || enquiry.contactMethod === "phone") ? `Customer's Preferred Contact: Call ${enquiry.name}` : `Call ${enquiry.name}`}
                       aria-label={`Call ${enquiry.name}`}
                       onClick={() => handleCall(enquiry.phone)}
                       disabled={isSubscriptionExpired}
@@ -336,7 +352,8 @@ const Enquiries = () => {
                     </button>
 
                     <button
-                      title={isSubscriptionExpired ? "WhatsApp disabled (Subscription expired)" : `WhatsApp ${enquiry.name}`}
+                      className={enquiry.contactMethod === "whatsapp" ? "enquiry-action-preferred whatsapp-preferred" : ""}
+                      title={isSubscriptionExpired ? "WhatsApp disabled (Subscription expired)" : enquiry.contactMethod === "whatsapp" ? `Customer's Preferred Contact: WhatsApp ${enquiry.name}` : `WhatsApp ${enquiry.name}`}
                       aria-label={`WhatsApp ${enquiry.name}`}
                       onClick={() => handleWhatsApp(enquiry.phone, enquiry.name)}
                       disabled={isSubscriptionExpired}
@@ -346,7 +363,8 @@ const Enquiries = () => {
                     </button>
 
                     <button
-                      title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : `Email ${enquiry.name}`}
+                      className={enquiry.contactMethod === "email" ? "enquiry-action-preferred email-preferred" : ""}
+                      title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : enquiry.contactMethod === "email" ? `Customer's Preferred Contact: Email ${enquiry.name}` : `Email ${enquiry.name}`}
                       aria-label={`Email ${enquiry.name}`}
                       onClick={() => handleEmail(enquiry.email)}
                       disabled={isSubscriptionExpired}
@@ -433,6 +451,16 @@ const Enquiries = () => {
                 <span>{selectedEnquiry.interest}</span>
               </div>
               <div className="enquiry-detail-row">
+                <label>Preferred Contact</label>
+                <span className={`contact-pref-modal-badge pref-${selectedEnquiry.contactMethod || 'phone'}`}>
+                  {selectedEnquiry.contactMethod === "whatsapp" && <FaWhatsapp />}
+                  {selectedEnquiry.contactMethod === "email" && <FaEnvelope />}
+                  {(!selectedEnquiry.contactMethod || selectedEnquiry.contactMethod === "phone") && <FaPhone />}
+                  {" "}
+                  {selectedEnquiry.contactMethod === "whatsapp" ? "WhatsApp" : selectedEnquiry.contactMethod === "email" ? "Email" : "Phone Call"}
+                </span>
+              </div>
+              <div className="enquiry-detail-row">
                 <label>Date</label>
                 <span>{selectedEnquiry.date}</span>
               </div>
@@ -442,6 +470,12 @@ const Enquiries = () => {
                   {selectedEnquiry.status}
                 </span>
               </div>
+              {selectedEnquiry.message && (
+                <div className="enquiry-detail-row enquiry-message-row">
+                  <label>Message</label>
+                  <span className="enquiry-message-text">{selectedEnquiry.message}</span>
+                </div>
+              )}
             </div>
             <div className="enquiry-modal-footer">
               <button className="enquiry-btn-primary" onClick={() => setViewDetailsId(null)}>

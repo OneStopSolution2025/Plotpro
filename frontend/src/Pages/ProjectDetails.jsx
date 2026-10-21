@@ -26,17 +26,26 @@ import {
     MapPin,
     Wrench,
     Sun,
-    ExternalLink
+    ExternalLink,
+    Check,
+    Phone
 } from "lucide-react";
 
 import entrance from "../assets/Projects/Greenvalley/Entrance.png";
 
 import { useState, useEffect } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { useProjects, findProjectByIdentifier, getProjectRouteSlug, normalizeProject } from "../context/ProjectContext";
+
+gsap.registerPlugin(ScrollTrigger);
 import { usePlots } from "../context/PlotContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { shareContent } from "../utils/shareUtils";
 import { userApi, publicApi } from "../services/api";
+import { commonBenefits, commonHighlights, commonAmenities } from "../data/projects";
 
 // Icon mapping functions for dynamic icons based on content
 const getBenefitIcon = (title) => {
@@ -124,8 +133,13 @@ function ProjectDetails() {
 
     const { isAuthenticated } = useAuth();
     const location = useLocation();
+    const { showToast } = useToast();
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isHeartPopping, setIsHeartPopping] = useState(false);
+    const [heartParticles, setHeartParticles] = useState([]);
+    const [isSharing, setIsSharing] = useState(false);
+    const [isShared, setIsShared] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated || !project) return;
@@ -145,6 +159,20 @@ function ProjectDetails() {
         };
     }, [isAuthenticated, project]);
 
+    const triggerHeartAnimation = () => {
+        setIsHeartPopping(true);
+        // Create 5-6 delightful floating mini-hearts with random angles
+        const particles = Array.from({ length: 6 }).map((_, i) => ({
+            id: Date.now() + i,
+            tx: `${(Math.random() - 0.5) * 60}px`,
+            ty: `-${25 + Math.random() * 35}px`,
+            icon: i % 2 === 0 ? "❤️" : "✨",
+        }));
+        setHeartParticles(particles);
+        setTimeout(() => setIsHeartPopping(false), 700);
+        setTimeout(() => setHeartParticles([]), 1000);
+    };
+
     const handleToggleSave = async () => {
         if (!isAuthenticated) {
             navigate("/login", { state: { from: location.pathname } });
@@ -156,13 +184,139 @@ function ProjectDetails() {
             const res = await userApi.toggleSaveProject(targetId);
             if (res?.success) {
                 setIsSaved(res.saved);
+                if (res.saved) {
+                    triggerHeartAnimation();
+                    showToast("Added to your Wishlist!", "success");
+                } else {
+                    showToast("Removed from Wishlist", "info");
+                }
             }
         } catch (err) {
             console.error("Failed to toggle wishlist project:", err);
+            showToast("Failed to update Wishlist", "error");
         } finally {
             setIsSaving(false);
         }
     };
+
+    const handleShare = async () => {
+        if (isSharing || !project) return;
+        setIsSharing(true);
+        try {
+            const title = project.title || "PlotPro Project";
+            const text = project.description
+                ? `${project.title} - ${project.location || ""}`
+                : `Explore ${project.title} on PlotPro`;
+            const url = window.location.href;
+
+            const result = await shareContent({ title, text, url });
+            if (result.success) {
+                setIsShared(true);
+                setTimeout(() => setIsShared(false), 2500);
+                showToast(
+                    result.method === "share"
+                        ? "Project shared successfully!"
+                        : "Project link copied to clipboard!",
+                    "success"
+                );
+            } else if (!result.cancelled) {
+                showToast("Could not share or copy link. Please copy the URL from your address bar.", "error");
+            }
+        } catch (err) {
+            console.error("Error sharing project:", err);
+            showToast("Failed to share project link.", "error");
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!project) return;
+
+        const ctx = gsap.context(() => {
+            // 1. Gallery and Hero details entrance
+            gsap.from(".project-gallery > *", {
+                opacity: 0,
+                y: 30,
+                duration: 0.8,
+                stagger: 0.15,
+                ease: "power3.out",
+            });
+
+            // 2. Generic section reveals as user scrolls down
+            gsap.utils.toArray(".project-reveal").forEach((section) => {
+                gsap.from(section, {
+                    opacity: 0,
+                    y: 45,
+                    duration: 0.8,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: section,
+                        start: "top 85%",
+                        once: true,
+                    },
+                });
+            });
+
+            // 3. Staggered Benefits cards
+            gsap.from(".benefit-card", {
+                opacity: 0,
+                y: 35,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".benefits",
+                    start: "top 85%",
+                    once: true,
+                },
+            });
+
+            // 4. Staggered Amenities cards
+            gsap.from(".amenity-card", {
+                opacity: 0,
+                scale: 0.9,
+                duration: 0.5,
+                stagger: 0.08,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".amenities-grid",
+                    start: "top 85%",
+                    once: true,
+                },
+            });
+
+            // 5. Location and Connectivity items
+            gsap.from(".location-item", {
+                opacity: 0,
+                x: -25,
+                duration: 0.5,
+                stagger: 0.08,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".location-list",
+                    start: "top 85%",
+                    once: true,
+                },
+            });
+
+            // 6. Plots grid cards entrance
+            gsap.from(".plots-grid > *", {
+                opacity: 0,
+                y: 30,
+                duration: 0.6,
+                stagger: 0.12,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".plots-grid",
+                    start: "top 85%",
+                    once: true,
+                },
+            });
+        });
+
+        return () => ctx.revert();
+    }, [project]);
 
     if (!project) {
         if (isLoading || isFetchingDirect) {
@@ -194,6 +348,15 @@ function ProjectDetails() {
         String(plot.projectId) === String(project._id) ||
         String(plot.projectId) === String(project.customId)
     );
+
+    // Project-specific benefits: no silent fallback to generic defaults
+    const projectBenefits = Array.isArray(project.benefits) ? project.benefits : [];
+
+    // Project-specific highlights: no silent fallback to generic defaults
+    const projectHighlights = Array.isArray(project.highlights) ? project.highlights : [];
+
+    // Project-specific amenities: no silent fallback to generic defaults
+    const projectAmenities = Array.isArray(project.amenities) ? project.amenities : [];
 
 
     return (
@@ -278,15 +441,36 @@ function ProjectDetails() {
                                     onClick={handleToggleSave}
                                     disabled={isSaving}
                                     title={isSaved ? "Remove from Wishlist" : "Save to Wishlist"}
+                                    aria-label={isSaved ? "Remove from Wishlist" : "Save to Wishlist"}
                                     style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5" } : {}}
                                 >
-                                    <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
-                                    {isSaved ? "Saved" : "Save"}
+                                    <span className="heart-button-wrapper">
+                                        <span className={`heart-icon-animated ${isHeartPopping ? "popping" : ""}`}>
+                                            <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
+                                        </span>
+                                        {heartParticles.map((p) => (
+                                            <span
+                                                key={p.id}
+                                                className="floating-heart-particle"
+                                                style={{ "--tx": p.tx, "--ty": p.ty }}
+                                            >
+                                                {p.icon}
+                                            </span>
+                                        ))}
+                                    </span>
+                                    <span>{isSaved ? "Saved" : "Save"}</span>
                                 </button>
 
-                                <button>
-                                    <Share2 />
-                                    Share
+                                <button
+                                    type="button"
+                                    onClick={handleShare}
+                                    disabled={isSharing}
+                                    title={isShared ? "Link Copied" : "Share Project"}
+                                    aria-label="Share this project"
+                                    style={isShared ? { color: "#16a34a", borderColor: "#86efac" } : {}}
+                                >
+                                    {isShared ? <Check size={18} color="#16a34a" /> : <Share2 size={18} />}
+                                    {isShared ? "Copied!" : "Share"}
                                 </button>
 
                             </div>
@@ -316,50 +500,37 @@ function ProjectDetails() {
                                 {project.details || "No description provided."}
                             </p>
 
-                            <div className="plot-price2">
-
-                                <p className="p1">
-                                    Price Starting From
-                                </p>
-
-                                <div className="per-plot">
-
-                                    <p className="p2">
-                                        ₹ {project.plotPrice}
-                                    </p>
-
-                                    <p className="p3">
-                                        Per Plot
-                                    </p>
-
-                                </div>
-
+                            <div className="plot-total-price">
+                                <span>PRICE STARTING FROM</span>
+                                <strong>₹ {project.plotPrice} <small style={{ fontSize: "16px", fontWeight: "500", opacity: 0.9, letterSpacing: "0.5px" }}>/ Plot</small></strong>
                             </div>
 
-                            <div className="book-btn">
-
+                            <div className="plot-hero-actions">
                                 <button
-                                    className="primary-btn"
+                                    type="button"
+                                    className="primary-plot-btn"
                                     onClick={() => navigate(`/site-visit/${project.id}`, {
                                         state: {
                                             from: location.pathname
                                         }
                                     })}
                                 >
-                                    Book a Site Visit
+                                    <span>Book a Site Visit</span>
+                                    <ArrowRight />
                                 </button>
 
                                 <button
-                                    className="secondary-btn"
+                                    type="button"
+                                    className="secondary-plot-btn"
                                     onClick={() => navigate(`/enquiry/${project.id}`, {
                                         state: {
                                             from: location.pathname
                                         }
                                     })}
                                 >
-                                    Enquiry
+                                    <Phone />
+                                    <span>Enquiry</span>
                                 </button>
-
                             </div>
 
                         </div>
@@ -370,40 +541,36 @@ function ProjectDetails() {
 
 
 
-                <div className="benefits-header">
-
-                    <p className="section-tag">
-                        WHY CHOOSE US
-                    </p>
-                    <h2>
-                        Benefits of <br /><span>{project.title}</span>
-                    </h2>
-                </div>
-
-
-                <section className="benefits">
-
-                    {project.benefits?.map((benefit, index) => (
-                        <div className="benefit-card" key={index}>
-
-                            <div className="benefit-icon">
-                                {getBenefitIcon(benefit.title)}
-                            </div>
-
-                            <h3>
-                                {benefit.title}
-                            </h3>
-
-                            <p>
-                                {benefit.description}
+                {projectBenefits.length > 0 && (
+                    <>
+                        <div className="benefits-header">
+                            <p className="section-tag">
+                                WHY CHOOSE US
                             </p>
-
+                            <h2>
+                                Benefits of <br /><span>{project.title}</span>
+                            </h2>
                         </div>
-                    ))}
 
-                </section>
+                        <section className="benefits">
+                            {projectBenefits.map((benefit, index) => (
+                                <div className="benefit-card" key={index}>
+                                    <div className="benefit-icon">
+                                        {getBenefitIcon(benefit.title)}
+                                    </div>
+                                    <h3>
+                                        {benefit.title}
+                                    </h3>
+                                    <p>
+                                        {benefit.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </section>
+                    </>
+                )}
 
-                <section className="about-section">
+                <section className="about-section project-reveal">
 
                     <div className="about-content">
 
@@ -469,17 +636,20 @@ function ProjectDetails() {
                             Project Highlights
                         </h2>
 
-
-                        <div className="highlight-list">
-
-                            {project.highlights?.map((highlight, index) => (
-                                <p key={index}>
-                                    <CheckCircle2 />
-                                    {highlight}
-                                </p>
-                            ))}
-
-                        </div>
+                        {projectHighlights.length > 0 ? (
+                            <div className="highlight-list">
+                                {projectHighlights.map((highlight, index) => (
+                                    <p key={index}>
+                                        <CheckCircle2 />
+                                        {highlight}
+                                    </p>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="highlights-empty-state" style={{ marginTop: "20px", color: "#64748b", fontSize: "14px", lineHeight: "1.6" }}>
+                                <p style={{ margin: 0 }}>Specific highlights and investment features will be updated soon for this project.</p>
+                            </div>
+                        )}
 
                     </div>
 
@@ -494,41 +664,42 @@ function ProjectDetails() {
 
                 </section>
 
-                <section className="amenities-section">
+                {projectAmenities.length > 0 && (
+                    <section className="amenities-section project-reveal">
 
-                    <div className="amenities-header">
+                        <div className="amenities-header">
 
-                        <p className="section-tag">
-                            FEATURES
-                        </p>
+                            <p className="section-tag">
+                                FEATURES
+                            </p>
 
-                        <h2>
-                            Project <br /> <span>Amenities</span>
-                        </h2>
+                            <h2>
+                                Project <br /> <span>Amenities</span>
+                            </h2>
 
-                    </div>
+                        </div>
 
+                        <div className="amenities-grid">
 
-                    <div className="amenities-grid">
+                            {projectAmenities.map((amenity, index) => (
 
-                        {project.amenities?.map((amenity, index) => (
+                                <div className="amenity-card" key={index}>
 
-                            <div className="amenity-card" key={index}>
+                                    {getAmenityIcon(amenity)}
 
-                                {getAmenityIcon(amenity)}
+                                    <p>
+                                        {amenity}
+                                    </p>
 
-                                <p>
-                                    {amenity}
-                                </p>
+                                </div>
 
-                            </div>
+                            ))}
 
-                        ))}
+                        </div>
 
-                    </div>
-
-                </section>
-                <section className="location-section">
+                    </section>
+                )}
+                <section className="location-section project-reveal">
 
                     <div className="location-list">
 
@@ -554,19 +725,55 @@ function ProjectDetails() {
 
                     </div>
 
-                    <div className="map-box">
+                    {(() => {
+                        const rawLoc = project?.location?.trim() || "";
+                        const rawCity = project?.city?.trim() || "";
+                        let resolvedLocation = "";
+                        if (rawLoc && rawCity) {
+                            resolvedLocation = rawLoc.toLowerCase().includes(rawCity.toLowerCase())
+                                ? rawLoc
+                                : `${rawLoc}, ${rawCity}`;
+                        } else {
+                            resolvedLocation = rawLoc || rawCity;
+                        }
+                        const mapQuery = resolvedLocation ? encodeURIComponent(resolvedLocation) : "";
+                        const projectTitle = project?.title?.trim() || "Project";
 
-                        <iframe
-                            src="https://www.google.com/maps?q=Chettinayakanpatti,Dindigul&output=embed"
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            allowFullScreen=""
-                            loading="lazy"
-                            title="Green Valley Location"
-                        ></iframe>
-
-                    </div>
+                        return mapQuery ? (
+                            <div className="map-box">
+                                <iframe
+                                    src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen=""
+                                    loading="lazy"
+                                    title={`${projectTitle} Location`}
+                                ></iframe>
+                            </div>
+                        ) : (
+                            <div
+                                className="map-box"
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    padding: "30px 20px",
+                                    textAlign: "center",
+                                    background: "#f1f5f9",
+                                    color: "#64748b",
+                                    gap: "10px",
+                                }}
+                            >
+                                <MapPin size={32} style={{ color: "#94a3b8" }} />
+                                <strong style={{ color: "#334155", fontSize: "15px" }}>Location Map Unavailable</strong>
+                                <p style={{ margin: 0, fontSize: "13px", maxWidth: "320px", lineHeight: "1.5" }}>
+                                    Map location details are currently unavailable for this project.
+                                </p>
+                            </div>
+                        );
+                    })()}
 
                     <div className="contact-card">
 
@@ -604,7 +811,7 @@ function ProjectDetails() {
 
                 </section>
 
-                <section className="plots-section">
+                <section className="plots-section project-reveal">
 
                     <div className="plots-top">
 

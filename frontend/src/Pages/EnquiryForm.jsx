@@ -146,7 +146,7 @@ export default function EnquiryForm() {
                 plot: form.plot,
                 contactMethod: form.contactMethod || "phone",
                 message: form.message,
-                projectId: project?.id || projectId,
+                projectId: project?._id || project?.id || projectId,
             });
 
             setStatus("ok");

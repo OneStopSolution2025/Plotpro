@@ -150,7 +150,7 @@ export default function SiteVisitForm() {
                 preferredDate: form.preferredDate,
                 preferredTime: form.preferredTime,
                 message: form.message,
-                projectId: project?.id || projectId,
+                projectId: project?._id || project?.id || projectId,
             });
 
             setStatus("ok");

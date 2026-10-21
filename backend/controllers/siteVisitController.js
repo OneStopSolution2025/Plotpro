@@ -1,4 +1,5 @@
 import SiteVisit from "../models/SiteVisit.js";
+import Project from "../models/Project.js";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
 
@@ -67,7 +68,15 @@ export const submitPublicSiteVisit = async (req, res, next) => {
  */
 export const getAdminSiteVisits = async (req, res, next) => {
   try {
-    const visits = await SiteVisit.find({ assignedAdminId: req.user._id })
+    const adminProjects = await Project.find({ adminId: req.user._id }).select("_id");
+    const projectIds = adminProjects.map((p) => p._id);
+
+    const visits = await SiteVisit.find({
+      $or: [
+        { assignedAdminId: req.user._id },
+        { projectId: { $in: projectIds } }
+      ]
+    })
       .populate("projectId", "title customId location")
       .sort({ preferredDate: 1, createdAt: -1 });
 
@@ -97,7 +106,15 @@ export const updateSiteVisitStatusAdmin = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Site visit not found." });
     }
 
-    if (!visit.assignedAdminId || visit.assignedAdminId.toString() !== req.user._id.toString()) {
+    let isAuthorized = visit.assignedAdminId && visit.assignedAdminId.toString() === req.user._id.toString();
+    if (!isAuthorized && visit.projectId) {
+      const ownedProject = await Project.findOne({ _id: visit.projectId, adminId: req.user._id });
+      if (ownedProject) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return res.status(403).json({
         success: false,
         message: "Forbidden: You are not assigned to this site visit.",

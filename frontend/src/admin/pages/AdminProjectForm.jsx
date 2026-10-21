@@ -3,7 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useProjects } from "../../context/ProjectContext";
 import { usePlots } from "../../context/PlotContext";
 import { FaArrowLeft, FaSave, FaPlus, FaTrash, FaExclamationCircle } from "react-icons/fa";
-import { commonBenefits, commonHighlights, commonAmenities } from "../../data/projects";
+import {
+  commonBenefits,
+  AVAILABLE_BENEFITS,
+  DEFAULT_NEW_PROJECT_BENEFITS,
+  AVAILABLE_HIGHLIGHTS,
+  AVAILABLE_AMENITIES,
+  DEFAULT_NEW_PROJECT_HIGHLIGHTS,
+  DEFAULT_NEW_PROJECT_AMENITIES,
+} from "../../data/projects";
 import { useAdminProfile } from "../context/AdminProfileContext";
 import { useNotifications } from "../context/NotificationContext";
 import CustomDropdown from "../components/CustomDropdown";
@@ -130,9 +138,9 @@ const AdminProjectForm = () => {
     images: [],
     about: { description: "" },
     locationConnectivity: [{ name: "", distance: "" }],
-    benefits: commonBenefits,
-    highlights: commonHighlights,
-    amenities: commonAmenities,
+    benefits: DEFAULT_NEW_PROJECT_BENEFITS,
+    highlights: DEFAULT_NEW_PROJECT_HIGHLIGHTS,
+    amenities: DEFAULT_NEW_PROJECT_AMENITIES,
   });
 
   const total = Number(form.totalPlots) || 0;
@@ -183,9 +191,10 @@ const AdminProjectForm = () => {
           images: project.images || [],
           about: project.about || { description: ""},
           locationConnectivity: project.locationConnectivity || [{ name: "", distance: "" }],
-          benefits: project.benefits || commonBenefits,
-          highlights: project.highlights || commonHighlights,
-          amenities: project.amenities || commonAmenities,
+          // For existing projects: load saved array directly, never overwrite with default options
+          benefits: Array.isArray(project.benefits) ? project.benefits : [],
+          highlights: Array.isArray(project.highlights) ? project.highlights : [],
+          amenities: Array.isArray(project.amenities) ? project.amenities : [],
         });
       }
     }
@@ -218,6 +227,37 @@ const AdminProjectForm = () => {
       ...prev,
       [fieldName]: { ...prev[fieldName], [key]: value },
     }));
+  };
+
+  const handleToggleBenefit = (benefitObj) => {
+    setForm((prev) => {
+      const current = Array.isArray(prev.benefits) ? prev.benefits : [];
+      const exists = current.some((b) => b.title === benefitObj.title);
+      const updated = exists
+        ? current.filter((b) => b.title !== benefitObj.title)
+        : [...current, benefitObj];
+      return { ...prev, benefits: updated };
+    });
+  };
+
+  const handleToggleHighlight = (item) => {
+    setForm((prev) => {
+      const current = Array.isArray(prev.highlights) ? prev.highlights : [];
+      const updated = current.includes(item)
+        ? current.filter((h) => h !== item)
+        : [...current, item];
+      return { ...prev, highlights: updated };
+    });
+  };
+
+  const handleToggleAmenity = (item) => {
+    setForm((prev) => {
+      const current = Array.isArray(prev.amenities) ? prev.amenities : [];
+      const updated = current.includes(item)
+        ? current.filter((a) => a !== item)
+        : [...current, item];
+      return { ...prev, amenities: updated };
+    });
   };
 
   const getPlotIndex = (plot, projectId) => {
@@ -917,6 +957,93 @@ const AdminProjectForm = () => {
             />
             <small>One image URL per line. The first image will be used as the cover image.</small>
           </label>
+        </section>
+
+        {/* Benefits Section */}
+        <section className="form-section">
+          <div className="checkbox-section-header">
+            <h2>Project Benefits (Why Choose Us)</h2>
+            <span className={`checkbox-count-badge ${form.benefits.length > 0 ? "has-selected" : ""}`}>
+              {form.benefits.length} selected
+            </span>
+          </div>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
+            Select the key benefits displayed in the &quot;Benefits of Project&quot; section on the client site.
+          </p>
+          <div className="checkbox-group-grid">
+            {AVAILABLE_BENEFITS.map((benefit) => {
+              const isChecked = form.benefits.some((b) => b.title === benefit.title);
+              return (
+                <label key={benefit.title} className={`checkbox-card has-desc ${isChecked ? "selected" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleToggleBenefit(benefit)}
+                  />
+                  <div className="checkbox-content-wrap">
+                    <span className="checkbox-title">{benefit.title}</span>
+                    <span className="checkbox-desc">{benefit.description}</span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Highlights Section */}
+        <section className="form-section">
+          <div className="checkbox-section-header">
+            <h2>Project Highlights</h2>
+            <span className={`checkbox-count-badge ${form.highlights.length > 0 ? "has-selected" : ""}`}>
+              {form.highlights.length} selected
+            </span>
+          </div>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
+            Select key selling points and verified features for this project.
+          </p>
+          <div className="checkbox-group-grid">
+            {AVAILABLE_HIGHLIGHTS.map((item) => {
+              const isChecked = form.highlights.includes(item);
+              return (
+                <label key={item} className={`checkbox-card ${isChecked ? "selected" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleToggleHighlight(item)}
+                  />
+                  <span className="checkbox-label-text">{item}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Amenities Section */}
+        <section className="form-section">
+          <div className="checkbox-section-header">
+            <h2>Project Amenities</h2>
+            <span className={`checkbox-count-badge ${form.amenities.length > 0 ? "has-selected" : ""}`}>
+              {form.amenities.length} selected
+            </span>
+          </div>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
+            Select verified amenities available in this layout or gated community.
+          </p>
+          <div className="checkbox-group-grid">
+            {AVAILABLE_AMENITIES.map((item) => {
+              const isChecked = form.amenities.includes(item);
+              return (
+                <label key={item} className={`checkbox-card ${isChecked ? "selected" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleToggleAmenity(item)}
+                  />
+                  <span className="checkbox-label-text">{item}</span>
+                </label>
+              );
+            })}
+          </div>
         </section>
 
         <section className="form-section">

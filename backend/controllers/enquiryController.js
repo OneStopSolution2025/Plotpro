@@ -1,4 +1,5 @@
 import Enquiry from "../models/Enquiry.js";
+import Project from "../models/Project.js";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
 
@@ -62,7 +63,15 @@ export const submitPublicEnquiry = async (req, res, next) => {
  */
 export const getAdminEnquiries = async (req, res, next) => {
   try {
-    const enquiries = await Enquiry.find({ assignedAdminId: req.user._id })
+    const adminProjects = await Project.find({ adminId: req.user._id }).select("_id");
+    const projectIds = adminProjects.map((p) => p._id);
+
+    const enquiries = await Enquiry.find({
+      $or: [
+        { assignedAdminId: req.user._id },
+        { projectId: { $in: projectIds } }
+      ]
+    })
       .populate("projectId", "title customId location")
       .sort({ createdAt: -1 });
 
@@ -92,7 +101,15 @@ export const updateEnquiryStatusAdmin = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Enquiry not found." });
     }
 
-    if (!enquiry.assignedAdminId || enquiry.assignedAdminId.toString() !== req.user._id.toString()) {
+    let isAuthorized = enquiry.assignedAdminId && enquiry.assignedAdminId.toString() === req.user._id.toString();
+    if (!isAuthorized && enquiry.projectId) {
+      const ownedProject = await Project.findOne({ _id: enquiry.projectId, adminId: req.user._id });
+      if (ownedProject) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return res.status(403).json({
         success: false,
         message: "Forbidden: You are not assigned to this enquiry.",

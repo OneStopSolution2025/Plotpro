@@ -44,9 +44,10 @@ export const getPlatformOverview = async (req, res, next) => {
       .populate("planId", "name price maxAdminSeats")
       .limit(10);
 
-    // Platform-wide staff Admin counts
-    const totalAdmins = await User.countDocuments({ role: "ADMIN" });
-    const activeAdmins = await User.countDocuments({ role: "ADMIN", status: "ACTIVE" });
+    // Platform-wide staff Admin counts (strictly belonging to valid subscribers/tenants)
+    const subscriberIds = await User.find({ role: "SUPER_ADMIN" }).distinct("_id");
+    const totalAdmins = await User.countDocuments({ role: "ADMIN", tenantId: { $in: subscriberIds } });
+    const activeAdmins = await User.countDocuments({ role: "ADMIN", status: "ACTIVE", tenantId: { $in: subscriberIds } });
 
     // Platform-wide projects and enquiries
     const totalProjects = await Project.countDocuments({ isArchived: false });

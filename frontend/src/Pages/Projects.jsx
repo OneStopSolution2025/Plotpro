@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 import Navbar from "../components/Navbar";
 import "../css/Projects.css";
@@ -85,16 +85,62 @@ function Projects() {
         useState(false);
 
 
+    const isPriceInitializedRef = useRef(false);
+
     useEffect(() => {
-        setDraftFilters(prev => ({
-            ...prev,
-            priceRange: { ...priceRange }
-        }));
-        setAppliedFilters(prev => ({
-            ...prev,
-            priceRange: { ...priceRange }
-        }));
-    }, [priceRange]);
+        if (!isPriceInitializedRef.current) {
+            if (projects.length > 0) {
+                isPriceInitializedRef.current = true;
+                setDraftFilters(prev => ({
+                    ...prev,
+                    priceRange: { ...priceRange }
+                }));
+                setAppliedFilters(prev => ({
+                    ...prev,
+                    priceRange: { ...priceRange }
+                }));
+            }
+            return;
+        }
+
+        // On subsequent background polls, do NOT overwrite active or draft filter values.
+        // We only clamp if the values exceed the new absolute project bounds.
+        setDraftFilters(prev => {
+            const currentMin = prev.priceRange.min;
+            const currentMax = prev.priceRange.max;
+            const clampedMin = Math.max(priceRange.min, currentMin);
+            const clampedMax = Math.min(priceRange.max, currentMax);
+
+            if (clampedMin === currentMin && clampedMax === currentMax) {
+                return prev;
+            }
+            return {
+                ...prev,
+                priceRange: {
+                    min: Math.min(clampedMin, clampedMax),
+                    max: Math.max(clampedMin, clampedMax)
+                }
+            };
+        });
+
+        setAppliedFilters(prev => {
+            const currentMin = prev.priceRange.min;
+            const currentMax = prev.priceRange.max;
+            const clampedMin = Math.max(priceRange.min, currentMin);
+            const clampedMax = Math.min(priceRange.max, currentMax);
+
+            if (clampedMin === currentMin && clampedMax === currentMax) {
+                return prev;
+            }
+            return {
+                ...prev,
+                priceRange: {
+                    min: Math.min(clampedMin, clampedMax),
+                    max: Math.max(clampedMin, clampedMax)
+                }
+            };
+        });
+    }, [priceRange, projects.length]);
 
 
     /* =====================================================
@@ -163,9 +209,10 @@ function Projects() {
     };
 
     const getPercent = (value) => {
+        const numVal = typeof value === "number" ? value : (parseFloat(value) || priceRange.min);
         const range = priceRange.max - priceRange.min;
-        if (range === 0) return 0;
-        return ((value - priceRange.min) / range) * 100;
+        if (range <= 0) return 0;
+        return ((numVal - priceRange.min) / range) * 100;
     };
 
     const minPercent = getPercent(draftFilters.priceRange.min);
@@ -375,6 +422,19 @@ function Projects() {
     ===================================================== */
 
     const applyFilters = () => {
+        const rawMin = typeof draftFilters.priceRange.min === "number" ? draftFilters.priceRange.min : parseFloat(draftFilters.priceRange.min);
+        const rawMax = typeof draftFilters.priceRange.max === "number" ? draftFilters.priceRange.max : parseFloat(draftFilters.priceRange.max);
+        const validMin = isNaN(rawMin) ? priceRange.min : Math.max(priceRange.min, rawMin);
+        const validMax = isNaN(rawMax) ? priceRange.max : Math.min(priceRange.max, rawMax);
+        const finalPriceRange = {
+            min: Math.min(validMin, validMax),
+            max: Math.max(validMin, validMax)
+        };
+
+        setDraftFilters(prev => ({
+            ...prev,
+            priceRange: finalPriceRange
+        }));
 
         setAppliedFilters({
             category: draftFilters.category,
@@ -387,9 +447,7 @@ function Projects() {
                 ...draftFilters.plotTypes,
             ],
 
-            priceRange: {
-                ...draftFilters.priceRange
-            },
+            priceRange: finalPriceRange,
         });
 
 
@@ -814,18 +872,41 @@ function Projects() {
                                     <input
                                         type="number"
                                         min={priceRange.min}
-                                        max={draftFilters.priceRange.max}
+                                        max={priceRange.max}
                                         step="0.5"
                                         value={draftFilters.priceRange.min}
                                         onChange={(e) => {
-                                            const val = parseFloat(e.target.value) || priceRange.min;
+                                            const raw = e.target.value;
+                                            if (raw === "") {
+                                                setDraftFilters(prev => ({
+                                                    ...prev,
+                                                    priceRange: { ...prev.priceRange, min: "" }
+                                                }));
+                                                return;
+                                            }
+                                            const val = parseFloat(raw);
+                                            if (isNaN(val)) return;
                                             setDraftFilters(prev => ({
                                                 ...prev,
                                                 priceRange: {
                                                     ...prev.priceRange,
-                                                    min: Math.min(val, prev.priceRange.max)
+                                                    min: val
                                                 }
                                             }));
+                                        }}
+                                        onBlur={() => {
+                                            setDraftFilters(prev => {
+                                                const currentMin = typeof prev.priceRange.min === "number" ? prev.priceRange.min : priceRange.min;
+                                                const currentMax = typeof prev.priceRange.max === "number" ? prev.priceRange.max : priceRange.max;
+                                                const validMin = Math.max(priceRange.min, Math.min(currentMin, currentMax));
+                                                return {
+                                                    ...prev,
+                                                    priceRange: {
+                                                        ...prev.priceRange,
+                                                        min: validMin
+                                                    }
+                                                };
+                                            });
                                         }}
                                     />
                                 </label>
@@ -833,19 +914,42 @@ function Projects() {
                                     Max
                                     <input
                                         type="number"
-                                        min={draftFilters.priceRange.min}
+                                        min={priceRange.min}
                                         max={priceRange.max}
                                         step="0.5"
                                         value={draftFilters.priceRange.max}
                                         onChange={(e) => {
-                                            const val = parseFloat(e.target.value) || priceRange.max;
+                                            const raw = e.target.value;
+                                            if (raw === "") {
+                                                setDraftFilters(prev => ({
+                                                    ...prev,
+                                                    priceRange: { ...prev.priceRange, max: "" }
+                                                }));
+                                                return;
+                                            }
+                                            const val = parseFloat(raw);
+                                            if (isNaN(val)) return;
                                             setDraftFilters(prev => ({
                                                 ...prev,
                                                 priceRange: {
                                                     ...prev.priceRange,
-                                                    max: Math.max(val, prev.priceRange.min)
+                                                    max: val
                                                 }
                                             }));
+                                        }}
+                                        onBlur={() => {
+                                            setDraftFilters(prev => {
+                                                const currentMin = typeof prev.priceRange.min === "number" ? prev.priceRange.min : priceRange.min;
+                                                const currentMax = typeof prev.priceRange.max === "number" ? prev.priceRange.max : priceRange.max;
+                                                const validMax = Math.min(priceRange.max, Math.max(currentMax, currentMin));
+                                                return {
+                                                    ...prev,
+                                                    priceRange: {
+                                                        ...prev.priceRange,
+                                                        max: validMax
+                                                    }
+                                                };
+                                            });
                                         }}
                                     />
                                 </label>

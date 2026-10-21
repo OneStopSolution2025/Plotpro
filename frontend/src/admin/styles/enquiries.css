@@ -806,3 +806,128 @@
     font-size: 28px;
   }
 }
+
+
+
+/* =========================================================
+   CONTACT PREFERENCE BADGE & PREFERRED ACTION HIGHLIGHTS
+========================================================= */
+
+.contact-pref-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+/* Site theme (#a63d2f) styling for preferred contact channel */
+.contact-pref-pill.pref-phone {
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.28);
+}
+
+.contact-pref-pill.pref-whatsapp {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.contact-pref-pill.pref-email {
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.28);
+}
+
+.contact-pref-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.contact-pref-modal-badge.pref-phone {
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.28);
+}
+
+.contact-pref-modal-badge.pref-whatsapp {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.contact-pref-modal-badge.pref-email {
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.28);
+}
+
+.enquiry-action-preferred {
+  position: relative;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #a63d2f !important;
+  transform: scale(1.04);
+}
+
+.enquiry-action-preferred.phone-preferred {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #a63d2f !important;
+  color: #a63d2f !important;
+  border-color: #a63d2f !important;
+}
+
+.enquiry-action-preferred.whatsapp-preferred {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #16a34a !important;
+  color: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.enquiry-action-preferred.email-preferred {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #a63d2f !important;
+  color: #a63d2f !important;
+  border-color: #a63d2f !important;
+}
+
+.enquiry-action-preferred::after {
+  content: "★";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #a63d2f;
+  color: #ffffff;
+  font-size: 9px;
+  line-height: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.enquiry-message-row {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #cbd5e1;
+}
+
+.enquiry-message-text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+  white-space: pre-wrap;
+}

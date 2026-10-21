@@ -5,6 +5,8 @@ import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useProjects, findProjectByIdentifier, getProjectRouteSlug, normalizeProject } from "../context/ProjectContext";
 import { usePlots, normalizePlot } from "../context/PlotContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { shareContent } from "../utils/shareUtils";
 import { userApi, publicApi } from "../services/api";
 
 import Navbar from "../components/Navbar";
@@ -195,8 +197,13 @@ function PlotDetails() {
 
     const { isAuthenticated } = useAuth();
     const location = useLocation();
+    const { showToast } = useToast();
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isHeartPopping, setIsHeartPopping] = useState(false);
+    const [heartParticles, setHeartParticles] = useState([]);
+    const [isSharing, setIsSharing] = useState(false);
+    const [isShared, setIsShared] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated || !plot) return;
@@ -216,6 +223,19 @@ function PlotDetails() {
         };
     }, [isAuthenticated, plot]);
 
+    const triggerHeartAnimation = () => {
+        setIsHeartPopping(true);
+        const particles = Array.from({ length: 6 }).map((_, i) => ({
+            id: Date.now() + i,
+            tx: `${(Math.random() - 0.5) * 60}px`,
+            ty: `-${25 + Math.random() * 35}px`,
+            icon: i % 2 === 0 ? "❤️" : "✨",
+        }));
+        setHeartParticles(particles);
+        setTimeout(() => setIsHeartPopping(false), 700);
+        setTimeout(() => setHeartParticles([]), 1000);
+    };
+
     const handleToggleWishlist = async () => {
         if (!isAuthenticated) {
             navigate("/login", { state: { from: location.pathname } });
@@ -227,11 +247,51 @@ function PlotDetails() {
             const res = await userApi.toggleSavePlot(targetId);
             if (res?.success) {
                 setIsSaved(res.saved);
+                if (res.saved) {
+                    triggerHeartAnimation();
+                    showToast("Added to your Wishlist!", "success");
+                } else {
+                    showToast("Removed from Wishlist", "info");
+                }
             }
         } catch (err) {
             console.error("Failed to toggle wishlist plot:", err);
+            showToast("Failed to update Wishlist", "error");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleShare = async () => {
+        if (isSharing || !plot) return;
+        setIsSharing(true);
+        try {
+            const plotNum = plot.plotNumber || "";
+            const projTitle = project?.title || "";
+            const title = projTitle ? `Plot No. ${plotNum} - ${projTitle}` : `Plot No. ${plotNum}`;
+            const text = projTitle
+                ? `Explore Plot No. ${plotNum} at ${projTitle} on PlotPro`
+                : `Explore Plot No. ${plotNum} on PlotPro`;
+            const url = window.location.href;
+
+            const result = await shareContent({ title, text, url });
+            if (result.success) {
+                setIsShared(true);
+                setTimeout(() => setIsShared(false), 2500);
+                showToast(
+                    result.method === "share"
+                        ? "Plot shared successfully!"
+                        : "Plot link copied to clipboard!",
+                    "success"
+                );
+            } else if (!result.cancelled) {
+                showToast("Could not share or copy link. Please copy the URL from your address bar.", "error");
+            }
+        } catch (err) {
+            console.error("Error sharing plot:", err);
+            showToast("Failed to share plot link.", "error");
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -438,15 +498,36 @@ function PlotDetails() {
                                 onClick={handleToggleWishlist}
                                 disabled={isSaving}
                                 title={isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
-                                style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5", } : {}}
+                                aria-label={isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
+                                style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5" } : {}}
                             >
-                                <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
+                                <span className="heart-button-wrapper">
+                                    <span className={`heart-icon-animated ${isHeartPopping ? "popping" : ""}`}>
+                                        <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
+                                    </span>
+                                    {heartParticles.map((p) => (
+                                        <span
+                                            key={p.id}
+                                            className="floating-heart-particle"
+                                            style={{ "--tx": p.tx, "--ty": p.ty }}
+                                        >
+                                            {p.icon}
+                                        </span>
+                                    ))}
+                                </span>
                                 <span>{isSaved ? "In Wishlist" : "Add to Wishlist"}</span>
                             </button>
 
-                            <button>
-                                <Share2 />
-                                Share
+                            <button
+                                type="button"
+                                onClick={handleShare}
+                                disabled={isSharing}
+                                title={isShared ? "Link Copied" : "Share Plot"}
+                                aria-label="Share this plot"
+                                style={isShared ? { color: "#16a34a", borderColor: "#86efac" } : {}}
+                            >
+                                {isShared ? <Check size={18} color="#16a34a" /> : <Share2 size={18} />}
+                                <span>{isShared ? "Copied!" : "Share"}</span>
                             </button>
 
                         </div>
@@ -604,67 +685,109 @@ function PlotDetails() {
                 LOCATION + SPECIFICATIONS
             ================================================= */}
 
-            <section className="plot-two-column plot-reveal">
+            {(() => {
+                const rawLoc = project?.location?.trim() || "";
+                const rawCity = project?.city?.trim() || "";
+                let resolvedLocation = "";
+                if (rawLoc && rawCity) {
+                    resolvedLocation = rawLoc.toLowerCase().includes(rawCity.toLowerCase())
+                        ? rawLoc
+                        : `${rawLoc}, ${rawCity}`;
+                } else {
+                    resolvedLocation = rawLoc || rawCity;
+                }
+                const mapQuery = resolvedLocation ? encodeURIComponent(resolvedLocation) : "";
+                const projectTitle = project?.title?.trim() || "Plot";
 
-                {/* Location */}
+                return (
+                    <section className="plot-two-column plot-reveal">
 
-                <div className="plot-info-card location-card">
+                        {/* Location */}
 
-                    <div className="info-card-heading">
+                        <div className="plot-info-card location-card">
 
-                        <div className="info-heading-icon">
-                            <MapPin />
+                            <div className="info-card-heading">
+
+                                <div className="info-heading-icon">
+                                    <MapPin />
+                                </div>
+
+                                <div>
+
+                                    <h2>
+                                        Plot <span>Location</span>
+                                    </h2>
+
+                                    <p>
+                                        Strategically located with easy
+                                        access to key destinations.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            {mapQuery ? (
+                                <>
+                                    <div className="plot-map">
+
+                                        <iframe
+                                            src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+                                            title={`${projectTitle} Location`}
+                                            loading="lazy"
+                                        ></iframe>
+
+
+                                        <div className="map-location-label">
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="map-button"
+                                    >
+
+                                        View on Google Maps
+
+                                        <ExternalLink />
+
+                                    </a>
+                                </>
+                            ) : (
+                                <div
+                                    className="plot-map-unavailable"
+                                    style={{
+                                        minHeight: "220px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        padding: "30px 20px",
+                                        textAlign: "center",
+                                        background: "#f1f5f9",
+                                        borderRadius: "20px",
+                                        color: "#64748b",
+                                        gap: "10px",
+                                    }}
+                                >
+                                    <MapPin size={32} style={{ color: "#94a3b8" }} />
+                                    <strong style={{ color: "#334155", fontSize: "15px" }}>Location Map Unavailable</strong>
+                                    <p style={{ margin: 0, fontSize: "13px", maxWidth: "320px", lineHeight: "1.5" }}>
+                                        Map location details are currently unavailable for this project.
+                                    </p>
+                                </div>
+                            )}
+
                         </div>
 
-                        <div>
 
-                            <h2>
-                                Plot <span>Location</span>
-                            </h2>
-
-                            <p>
-                                Strategically located with easy
-                                access to key destinations.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="plot-map">
-
-                        <iframe
-                            src="https://www.google.com/maps?q=Chettinayakanpatti,Dindigul&output=embed"
-                            title="Green Valley Plot Location"
-                            loading="lazy"
-                        ></iframe>
-
-
-                        <div className="map-location-label">
-
-                        </div>
-
-                    </div>
-
-
-                    <a
-                        href="https://www.google.com/maps/search/?api=1&query=Chettinayakanpatti,Dindigul"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="map-button"
-                    >
-
-                        View on Google Maps
-
-                        <ExternalLink />
-
-                    </a>
-
-                </div>
-
-
-                {/* Specifications */}
+                        {/* Specifications */}
 
                 <div className="plot-info-card specifications-card">
 
@@ -806,7 +929,9 @@ function PlotDetails() {
 
                 </div>
 
-            </section>
+                    </section>
+                );
+            })()}
 
 
             {/* =================================================
@@ -848,7 +973,7 @@ function PlotDetails() {
                         <div className="landmark-image">
                             <img
                                 src={school}
-                                alt="Schools near Green Valley"
+                                alt={`Schools near ${project?.title || "this project"}`}
                             />
                         </div>
 
@@ -871,7 +996,7 @@ function PlotDetails() {
                         <div className="landmark-image">
                             <img
                                 src={hospital}
-                                alt="Hospitals near Green Valley"
+                                alt={`Hospitals near ${project?.title || "this project"}`}
                             />
                         </div>
 
@@ -894,7 +1019,7 @@ function PlotDetails() {
                         <div className="landmark-image">
                             <img
                                 src={shoppingmall}
-                                alt="Shopping near Green Valley"
+                                alt={`Shopping near ${project?.title || "this project"}`}
                             />
                         </div>
 
@@ -917,7 +1042,7 @@ function PlotDetails() {
                         <div className="landmark-image">
                             <img
                                 src={bus}
-                                alt="Bus Stand near Green Valley"
+                                alt={`Bus Stand near ${project?.title || "this project"}`}
                             />
                         </div>
 
@@ -940,7 +1065,7 @@ function PlotDetails() {
                         <div className="landmark-image">
                             <img
                                 src={road}
-                                alt="NH-44 near Green Valley"
+                                alt={`Highway near ${project?.title || "this project"}`}
                             />
                         </div>
 
@@ -963,7 +1088,7 @@ function PlotDetails() {
                         <div className="landmark-image">
                             <img
                                 src={train}
-                                alt="Railway Station near Green Valley"
+                                alt={`Railway Station near ${project?.title || "this project"}`}
                             />
                         </div>
 
@@ -1003,7 +1128,7 @@ function PlotDetails() {
                     <div className="para">
                         <p>
                             Plot No- {plot.plotNumber} is a thoughtfully positioned {plot.facing} Facing
-                            plot in Green Valley, offering
+                            plot in {project?.title || "this premium community"}, offering
                             the perfect balance of location, connectivity,
                             and modern infrastructure.
                         </p>

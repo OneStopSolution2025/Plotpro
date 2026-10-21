@@ -127,6 +127,63 @@ const parseDisplayTime = (displayTime) => {
   return `${String(hour).padStart(2, "0")}:${m}`;
 };
 
+/**
+ * Checks if a site visit is scheduled for a future date/time relative to now.
+ * Supports:
+ * - date as "DD Mon YYYY" (e.g. "15 Oct 2026")
+ * - date as ISO "YYYY-MM-DD"
+ * - time as "8:58 PM", "10:00 AM", or "HH:mm"
+ */
+const isVisitInFuture = (visit) => {
+  if (!visit || !visit.date) return false;
+
+  let year, month, day;
+
+  const rawDate = String(visit.date).trim();
+  const dateParts = rawDate.split(" ");
+  if (dateParts.length === 3) {
+    // "15 Oct 2026"
+    day = parseInt(dateParts[0], 10);
+    const monthMap = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+    month = monthMap[dateParts[1]] ?? 0;
+    year = parseInt(dateParts[2], 10);
+  } else if (rawDate.includes("-")) {
+    // "2026-10-15"
+    const [y, m, d] = rawDate.split("-");
+    year = parseInt(y, 10);
+    month = parseInt(m, 10) - 1;
+    day = parseInt(d, 10);
+  } else {
+    const parsed = new Date(rawDate);
+    if (isNaN(parsed.getTime())) return false;
+    return parsed.getTime() >= Date.now();
+  }
+
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return false;
+
+  let hours = 23;
+  let minutes = 59;
+  let seconds = 59;
+
+  if (visit.time) {
+    const timeStr = String(visit.time).trim();
+    const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+    if (timeMatch) {
+      let h = parseInt(timeMatch[1], 10);
+      const m = parseInt(timeMatch[2], 10);
+      const ampm = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
+      if (ampm === "PM" && h !== 12) h += 12;
+      if (ampm === "AM" && h === 12) h = 0;
+      hours = h;
+      minutes = m;
+      seconds = 0;
+    }
+  }
+
+  const visitDate = new Date(year, month, day, hours, minutes, seconds);
+  return visitDate.getTime() >= Date.now();
+};
+
 const initialFormState = {
   name: "",
   phone: "",
@@ -462,7 +519,7 @@ const SiteVisits = () => {
 
         <div className="site-visit-summary-card">
           <span>Upcoming</span>
-          <strong>{visits.filter((v) => v.status === "Scheduled" || v.status === "Confirmed").length}</strong>
+          <strong>{visits.filter((v) => (v.status === "Scheduled" || v.status === "Confirmed") && isVisitInFuture(v)).length}</strong>
           <small>Future site visits</small>
         </div>
 

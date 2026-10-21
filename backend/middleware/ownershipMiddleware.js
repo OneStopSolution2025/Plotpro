@@ -24,11 +24,15 @@ export const findProjectByIdentifier = async (id) => {
 
   // Try case-insensitive title or slug match (e.g. "green-meadows" -> "Green Meadows")
   const escaped = strId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regexPattern = escaped.replace(/[-_]+/g, "[\\s-_]+");
-  const byTitle = await Project.findOne({
-    title: { $regex: new RegExp(`^${regexPattern}$`, "i") }
-  });
-  if (byTitle) return byTitle;
+  const regexPattern = escaped.replace(/[-_]+/g, "[\\s_\\-]+");
+  try {
+    const byTitle = await Project.findOne({
+      title: { $regex: new RegExp(`^${regexPattern}$`, "i") }
+    });
+    if (byTitle) return byTitle;
+  } catch (err) {
+    console.warn("[findProjectByIdentifier] Regex match warning:", err.message);
+  }
 
   if (mongoose.Types.ObjectId.isValid(strId)) {
     return await Project.findById(strId);

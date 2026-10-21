@@ -134,78 +134,90 @@
     word-break: break-word;
 }
 
-.plot-price2 {
-    margin-top: 30px;
-}
+/* =========================================================
+   PRICE (MATCHING PLOT DETAILS STYLE)
+========================================================= */
 
-.p1 {
-    margin: 0;
-    color: #999;
-    font-size: 13px;
-}
-
-.per-plot {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-}
-
-.p2 {
-    margin: 5px 0;
-    color: #a63d2f;
-    font-size: 35px;
-    font-weight: 700;
-}
-
-.p3 {
-    color: #666;
-    font-size: 13px;
-}
-
-.book-btn {
-    margin-top: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.book-btn button {
-    flex: 1;
-    min-width: 160px;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.primary-btn {
+.plot-total-price {
+    margin-top: 28px;
+    padding: 20px 23px;
+    border-radius: 18px;
+    border: 1px solid #a63d2f;
     background: #a63d2f;
     color: white;
 }
 
-.primary-btn:hover {
-    background: #872e22;
+.plot-total-price span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
 }
 
-.secondary-btn {
-    background: white;
+.plot-total-price strong {
+    display: block;
+    font-size: 44px;
+    line-height: 0.95;
+    letter-spacing: -1.5px;
+}
+
+/* =========================================================
+   HERO CTA (MATCHING PLOT DETAILS STYLE)
+========================================================= */
+
+.plot-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.primary-plot-btn,
+.secondary-plot-btn {
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
+}
+
+.primary-plot-btn {
+    border: none;
+    background: #a63d2f;
+    color: #ffffff;
+}
+
+.primary-plot-btn:hover {
+    box-shadow: 0 14px 30px rgba(166, 61, 47, 0.2);
+}
+
+.primary-plot-btn:hover .lucide-arrow-right {
+    transform: translateX(6px);
+}
+
+.secondary-plot-btn {
+    border: 1px solid #a63d2f;
+    background: #ffffff;
     color: #a63d2f;
-    border: 2px solid #a63d2f !important;
 }
 
-.secondary-btn:hover {
-    background: #eaf5ff;
+.secondary-plot-btn:hover {
+    background: #a63d2f;
+    color: #ffffff;
 }
 
 @media (max-width: 576px) {
-    .book-btn {
-        flex-direction: column;
-    }
-    
-    .book-btn button {
-        width: 100%;
+    .plot-hero-actions {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -2127,4 +2139,71 @@
         height: 10px;
     }
 
+}
+
+
+/* =========================================================
+   HEART ANIMATION & FLOATING HEARTS (WISHLIST INTERACTION)
+========================================================= */
+
+.heart-button-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.heart-icon-animated {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.heart-icon-animated.popping {
+    animation: heartPop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes heartPop {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.45);
+    }
+    50% {
+        transform: scale(0.9);
+    }
+    75% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Floating particles burst */
+.floating-heart-particle {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    font-size: 13px;
+    z-index: 20;
+    will-change: transform, opacity;
+    animation: floatHeart 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes floatHeart {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.6);
+    }
+    50% {
+        opacity: 0.9;
+        transform: translate(var(--tx, 0px), var(--ty, -28px)) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(var(--tx, 0px) * 1.5), calc(var(--ty, -28px) - 20px)) scale(0.4);
+    }
 }

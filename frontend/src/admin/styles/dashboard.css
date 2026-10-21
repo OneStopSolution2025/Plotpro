@@ -1534,4 +1534,40 @@
   color: #94a3b8;
   font-size: 13px;
   font-style: italic;
-}
+}
+
+
+
+/* =========================================================
+   DASHBOARD CONTACT PREFERENCE BADGE
+   ========================================================= */
+
+.dashboard-pref-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.dashboard-pref-pill.pref-phone {
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.28);
+}
+
+.dashboard-pref-pill.pref-whatsapp {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.dashboard-pref-pill.pref-email {
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.28);
+}

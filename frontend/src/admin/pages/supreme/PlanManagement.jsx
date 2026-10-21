@@ -14,6 +14,31 @@ import {
 import CustomDropdown from "../../components/CustomDropdown";
 import "../../styles/super-admin.css";
 
+const getIntervalLabel = (plan) => {
+  const days = Number(plan?.durationDays) || 30;
+  const interval = (plan?.billingInterval || "").toUpperCase();
+
+  if (days === 30 || (interval === "MONTHLY" && days >= 28 && days <= 31)) {
+    return "Monthly";
+  }
+  if (days === 60) {
+    return "Bi-Monthly (60 Days)";
+  }
+  if (days === 90 || interval === "QUARTERLY") {
+    return "Quarterly";
+  }
+  if (days === 180) {
+    return "Half-Yearly (180 Days)";
+  }
+  if (days === 365 || interval === "ANNUAL") {
+    return "Annual";
+  }
+  if (interval && interval !== "CUSTOM" && interval !== "MONTHLY") {
+    return interval.charAt(0) + interval.slice(1).toLowerCase();
+  }
+  return `${days} Days`;
+};
+
 const PlanManagement = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -237,8 +262,21 @@ const PlanManagement = () => {
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
                   <div>
-                    <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#1e293b" }}>{p.name}</h3>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>{p.billingInterval}</span>
+                    <h3 style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 4px 0", color: "#1e293b" }}>{p.name}</h3>
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: "#f1f5f9",
+                        color: "#475569",
+                        border: "1px solid #e2e8f0",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        padding: "3px 8px",
+                        borderRadius: "6px"
+                      }}
+                    >
+                      {getIntervalLabel(p)}
+                    </span>
                   </div>
                   <span className={`badge ${p.isActive ? "bg-success" : "bg-secondary"}`}>
                     {p.isActive ? "Active" : "Inactive"}
@@ -249,8 +287,8 @@ const PlanManagement = () => {
                   <span style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>
                     ₹{p.price.toLocaleString()}
                   </span>
-                  <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "4px" }}>
-                    / {p.durationDays} days
+                  <span style={{ fontSize: "13px", color: "#64748b", marginLeft: "6px" }}>
+                    / {p.durationDays === 30 ? "month (30 days)" : `${p.durationDays} days`}
                   </span>
                 </div>
 
@@ -364,12 +402,23 @@ const PlanManagement = () => {
                   <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>Billing Interval</label>
                   <CustomDropdown
                     value={formData.billingInterval}
-                    onChange={(e) => setFormData({ ...formData, billingInterval: e.target.value })}
+                    onChange={(e) => {
+                      const nextInterval = e.target.value;
+                      let nextDays = formData.durationDays;
+                      if (nextInterval === "MONTHLY" && (!nextDays || nextDays === 90 || nextDays === 365 || nextDays === 60)) {
+                        nextDays = 30;
+                      } else if (nextInterval === "QUARTERLY" && (!nextDays || nextDays === 30 || nextDays === 365 || nextDays === 60)) {
+                        nextDays = 90;
+                      } else if (nextInterval === "ANNUAL" && (!nextDays || nextDays === 30 || nextDays === 90 || nextDays === 60)) {
+                        nextDays = 365;
+                      }
+                      setFormData({ ...formData, billingInterval: nextInterval, durationDays: nextDays });
+                    }}
                   >
-                    <option value="MONTHLY">Monthly</option>
-                    <option value="QUARTERLY">Quarterly</option>
-                    <option value="ANNUAL">Annual</option>
-                    <option value="CUSTOM">Custom</option>
+                    <option value="MONTHLY">Monthly (30 days)</option>
+                    <option value="QUARTERLY">Quarterly (90 days)</option>
+                    <option value="ANNUAL">Annual (365 days)</option>
+                    <option value="CUSTOM">Custom Interval</option>
                   </CustomDropdown>
                 </div>
               </div>

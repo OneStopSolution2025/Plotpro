@@ -4,6 +4,8 @@ import {
   FaBuilding,
   FaCheckCircle,
   FaEnvelope,
+  FaPhone,
+  FaWhatsapp,
   FaArrowRight,
   FaPlus,
   FaThLarge,
@@ -47,6 +49,7 @@ const Dashboard = () => {
             name: e.fullName || e.name || "Customer",
             phone: e.mobile || e.phone || "",
             email: e.email || "",
+            contactMethod: e.contactMethod || "phone",
             project: e.projectId?.title || e.project || (e.projectId ? `Project #${e.projectId?.customId || ""}` : "Direct Enquiry"),
             interest: e.plot ? `Plot ${e.plot}` : e.interest || "General Enquiry",
             date: e.createdAt
@@ -359,7 +362,15 @@ const Dashboard = () => {
                           .slice(0, 2)
                         : "CU"}
                     </span>
-                    <strong>{enquiry.name}</strong>
+                    <div>
+                      <strong>{enquiry.name}</strong>
+                      <span className={`dashboard-pref-pill pref-${enquiry.contactMethod || 'phone'}`} title={`Preferred Contact: ${enquiry.contactMethod === "whatsapp" ? "WhatsApp" : enquiry.contactMethod === "email" ? "Email" : "Phone Call"}`}>
+                        {enquiry.contactMethod === "whatsapp" && <FaWhatsapp />}
+                        {enquiry.contactMethod === "email" && <FaEnvelope />}
+                        {(!enquiry.contactMethod || enquiry.contactMethod === "phone") && <FaPhone />}
+                        <span>{enquiry.contactMethod === "whatsapp" ? "WhatsApp" : enquiry.contactMethod === "email" ? "Email" : "Call"}</span>
+                      </span>
+                    </div>
                   </div>
 
                   <span>{enquiry.project}</span>
