@@ -1,8 +1,11 @@
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
+import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import PlatformSettings from "../models/PlatformSettings.js";
 import { generateToken } from "../utils/generateToken.js";
+
+const googleClient = new OAuth2Client();
 
 
 /**
@@ -330,6 +333,214 @@ export const resetPassword = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Password reset successful. You can now log in with your new password.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Authenticate or register user via Google OAuth (ID token)
+ * @route   POST /api/auth/google
+ * @access  Public
+ */
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Google ID credential is required.",
+      });
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      console.error("[GoogleAuth] GOOGLE_CLIENT_ID is not configured in backend environment.");
+      return res.status(500).json({
+        success: false,
+        message: "Google authentication is not properly configured on the server.",
+      });
+    }
+
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyErr) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired Google authentication credential.",
+      });
+    }
+
+    if (!payload || !payload.sub || !payload.email) {
+      return res.status(401).json({
+        success: false,
+        message: "Google token payload is missing required identity claims.",
+      });
+    }
+
+    // Verify token issuer
+    const validIssuers = ["accounts.google.com", "https://accounts.google.com"];
+    if (!validIssuers.includes(payload.iss)) {
+      return res.status(401).json({
+        success: false,
+        message: "Google token issuer is invalid.",
+      });
+    }
+
+    // Ensure email is verified by Google
+    if (!payload.email_verified) {
+      return res.status(401).json({
+        success: false,
+        message: "Google email is not verified.",
+      });
+    }
+
+    const googleId = String(payload.sub);
+    const emailNormalized = String(payload.email).trim().toLowerCase();
+    const name = (payload.name && payload.name.trim()) || emailNormalized.split("@")[0];
+    const avatar = payload.picture || "";
+
+    // 1. Check if user already exists with this googleId
+    let user = await User.findOne({ googleId });
+
+    if (user) {
+      // Existing Google-linked user
+      if (user.status === "INACTIVE") {
+        return res.status(403).json({
+          success: false,
+          message: "Your account has been deactivated. Please contact platform administration.",
+        });
+      }
+
+      // Synchronize avatar if Google provides a valid picture and it differs
+      let updated = false;
+      if (avatar && user.avatar !== avatar) {
+        user.avatar = avatar;
+        updated = true;
+      }
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+        updated = true;
+      }
+      if (updated) {
+        await user.save();
+      }
+
+      const token = generateToken(user._id, user.role);
+      return res.status(200).json({
+        success: true,
+        message: "Login successful with Google",
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          phone: user.phone,
+          avatar: user.avatar,
+        },
+      });
+    }
+
+    // 2. Not found by googleId: Check if an account already exists with the same email
+    const existingEmailUser = await User.findOne({ email: emailNormalized });
+
+    if (existingEmailUser) {
+      // Never allow administrative accounts to be commandeered or linked automatically via public Google OAuth
+      if (["ADMIN", "SUPER_ADMIN", "SUPREME_ADMIN"].includes(existingEmailUser.role)) {
+        return res.status(403).json({
+          success: false,
+          message: "Administrative accounts cannot be accessed via Google sign-in. Please use your administrator password.",
+        });
+      }
+
+      if (existingEmailUser.status === "INACTIVE") {
+        return res.status(403).json({
+          success: false,
+          message: "Your account has been deactivated. Please contact platform administration.",
+        });
+      }
+
+      // For standard public USER role, link the verified Google account safely without altering passwordHash or role
+      existingEmailUser.googleId = googleId;
+      existingEmailUser.isEmailVerified = true;
+      if (avatar && existingEmailUser.avatar !== avatar) {
+        existingEmailUser.avatar = avatar;
+      }
+      await existingEmailUser.save();
+
+      const token = generateToken(existingEmailUser._id, existingEmailUser.role);
+      return res.status(200).json({
+        success: true,
+        message: "Google account successfully linked",
+        token,
+        user: {
+          _id: existingEmailUser._id,
+          name: existingEmailUser.name,
+          email: existingEmailUser.email,
+          role: existingEmailUser.role,
+          status: existingEmailUser.status,
+          phone: existingEmailUser.phone,
+          avatar: existingEmailUser.avatar,
+        },
+      });
+    }
+
+    // 3. New User Registration via Google OAuth
+    const settings = await PlatformSettings.findOne({});
+    if (settings && settings.allowSelfRegistration === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Public self-registration is currently disabled by platform administration.",
+      });
+    }
+
+    // Create new customer account: strictly USER role, no tenant escalation
+    try {
+      user = await User.create({
+        name,
+        email: emailNormalized,
+        googleId,
+        authProvider: "google",
+        isEmailVerified: true,
+        role: "USER",
+        status: "ACTIVE",
+        avatar,
+      });
+    } catch (createErr) {
+      // Handle potential race condition / duplicate key gracefully
+      if (createErr.code === 11000) {
+        user = await User.findOne({ $or: [{ googleId }, { email: emailNormalized }] });
+        if (!user) {
+          throw createErr;
+        }
+      } else {
+        throw createErr;
+      }
+    }
+
+    const token = generateToken(user._id, user.role);
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful with Google",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        phone: user.phone,
+        avatar: user.avatar,
+      },
     });
   } catch (error) {
     next(error);

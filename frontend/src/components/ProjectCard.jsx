@@ -133,7 +133,7 @@ function Plotcard({
             <span>Plots From</span>
 
             <strong>
-              ₹{plotPrice}
+              {plotPrice ? `₹${String(plotPrice).replace(/^[₹\s]+/, "")}` : ""}
             </strong>
           </div>
 

@@ -57,12 +57,12 @@ function Footer() {
                         Dindigul, Tamil Nadu
                     </p>
 
-                    <a href="callto:+91 88698 34824">
+                    <a href="tel:+918869834824">
                         <Phone />
                         +91 88698 34824
                     </a>
                     <p>
-                        <a href="mailto:info@dreamcity.in">
+                        <a href="mailto:info@os2plotpro.in">
                             <Mail />
                             info@os2plotpro.in
                         </a>

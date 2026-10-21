@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
@@ -205,8 +205,10 @@ function PlotDetails() {
     const [isSharing, setIsSharing] = useState(false);
     const [isShared, setIsShared] = useState(false);
 
+    const plotIdKey = plot?._id || plot?.customId || plot?.id;
+
     useEffect(() => {
-        if (!isAuthenticated || !plot) return;
+        if (!isAuthenticated || !plotIdKey) return;
         let isMounted = true;
         userApi.getWishlist()
             .then((res) => {
@@ -221,7 +223,7 @@ function PlotDetails() {
         return () => {
             isMounted = false;
         };
-    }, [isAuthenticated, plot]);
+    }, [isAuthenticated, plotIdKey]);
 
     const triggerHeartAnimation = () => {
         setIsHeartPopping(true);
@@ -295,8 +297,14 @@ function PlotDetails() {
         }
     };
 
+    const animatedPlotIdRef = useRef(null);
+
     useEffect(() => {
-        if (!plot) return;
+        if (!plot || !plotIdKey) return;
+
+        // Prevent re-running entrance animations on background data syncs for the same plot
+        if (animatedPlotIdRef.current === plotIdKey) return;
+        animatedPlotIdRef.current = plotIdKey;
 
         const ctx = gsap.context(() => {
 
@@ -360,7 +368,7 @@ function PlotDetails() {
 
         return () => ctx.revert();
 
-    }, [plot]);
+    }, [plotIdKey, plot]);
 
     if (!plot || !project) {
         if (isLoadingProjects || isFetchingPlots || isFetchingDirectPlot) {

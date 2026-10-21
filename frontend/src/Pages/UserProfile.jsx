@@ -21,6 +21,7 @@ import {
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ConfirmationModal from "../admin/components/ConfirmationModal";
+import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 import { useProjects, getProjectRouteSlug, findProjectByIdentifier } from "../context/ProjectContext";
 import { userApi } from "../services/api";
@@ -267,11 +268,11 @@ export default function UserProfile() {
         <div className="user-profile-header-card">
           <div className="user-profile-info-left">
             <div className="user-profile-avatar-circle">
-              {authUser?.avatar ? (
-                <img src={authUser.avatar} alt={authUser.name} />
-              ) : (
-                authUser?.name ? authUser.name.charAt(0).toUpperCase() : "U"
-              )}
+              <UserAvatar
+                src={authUser?.avatar}
+                name={authUser?.name}
+                alt={authUser?.name || "User profile photo"}
+              />
             </div>
 
             <div className="user-profile-meta">

@@ -60,10 +60,10 @@ function Projects() {
 
     const priceRange = useMemo(() => {
         const prices = projects.map(p => p.priceLakhs).filter(Boolean);
-        if (prices.length === 0) return { min: 0, max: 50 };
+        if (prices.length === 0) return { min: 1, max: 50 };
         return {
-            min: Math.min(...prices),
-            max: Math.max(...prices)
+            min: Math.max(1, Math.min(...prices)),
+            max: Math.max(1, Math.max(...prices))
         };
     }, [projects]);
 
@@ -71,14 +71,14 @@ function Projects() {
         category: "All Projects",
         locations: [],
         plotTypes: [],
-        priceRange: { min: 0, max: 100 },
+        priceRange: { min: 1, max: 100 },
     });
 
     const [draftFilters, setDraftFilters] = useState({
         category: "All Projects",
         locations: [],
         plotTypes: [],
-        priceRange: { min: 0, max: 100 },
+        priceRange: { min: 1, max: 100 },
     });
 
     const [mobileFilterOpen, setMobileFilterOpen] =
@@ -361,8 +361,17 @@ function Projects() {
 
     const priceRangeMatch = (project, range) => {
         // Use priceLakhs if available, otherwise parse from plotPrice
-        const priceLakhs = project.priceLakhs ?? parsePriceLakhs(project.plotPrice);
-        if (!priceLakhs) return true; // Include project if price can't be determined
+        const raw = project.priceLakhs !== undefined && project.priceLakhs !== null && !isNaN(project.priceLakhs)
+            ? Number(project.priceLakhs)
+            : parsePriceLakhs(project.plotPrice);
+        const priceLakhs = (!isNaN(raw) && raw > 0) ? raw : parsePriceLakhs(project.plotPrice);
+
+        // If price could not be determined
+        if (!priceLakhs || isNaN(priceLakhs) || priceLakhs <= 0) {
+            // Only include if no specific price filter has been actively set
+            return range.min <= priceRange.min && range.max >= priceRange.max;
+        }
+
         return priceLakhs >= range.min && priceLakhs <= range.max;
     };
 

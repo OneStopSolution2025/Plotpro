@@ -150,6 +150,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.googleLogin(credential);
+      if (response?.success && response.token) {
+        setAuthToken(response.token);
+        setTokenState(response.token);
+        setUser(response.user);
+        return { success: true, user: response.user };
+      }
+      throw new Error(response?.message || "Google authentication failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     setAuthToken(null);
     setTokenState(null);
@@ -181,6 +197,7 @@ export const AuthProvider = ({ children }) => {
     reloadSettings: fetchPlatformSettings,
     login,
     signup,
+    loginWithGoogle,
     logout,
     setUser,
   };

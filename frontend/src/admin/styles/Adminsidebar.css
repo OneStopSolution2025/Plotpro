@@ -27,7 +27,18 @@
     }
 }
 
-.admin-profile-avatar svg{
+.admin-profile-avatar-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.admin-profile-avatar svg,
+.admin-profile-avatar-img svg {
+    display: block;
+    margin: auto;
     font-size: 15px !important;
 }
 

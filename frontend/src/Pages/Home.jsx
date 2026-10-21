@@ -74,21 +74,15 @@ const Home = () => {
                     scrollTrigger: {
                         trigger: section,
 
-                        start: "top 12%",
+                        start: "top top",
 
-                        /*
-                         * THIS IS THE IMPORTANT PART
-                         * Gives the animation a long scroll distance.
-                         */
-                        end: "+=2800",
+                        end: "+=1800",
 
                         scrub: 1,
 
                         pin: true,
 
                         pinSpacing: true,
-
-                        anticipatePin: 1,
 
                         invalidateOnRefresh: true,
 
@@ -171,24 +165,6 @@ const Home = () => {
                     );
 
 
-                    /* ---------------------------------------------
-                       NUMBER
-                    --------------------------------------------- */
-
-                    timeline.fromTo(
-                        step.querySelector(".process-number"),
-                        {
-                            opacity: 0,
-                            scale: 0.6
-                        },
-                        {
-                            opacity: 1,
-                            scale: 1,
-                            duration: 0.35,
-                            ease: "back.out(1.7)"
-                        },
-                        "-=0.45"
-                    );
 
 
                     /* ---------------------------------------------
@@ -250,17 +226,15 @@ const Home = () => {
                     scrollTrigger: {
                         trigger: section,
 
-                        start: "top 10%",
+                        start: "top top",
 
-                        end: "+=2200",
+                        end: "+=1600",
 
                         scrub: 1,
 
                         pin: true,
 
                         pinSpacing: true,
-
-                        anticipatePin: 1,
 
                         invalidateOnRefresh: true,
 
@@ -348,8 +322,14 @@ const Home = () => {
 
         }, section);
 
+        const timer = setTimeout(() => {
+            ScrollTrigger.refresh();
+        }, 500);
+
+        window.addEventListener("load", () => ScrollTrigger.refresh());
 
         return () => {
+            clearTimeout(timer);
             ctx.revert();
         };
 

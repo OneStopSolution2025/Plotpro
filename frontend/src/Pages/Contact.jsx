@@ -11,16 +11,16 @@ const INFO = [
     {
         icon: "mail",
         label: "Support email",
-        value: "dreamcitysupport@example.com",
+        value: "info@os2plotpro.in",
         action: "Email Us",
-        href: "mailto:support@example.com",
+        href: "mailto:info@os2plotpro.in",
     },
     {
         icon: "phone",
         label: "Phone number",
-        value: "+11111 11111",
+        value: "+91 88698 34824",
         action: "Call Us",
-        href: "tel:+11111 11111",
+        href: "tel:+918869834824",
     },
     {
         icon: "pin",

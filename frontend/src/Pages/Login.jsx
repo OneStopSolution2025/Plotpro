@@ -9,6 +9,7 @@ import {
     EyeOff,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import "../css/Login.css";
 import loginImage from "../assets/bg-image.jpg";
@@ -19,7 +20,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login, isAuthenticated, user, isMaintenanceMode } = useAuth();
+    const { login, loginWithGoogle, isAuthenticated, user, isMaintenanceMode } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -86,6 +87,37 @@ const Login = () => {
         }
     };
 
+    const handleGoogleSuccess = async (credential) => {
+        setError("");
+        setIsSubmitting(true);
+        try {
+            const result = await loginWithGoogle(credential);
+            const userRole = result?.user?.role;
+            const fromPath = location.state?.from?.pathname;
+
+            let redirectPath = "/";
+            if (userRole === "SUPREME_ADMIN") {
+                redirectPath = (fromPath && fromPath.startsWith("/supreme-admin")) ? fromPath : "/supreme-admin";
+            } else if (userRole === "SUPER_ADMIN") {
+                redirectPath = (fromPath && fromPath.startsWith("/super-admin")) ? fromPath : "/super-admin";
+            } else if (userRole === "ADMIN") {
+                redirectPath = (fromPath && fromPath.startsWith("/admin")) ? fromPath : "/admin";
+            } else {
+                if (isMaintenanceMode) {
+                    setError("Public access is paused during scheduled maintenance. Only administrative accounts are permitted.");
+                    return;
+                }
+                redirectPath = (fromPath && !fromPath.startsWith("/admin") && !fromPath.startsWith("/super-admin") && !fromPath.startsWith("/supreme-admin")) ? fromPath : "/";
+            }
+
+            navigate(redirectPath, { replace: true });
+        } catch (err) {
+            setError(err.message || "Google sign-in failed. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <main className="login-page">
 
@@ -115,14 +147,11 @@ const Login = () => {
                             )}
                         </div>
 
-
-                        <button
-                            type="button"
-                            className="login-google-btn"
-                        >
-                            <span className="login-google-icon">G</span>
-                            <span>Continue with Google</span>
-                        </button>
+                        <GoogleAuthButton
+                            onSuccess={handleGoogleSuccess}
+                            onError={(msg) => setError(msg)}
+                            isSubmitting={isSubmitting}
+                        />
 
                         {/* Divider */}
                         <div className="login-divider">

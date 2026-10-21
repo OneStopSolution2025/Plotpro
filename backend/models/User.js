@@ -18,8 +18,23 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: [true, "Password hash is required"],
+      required: false, // Optional for OAuth accounts (e.g., Google)
       select: false, // Never return password hash in queries unless explicitly selected
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
     },
     role: {
       type: String,
@@ -87,8 +102,10 @@ const userSchema = new mongoose.Schema(
 
 /**
  * Compare plain-text password with stored bcrypt hash.
+ * Safely returns false if the user account has no passwordHash (e.g. Google OAuth only).
  */
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.passwordHash) return false;
   return await bcrypt.compare(enteredPassword, this.passwordHash);
 };
 

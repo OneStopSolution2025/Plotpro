@@ -22,6 +22,7 @@ import { useAdminProfile } from "../context/AdminProfileContext";
 import { useNotifications } from "../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import { useAdmins } from "../context/AdminContext";
+import UserAvatar from "../../components/UserAvatar";
 
 import "../styles/Adminsidebar.css";
 
@@ -479,15 +480,13 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
           title="View profile"
         >
           <div className="admin-profile-avatar">
-            {profile.avatar ? (
-              <img
-                src={profile.avatar}
-                alt=""
-                className="admin-profile-avatar-img"
-              />
-            ) : (
-              <FaUser />
-            )}
+            <UserAvatar
+              src={profile.avatar}
+              name={profile.name}
+              alt={profile.name || "Admin avatar"}
+              fallbackIcon={<FaUser />}
+              className="admin-profile-avatar-img"
+            />
           </div>
 
           <div className="admin-profile-info">

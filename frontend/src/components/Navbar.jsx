@@ -6,6 +6,7 @@ import { ArrowRight, LogOut} from 'lucide-react';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import plotproLogo from "../assets/Logo/plotpro-logo12.png";
+import UserAvatar from "./UserAvatar";
 
 function MainNavbar() {
     const { user, isAuthenticated, isAdmin, isSuperAdmin, logout } = useAuth();
@@ -84,11 +85,11 @@ function MainNavbar() {
                             <div className="nav-user-menu">
                                 <Link to="/profile" className="nav-user-profile-btn" title="My Profile & Wishlist">
                                     <span className="nav-user-avatar">
-                                        {user?.avatar ? (
-                                            <img src={user.avatar} alt={user.name} />
-                                        ) : (
-                                            user?.name ? user.name.charAt(0).toUpperCase() : "U"
-                                        )}
+                                        <UserAvatar
+                                            src={user?.avatar}
+                                            name={user?.name}
+                                            alt={user?.name || "User profile photo"}
+                                        />
                                     </span>
                                     <span className="nav-user-name">{user?.name?.split(" ")[0] || "Profile"}</span>
                                 </Link>

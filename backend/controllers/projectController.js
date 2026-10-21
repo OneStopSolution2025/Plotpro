@@ -38,12 +38,24 @@ const ALLOWED_PROJECT_FIELDS = [
 const parsePriceLakhs = (plotPrice) => {
   if (!plotPrice || typeof plotPrice !== "string") return 0;
   const cleaned = plotPrice.replace(/[₹,]/g, "").trim();
-  const lakhMatch = cleaned.match(/([\d.]+)\s*[Ll]akh/i);
-  if (lakhMatch) return parseFloat(lakhMatch[1]);
+  const crMatch = cleaned.match(/([\d.]+)\s*(?:cr|crore|crores)\b/i);
+  if (crMatch) {
+    const val = parseFloat(crMatch[1]);
+    return isNaN(val) ? 0 : val * 100;
+  }
+  const lakhMatch = cleaned.match(/([\d.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
+  if (lakhMatch) {
+    const val = parseFloat(lakhMatch[1]);
+    return isNaN(val) ? 0 : val;
+  }
   const numMatch = cleaned.match(/^([\d.]+)$/);
   if (numMatch) {
     const num = parseFloat(numMatch[1]);
-    return num >= 1000 ? num / 100000 : num;
+    if (isNaN(num)) return 0;
+    if (num >= 100000) {
+      return num / 100000;
+    }
+    return num;
   }
   return 0;
 };

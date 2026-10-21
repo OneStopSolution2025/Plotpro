@@ -95,6 +95,7 @@ export const api = {
 export const authApi = {
   login: (credentials) => api.post("/auth/login", credentials),
   register: (userData) => api.post("/auth/register", userData),
+  googleLogin: (credential) => api.post("/auth/google", { credential }),
   getMe: () => api.get("/auth/me"),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   verifyOtp: (email, otp) => api.post("/auth/verify-otp", { email, otp }),

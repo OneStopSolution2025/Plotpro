@@ -1146,8 +1146,20 @@ export const createProjectSuperAdmin = async (req, res, next) => {
     // Parse priceLakhs if not provided
     let parsedPriceLakhs = priceLakhs;
     if (!parsedPriceLakhs && plotPrice) {
-      const match = plotPrice.replace(/[₹,]/g, "").match(/([\d.]+)\s*[Ll]akh/i);
-      parsedPriceLakhs = match ? parseFloat(match[1]) : 0;
+      const cleaned = plotPrice.replace(/[₹,]/g, "").trim();
+      const crMatch = cleaned.match(/([\d.]+)\s*(?:cr|crore|crores)\b/i);
+      const lakhMatch = cleaned.match(/([\d.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
+      const numMatch = cleaned.match(/^([\d.]+)$/);
+      if (crMatch) {
+        parsedPriceLakhs = parseFloat(crMatch[1]) * 100;
+      } else if (lakhMatch) {
+        parsedPriceLakhs = parseFloat(lakhMatch[1]);
+      } else if (numMatch) {
+        const num = parseFloat(numMatch[1]);
+        parsedPriceLakhs = num >= 100000 ? num / 100000 : num;
+      } else {
+        parsedPriceLakhs = 0;
+      }
     }
 
     const newProject = await Project.create({

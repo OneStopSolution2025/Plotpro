@@ -33,7 +33,7 @@ import {
 
 import entrance from "../assets/Projects/Greenvalley/Entrance.png";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
@@ -114,13 +114,13 @@ function ProjectDetails() {
     }, [matchedProject, id]);
 
     const project = matchedProject || fetchedProject;
+    const projectIdKey = project?._id || project?.customId || project?.id;
 
     useEffect(() => {
-        const targetId = project?.customId || project?.id || project?._id;
-        if (targetId) {
-            fetchPlotsForProject(targetId);
+        if (projectIdKey) {
+            fetchPlotsForProject(projectIdKey);
         }
-    }, [project?.customId, project?.id, project?._id, fetchPlotsForProject]);
+    }, [projectIdKey, fetchPlotsForProject]);
 
     const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
     const rawProjectImages = project?.images && project.images.length > 0
@@ -142,7 +142,7 @@ function ProjectDetails() {
     const [isShared, setIsShared] = useState(false);
 
     useEffect(() => {
-        if (!isAuthenticated || !project) return;
+        if (!isAuthenticated || !projectIdKey) return;
         let isMounted = true;
         userApi.getWishlist()
             .then((res) => {
@@ -157,7 +157,7 @@ function ProjectDetails() {
         return () => {
             isMounted = false;
         };
-    }, [isAuthenticated, project]);
+    }, [isAuthenticated, projectIdKey]);
 
     const triggerHeartAnimation = () => {
         setIsHeartPopping(true);
@@ -230,8 +230,14 @@ function ProjectDetails() {
         }
     };
 
+    const animatedProjectIdRef = useRef(null);
+
     useEffect(() => {
-        if (!project) return;
+        if (!project || !projectIdKey) return;
+
+        // Prevent re-running entrance animations on background data syncs for the same project
+        if (animatedProjectIdRef.current === projectIdKey) return;
+        animatedProjectIdRef.current = projectIdKey;
 
         const ctx = gsap.context(() => {
             // 1. Gallery and Hero details entrance
@@ -316,7 +322,7 @@ function ProjectDetails() {
         });
 
         return () => ctx.revert();
-    }, [project]);
+    }, [projectIdKey, project]);
 
     if (!project) {
         if (isLoading || isFetchingDirect) {
@@ -502,7 +508,7 @@ function ProjectDetails() {
 
                             <div className="plot-total-price">
                                 <span>PRICE STARTING FROM</span>
-                                <strong>₹ {project.plotPrice} <small style={{ fontSize: "16px", fontWeight: "500", opacity: 0.9, letterSpacing: "0.5px" }}>/ Plot</small></strong>
+                                <strong>₹ {project.plotPrice ? String(project.plotPrice).replace(/^[₹\s]+/, "") : ""} <small style={{ fontSize: "16px", fontWeight: "500", opacity: 0.9, letterSpacing: "0.5px" }}>/ Plot</small></strong>
                             </div>
 
                             <div className="plot-hero-actions">

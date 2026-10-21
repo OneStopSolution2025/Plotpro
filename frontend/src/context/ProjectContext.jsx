@@ -25,17 +25,30 @@ export const parsePriceLakhs = (plotPrice) => {
 
   const cleaned = plotPrice.replace(/[₹,]/g, "").trim();
 
-  // Match "X.X Lakh" or "X Lakh" (case insensitive)
-  const lakhMatch = cleaned.match(/([\d.]+)\s*[Ll]akh/);
-  if (lakhMatch) {
-    return parseFloat(lakhMatch[1]);
+  // Match "X.X Cr" or "X Crore" (case insensitive) -> 1 Cr = 100 Lakhs
+  const crMatch = cleaned.match(/([\d.]+)\s*(?:cr|crore|crores)\b/i);
+  if (crMatch) {
+    const val = parseFloat(crMatch[1]);
+    return isNaN(val) ? 0 : val * 100;
   }
 
-  // Match plain number (assume it's in lakhs if reasonable, otherwise rupees)
+  // Match "X.X Lakh", "X Lakhs", "X L", "X Lac", "X Lacs" (case insensitive)
+  const lakhMatch = cleaned.match(/([\d.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
+  if (lakhMatch) {
+    const val = parseFloat(lakhMatch[1]);
+    return isNaN(val) ? 0 : val;
+  }
+
+  // Match plain number (entered in lakhs in PlotPro admin fields, e.g. 8.5, 12, 1000)
+  // Only convert if explicitly full INR denomination >= 10,000,000 (1 Cr) or 100,000 (1 Lakh)
   const numMatch = cleaned.match(/^([\d.]+)$/);
   if (numMatch) {
     const num = parseFloat(numMatch[1]);
-    return num >= 1000 ? num / 100000 : num;
+    if (isNaN(num)) return 0;
+    if (num >= 100000) {
+      return num / 100000;
+    }
+    return num;
   }
 
   return 0;
@@ -252,7 +265,31 @@ export const ProjectProvider = ({ children }) => {
       const res = await publicApi.getProjects();
       if (res?.success && Array.isArray(res.data)) {
         const normalized = res.data.map(normalizeProject);
-        setPublicProjects(normalized);
+        if (isSilent) {
+          setPublicProjects((prev) => {
+            if (prev.length === normalized.length) {
+              const isUnchanged = prev.every((p, idx) => {
+                const n = normalized[idx];
+                return (
+                  String(p.id) === String(n.id) &&
+                  String(p.customId) === String(n.customId) &&
+                  p.title === n.title &&
+                  p.price === n.price &&
+                  p.status === n.status &&
+                  p.totalPlots === n.totalPlots &&
+                  p.availablePlots === n.availablePlots &&
+                  p.reservedPlots === n.reservedPlots &&
+                  p.soldPlots === n.soldPlots &&
+                  p.approvalStatus === n.approvalStatus
+                );
+              });
+              if (isUnchanged) return prev;
+            }
+            return normalized;
+          });
+        } else {
+          setPublicProjects(normalized);
+        }
         return normalized;
       }
       if (!isSilent) setPublicProjects([]);

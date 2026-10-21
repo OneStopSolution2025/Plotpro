@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import "../css/Signup.css";
 import signupImage from "../assets/bg-image.jpg";
@@ -18,7 +19,7 @@ const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { signup } = useAuth();
+    const { signup, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -57,6 +58,28 @@ const Signup = () => {
         }
     };
 
+    const handleGoogleSuccess = async (credential) => {
+        setError("");
+        setIsSubmitting(true);
+        try {
+            const result = await loginWithGoogle(credential);
+            const userRole = result?.user?.role;
+            if (userRole === "SUPREME_ADMIN") {
+                navigate("/supreme-admin", { replace: true });
+            } else if (userRole === "SUPER_ADMIN") {
+                navigate("/super-admin", { replace: true });
+            } else if (userRole === "ADMIN") {
+                navigate("/admin", { replace: true });
+            } else {
+                navigate("/", { replace: true });
+            }
+        } catch (err) {
+            setError(err.message || "Google registration failed. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <main className="auth-page">
 
@@ -77,10 +100,11 @@ const Signup = () => {
                             </h1>
                         </div>
 
-                        <button type="button" className="google-btn">
-                            <span className="google-icon">G</span>
-                            <span>Continue with Google</span>
-                        </button>
+                        <GoogleAuthButton
+                            onSuccess={handleGoogleSuccess}
+                            onError={(msg) => setError(msg)}
+                            isSubmitting={isSubmitting}
+                        />
 
                         <div className="auth-divider">
                             <span></span>
