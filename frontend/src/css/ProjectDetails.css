@@ -1115,12 +1115,37 @@
 
 .plot-filters>button {
     background-color: rgba(0, 0, 0, 0.03);
-    padding: 7px 10px;
-    font-size: 15px;
-    border: none;
+    padding: 7px 14px;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
     border-radius: 20px;
     color: rgb(0, 0, 0);
+    cursor: pointer;
     transition: 0.25s;
+}
+
+.plot-filters>button.active-filter {
+    background-color: #0f172a;
+    color: white;
+    border-color: #0f172a;
+}
+
+.plot-filters>button.active-filter-available {
+    background-color: #10b981;
+    color: white !important;
+    border-color: #059669;
+}
+
+.plot-filters>button.active-filter-reserved {
+    background-color: #f59e0b;
+    color: white !important;
+    border-color: #d97706;
+}
+
+.plot-filters>button.active-filter-sold {
+    background-color: #ef4444;
+    color: white !important;
+    border-color: #dc2626;
 }
 
 .plot-filters>button:hover {

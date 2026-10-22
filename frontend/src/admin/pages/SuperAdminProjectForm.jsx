@@ -8,6 +8,7 @@ import {
   FaExclamationCircle,
   FaCheckCircle,
   FaUserCheck,
+  FaMapMarkedAlt,
 } from "react-icons/fa";
 import {
   commonBenefits,
@@ -23,6 +24,7 @@ import { useAdmins } from "../context/AdminContext";
 import { superAdminApi } from "../../services/api";
 import { useProjects } from "../../context/ProjectContext";
 import CustomDropdown from "../components/CustomDropdown";
+import LayoutEditorModal from "../components/LayoutEditorModal";
 import "../styles/admin-project-form.css";
 import "../styles/super-admin.css";
 
@@ -95,6 +97,7 @@ const SuperAdminProjectForm = () => {
   const [message, setMessage] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
   const [selectedAdminId, setSelectedAdminId] = useState("");
+  const [showLayoutEditor, setShowLayoutEditor] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -117,6 +120,7 @@ const SuperAdminProjectForm = () => {
     image: "",
     defaultPlotImage: "",
     images: [],
+    layout: { imageUrl: "", version: 1, blocks: [], regions: [] },
     about: { description: "", additionalDescription: "" },
     locationConnectivity: [{ name: "", distance: "" }],
     benefits: DEFAULT_NEW_PROJECT_BENEFITS,
@@ -244,6 +248,7 @@ const SuperAdminProjectForm = () => {
       benefits: form.benefits,
       highlights: form.highlights,
       amenities: form.amenities,
+      layout: form.layout,
       // Optional admin assignment
       adminId: selectedAdminId || null,
     };
@@ -647,6 +652,79 @@ const SuperAdminProjectForm = () => {
         </section>
 
         {/* ==============================
+            INTERACTIVE PROJECT LAYOUT MAP
+        ============================== */}
+        <section className="form-section">
+          <div className="form-section-header">
+            <span className="section-step">LAYOUT</span>
+            <h2>Interactive Project Layout Map (Cloudinary Supported)</h2>
+          </div>
+
+          <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: "1rem" }}>
+            Upload or configure a high-resolution plotted layout plan diagram. You can visually map and draw polygon boundaries for every numbered plot to provide visitors an interactive map experience with live availability synchronization.
+          </p>
+
+          <label className="full-width" style={{ marginBottom: "1rem" }}>
+            Layout Image Diagram URL (Cloudinary or hosted persistent URL)
+            <input
+              type="url"
+              placeholder="e.g. https://res.cloudinary.com/.../layout.png"
+              value={form.layout?.imageUrl || ""}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  layout: { ...(prev.layout || {}), imageUrl: e.target.value },
+                }))
+              }
+            />
+          </label>
+
+          {form.layout?.imageUrl && (
+            <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+              <img
+                src={form.layout.imageUrl}
+                alt="Layout preview"
+                style={{ width: "240px", height: "140px", objectFit: "contain", borderRadius: "8px", border: "1px solid #ddd", background: "#f8fafc" }}
+                onError={(e) => { e.target.style.display = "none"; }}
+                onLoad={(e) => { e.target.style.display = "block"; }}
+              />
+              <div>
+                <strong style={{ display: "block", fontSize: "0.9rem", color: "#1e293b" }}>
+                  Layout Diagram Ready
+                </strong>
+                <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                  Configured: {form.layout?.regions?.length || 0} plot boundary regions mapped
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: "0.5rem" }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowLayoutEditor(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.5rem 1rem",
+                background: "#0f172a",
+                color: "#f8fafc",
+                borderRadius: "8px",
+                border: "none",
+                fontWeight: 600,
+                fontSize: "0.88rem",
+                cursor: "pointer",
+              }}
+            >
+              <FaMapMarkedAlt />
+              <span>Open Interactive Layout Boundary Editor</span>
+            </button>
+          </div>
+        </section>
+
+        {/* ==============================
             PROJECT BENEFITS (WHY CHOOSE US)
         ============================== */}
         <section className="form-section">
@@ -833,6 +911,32 @@ const SuperAdminProjectForm = () => {
           </button>
         </div>
       </form>
+
+      {/* Interactive Layout Boundary Editor Modal */}
+      {showLayoutEditor && (
+        <LayoutEditorModal
+          project={{
+            title: form.title || "New Project",
+            layout: form.layout || {},
+          }}
+          plots={Array.from({ length: Number(form.totalPlots) || 5 }).map((_, i) => ({
+            _id: `temp_plot_${i + 1}`,
+            id: `temp_plot_${i + 1}`,
+            plotNumber: String(i + 1),
+            size: form.plotSizes ? form.plotSizes.split("–")[0].trim() : "1,200 sq.ft",
+            facing: "East",
+            price: form.plotPrice ? `₹${form.plotPrice} Lakh` : "₹12 Lakh",
+            status: i < (Number(form.availablePlots) || 3) ? "Available" : i < (Number(form.availablePlots) || 3) + (Number(form.reservedPlots) || 1) ? "Reserved" : "Sold",
+          }))}
+          onClose={() => setShowLayoutEditor(false)}
+          onSaveSuccess={(savedLayout) => {
+            setForm((prev) => ({
+              ...prev,
+              layout: savedLayout,
+            }));
+          }}
+        />
+      )}
     </div>
   );
 };

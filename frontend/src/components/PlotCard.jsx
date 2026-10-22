@@ -37,6 +37,9 @@ function PlotCard({
         resolvedProject?.image ||
         DEFAULT_PLOT_IMAGE;
 
+    const status = (plot?.status || "Available").trim();
+    const statusLower = status.toLowerCase();
+
     return (
         <article className="plot-card">
 
@@ -54,6 +57,12 @@ function PlotCard({
                 />
 
                 <div className="plot-image-overlay"></div>
+
+                {/* Status Indicator Badge */}
+                <div className={`plot-card-status-badge status-${statusLower}`}>
+                    <span className="status-dot"></span>
+                    <span>{status}</span>
+                </div>
 
             </div>
 

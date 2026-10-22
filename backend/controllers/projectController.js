@@ -30,6 +30,7 @@ const ALLOWED_PROJECT_FIELDS = [
   "highlights",
   "amenities",
   "locationConnectivity",
+  "layout",
 ];
 
 /**

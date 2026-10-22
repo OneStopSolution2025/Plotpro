@@ -161,6 +161,10 @@ export const superAdminApi = {
   getProfile: () => api.get("/super-admin/profile"),
   updateProfile: (data) => api.put("/super-admin/profile", data),
   changePassword: (data) => api.put("/super-admin/profile/password", data),
+  uploadLayoutImage: (projectId, data) => api.post(`/super-admin/projects/${projectId}/layout-image`, data),
+  getProjectLayout: (projectId) => api.get(`/super-admin/projects/${projectId}/layout`),
+  saveProjectLayout: (projectId, layoutData) => api.put(`/super-admin/projects/${projectId}/layout`, { layout: layoutData }),
+  detectLayoutCandidates: (projectId, data = {}) => api.post(`/super-admin/projects/${projectId || "new"}/layout/detect`, data),
 };
 
 // ==================== SUPREME ADMIN APIs ====================

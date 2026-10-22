@@ -20,10 +20,12 @@ import {
   FaExclamationTriangle,
   FaCheckCircle,
   FaPaperPlane,
+  FaMapMarkedAlt,
 } from "react-icons/fa";
 
 import ConfirmationModal from "../components/ConfirmationModal";
 import CustomDropdown from "../components/CustomDropdown";
+import LayoutEditorModal from "../components/LayoutEditorModal";
 import "../styles/projectplots.css";
 
 const ProjectPlots = () => {
@@ -51,6 +53,7 @@ const ProjectPlots = () => {
   const [plotsError, setPlotsError] = useState(null);
   const [resubmitting, setResubmitting] = useState(false);
   const [resubmitSuccess, setResubmitSuccess] = useState(false);
+  const [showLayoutEditor, setShowLayoutEditor] = useState(false);
 
   // Search input state.
   const [search, setSearch] = useState("");
@@ -580,7 +583,13 @@ const ProjectPlots = () => {
           </div>
 
           <div className="header-actions">
-
+            <button
+              className="manage-btn"
+              onClick={() => setShowLayoutEditor(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <FaMapMarkedAlt /> Interactive Layout Map
+            </button>
 
             <button
               className="manage-btn"
@@ -1191,6 +1200,25 @@ const ProjectPlots = () => {
         onConfirm={() => setAlertModal(null)}
         onCancel={() => setAlertModal(null)}
       />
+
+      {/* INTERACTIVE LAYOUT BOUNDARY EDITOR MODAL */}
+      {showLayoutEditor && project && (
+        <LayoutEditorModal
+          project={project}
+          plots={plots.filter((p) =>
+            String(p.projectId) === String(project.id) ||
+            String(p.projectCustomId) === String(project.customId) ||
+            String(p.projectMongoId) === String(project._id) ||
+            String(p.projectId) === String(project._id)
+          )}
+          onClose={() => setShowLayoutEditor(false)}
+          onSaveSuccess={async (savedLayout) => {
+            if (!isSuperAdminRole && updateProject) {
+              await updateProject(project.id || project._id, { layout: savedLayout }).catch(() => {});
+            }
+          }}
+        />
+      )}
 
     </>
   );

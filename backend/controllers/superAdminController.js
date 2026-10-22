@@ -8,6 +8,8 @@ import Subscription from "../models/Subscription.js";
 import Plan from "../models/Plan.js";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { createNotification } from "./notificationController.js";
+import { storageService } from "../services/storageService.js";
+import { vectorizationService } from "../services/vectorizationService.js";
 
 /**
  * Helper to resolve tenant admins, projects, and plot IDs for a Super Admin
@@ -1101,6 +1103,7 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       about, benefits, highlights, amenities, locationConnectivity,
       availablePlots: availableCount, reservedPlots: reservedCount,
       soldPlots: soldCount, adminId: assignedAdminId,
+      layout,
     } = req.body;
 
     if (!title || !location || !plotPrice) {
@@ -1236,6 +1239,60 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       await Plot.insertMany(plotsToInsert);
     }
 
+    // Persist layout subdocument and map regions to newly generated plots if provided
+    if (
+      layout &&
+      typeof layout === "object" &&
+      (layout.imageUrl || (Array.isArray(layout.regions) && layout.regions.length > 0))
+    ) {
+      let validatedRegions = [];
+      const rawRegions = Array.isArray(layout.regions) ? layout.regions : [];
+
+      if (totalCount > 0) {
+        const plotMapByNumber = new Map();
+        const createdPlots = await Plot.find({ projectId: newProject._id });
+        createdPlots.forEach((p) => {
+          plotMapByNumber.set(String(p.plotNumber), p._id);
+        });
+
+        const seenPlotIds = new Set();
+        for (let i = 0; i < rawRegions.length; i++) {
+          const region = rawRegions[i];
+          if (!region) continue;
+
+          const pNum = String(region.plotNumber || (i + 1)).trim();
+          const pId = plotMapByNumber.get(pNum) || region.plotId;
+
+          if (pId && !seenPlotIds.has(String(pId))) {
+            seenPlotIds.add(String(pId));
+            validatedRegions.push({
+              id: region.id || `reg_${Date.now()}_${i}`,
+              plotId: pId,
+              plotNumber: pNum,
+              block: region.block ? String(region.block).trim() : "",
+              shapeType: "polygon",
+              points: Array.isArray(region.points) ? region.points : [],
+              labelPosition: region.labelPosition,
+            });
+          }
+        }
+      } else {
+        validatedRegions = rawRegions;
+      }
+
+      newProject.layout = {
+        imageUrl: layout.imageUrl ? String(layout.imageUrl).trim() : "",
+        provider: layout.provider || "cloudinary",
+        publicId: layout.publicId || "",
+        version: 1,
+        width: Number(layout.width) || 0,
+        height: Number(layout.height) || 0,
+        blocks: Array.isArray(layout.blocks) ? layout.blocks : [],
+        regions: validatedRegions,
+      };
+      await newProject.save();
+    }
+
     res.status(201).json({
       success: true,
       message: assignedAdmin
@@ -1366,6 +1423,432 @@ export const getSubscriptionInfo = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Upload layout image to Cloudinary for a project
+ * @route   POST /api/super-admin/projects/:id/layout-image
+ * @access  Private (Super Admin)
+ */
+export const uploadLayoutImageSuperAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { fileData, mimeType, width, height } = req.body;
+
+    if (!fileData) {
+      return res.status(400).json({
+        success: false,
+        message: "No image file data provided.",
+      });
+    }
+
+    const { tenantAdminIds } = await getTenantContext(req.user._id);
+    let resolvedProjectId = "new_project";
+    let resolvedProject = null;
+
+    if (id && id !== "undefined" && id !== "new") {
+      resolvedProject = await findProjectByIdentifier(id);
+      if (!resolvedProject || resolvedProject.isArchived) {
+        return res.status(404).json({ success: false, message: "Project not found." });
+      }
+
+      if (!isProjectInTenant(resolvedProject, req.user._id, tenantAdminIds)) {
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: You do not have permission to manage layout for this project.",
+        });
+      }
+      resolvedProjectId = resolvedProject._id;
+    }
+
+    // Upload via storageService (strictly Cloudinary; throws 503 if not configured)
+    const uploadResult = await storageService.uploadLayoutImage({
+      fileData,
+      mimeType: mimeType || "image/png",
+      projectId: resolvedProjectId,
+      tenantId: req.user._id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Layout image uploaded successfully to persistent storage.",
+      data: {
+        imageUrl: uploadResult.imageUrl,
+        publicId: uploadResult.publicId,
+        provider: uploadResult.provider,
+        width: uploadResult.width || width || 0,
+        height: uploadResult.height || height || 0,
+        format: uploadResult.format,
+      },
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        code: error.code || "UPLOAD_ERROR",
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get project layout configuration
+ * @route   GET /api/super-admin/projects/:id/layout
+ * @access  Private (Super Admin)
+ */
+export const getProjectLayoutSuperAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { tenantAdminIds } = await getTenantContext(req.user._id);
+    const project = await findProjectByIdentifier(id);
+
+    if (!project || project.isArchived) {
+      return res.status(404).json({ success: false, message: "Project not found." });
+    }
+
+    if (!isProjectInTenant(project, req.user._id, tenantAdminIds)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You do not have permission to access layout for this project.",
+      });
+    }
+
+    // Get project plots for mapping reference
+    const plots = await Plot.find({ projectId: project._id }).sort({ plotNumber: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        layout: project.layout || {
+          referenceImageUrl: "",
+          imageUrl: "",
+          provider: "cloudinary",
+          publicId: "",
+          version: 1,
+          width: 1200,
+          height: 800,
+          compassOrientation: 0,
+          blocks: [],
+          roads: [],
+          commonAreas: [],
+          regions: [],
+        },
+        plots: plots.map((p) => ({
+          _id: p._id,
+          id: p.customId || p._id,
+          plotNumber: p.plotNumber,
+          status: p.status,
+          size: p.size,
+          facing: p.facing,
+          price: p.price,
+        })),
+        storageConfigured: storageService.isConfigured(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Save project layout configuration (regions, coordinates, blocks, roads, common areas)
+ * @route   PUT /api/super-admin/projects/:id/layout
+ * @access  Private (Super Admin)
+ */
+export const saveProjectLayoutSuperAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { layout } = req.body;
+
+    if (!layout || typeof layout !== "object") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid layout data payload.",
+      });
+    }
+
+    const { tenantAdminIds } = await getTenantContext(req.user._id);
+    const project = await findProjectByIdentifier(id);
+
+    if (!project || project.isArchived) {
+      return res.status(404).json({ success: false, message: "Project not found." });
+    }
+
+    if (!isProjectInTenant(project, req.user._id, tenantAdminIds)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You do not have permission to modify layout for this project.",
+      });
+    }
+
+    // 1. Fetch all real plots belonging to this project
+    const projectPlots = await Plot.find({ projectId: project._id });
+    const plotIdMap = new Map();
+    projectPlots.forEach((p) => {
+      plotIdMap.set(String(p._id), p);
+      if (p.customId) plotIdMap.set(String(p.customId), p);
+    });
+
+    const validatedRegions = [];
+    const seenPlotIds = new Set();
+    const rawRegions = Array.isArray(layout.regions) ? layout.regions : [];
+
+    for (let i = 0; i < rawRegions.length; i++) {
+      const region = rawRegions[i];
+      if (!region) continue;
+
+      const rawPlotId = String(region.plotId || "").trim();
+      const matchedPlot = plotIdMap.get(rawPlotId);
+
+      if (!matchedPlot) {
+        return res.status(400).json({
+          success: false,
+          message: `Region at index ${i} references invalid Plot ID "${rawPlotId}". Plot does not belong to this project or tenant.`,
+        });
+      }
+
+      const standardPlotId = String(matchedPlot._id);
+      if (seenPlotIds.has(standardPlotId)) {
+        return res.status(400).json({
+          success: false,
+          message: `Duplicate plot mapping: Plot "${matchedPlot.plotNumber}" is assigned to multiple layout regions.`,
+        });
+      }
+      seenPlotIds.add(standardPlotId);
+
+      // Validate points (must be >= 3 points with x, y in range 0 - 100)
+      if (!Array.isArray(region.points) || region.points.length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: `Region for plot "${matchedPlot.plotNumber}" must contain at least 3 polygon coordinate vertices.`,
+        });
+      }
+
+      const cleanPoints = [];
+      for (const pt of region.points) {
+        const x = Number(pt.x);
+        const y = Number(pt.y);
+        if (isNaN(x) || isNaN(y) || x < 0 || x > 100 || y < 0 || y > 100) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid coordinate [${pt.x}, ${pt.y}] in plot "${matchedPlot.plotNumber}". Normalized coordinates must be between 0 and 100.`,
+          });
+        }
+        cleanPoints.push({ x: Number(x.toFixed(4)), y: Number(y.toFixed(4)) });
+      }
+
+      const rawBlockId = region.blockId ? String(region.blockId).trim() : "";
+      const rawBlockName = region.block ? String(region.block).trim() : "";
+
+      validatedRegions.push({
+        id: region.id || `reg_${Date.now()}_${i}`,
+        plotId: matchedPlot._id,
+        plotNumber: matchedPlot.plotNumber,
+        blockId: rawBlockId,
+        block: rawBlockName,
+        shapeType: "polygon",
+        points: cleanPoints,
+        labelPosition: region.labelPosition && !isNaN(region.labelPosition.x) && !isNaN(region.labelPosition.y)
+          ? { x: Number(region.labelPosition.x), y: Number(region.labelPosition.y) }
+          : undefined,
+      });
+    }
+
+    // 2. Validate roads if present
+    const rawRoads = Array.isArray(layout.roads) ? layout.roads : [];
+    const validatedRoads = [];
+    for (let i = 0; i < rawRoads.length; i++) {
+      const road = rawRoads[i];
+      if (!road || !Array.isArray(road.points) || road.points.length < 2) continue;
+      const cleanPoints = [];
+      let valid = true;
+      for (const pt of road.points) {
+        const x = Number(pt.x);
+        const y = Number(pt.y);
+        if (isNaN(x) || isNaN(y) || x < 0 || x > 100 || y < 0 || y > 100) {
+          valid = false;
+          break;
+        }
+        cleanPoints.push({ x: Number(x.toFixed(4)), y: Number(y.toFixed(4)) });
+      }
+      if (valid && cleanPoints.length >= 2) {
+        validatedRoads.push({
+          id: road.id || `road_${Date.now()}_${i}`,
+          name: road.name ? String(road.name).trim() : `Road ${i + 1}`,
+          widthFt: road.widthFt ? String(road.widthFt).trim() : "30 Ft",
+          points: cleanPoints,
+        });
+      }
+    }
+
+    // 3. Validate common areas (parks, pathways, amenities) if present
+    const rawCommonAreas = Array.isArray(layout.commonAreas) ? layout.commonAreas : [];
+    const validatedCommonAreas = [];
+    for (let i = 0; i < rawCommonAreas.length; i++) {
+      const area = rawCommonAreas[i];
+      if (!area || !Array.isArray(area.points) || area.points.length < 3) continue;
+      const cleanPoints = [];
+      let valid = true;
+      for (const pt of area.points) {
+        const x = Number(pt.x);
+        const y = Number(pt.y);
+        if (isNaN(x) || isNaN(y) || x < 0 || x > 100 || y < 0 || y > 100) {
+          valid = false;
+          break;
+        }
+        cleanPoints.push({ x: Number(x.toFixed(4)), y: Number(y.toFixed(4)) });
+      }
+      if (valid && cleanPoints.length >= 3) {
+        validatedCommonAreas.push({
+          id: area.id || `common_${Date.now()}_${i}`,
+          name: area.name ? String(area.name).trim() : `Park ${i + 1}`,
+          type: area.type ? String(area.type).trim() : "park",
+          points: cleanPoints,
+        });
+      }
+    }
+
+    // Optimistic Concurrency check
+    const currentVersion = (project.layout && project.layout.version) || 0;
+    if (layout.expectedVersion !== undefined && layout.expectedVersion !== null) {
+      if (Number(layout.expectedVersion) !== currentVersion) {
+        return res.status(409).json({
+          success: false,
+          conflict: true,
+          message: `Conflict: Layout has been updated by another user (Server revision ${currentVersion}, client expected ${layout.expectedVersion}). Please reload before saving.`,
+        });
+      }
+    }
+
+    // Preserve previous Cloudinary asset until replacement is confirmed
+    const oldPublicId = project.layout?.publicId;
+    const newPublicId = layout.publicId;
+
+    const referenceImg = layout.referenceImageUrl || layout.imageUrl || project.layout?.referenceImageUrl || project.layout?.imageUrl || "";
+
+    const updatedLayout = {
+      referenceImageUrl: referenceImg ? String(referenceImg).trim() : "",
+      imageUrl: referenceImg ? String(referenceImg).trim() : "",
+      provider: layout.provider || "cloudinary",
+      publicId: newPublicId || oldPublicId || "",
+      version: currentVersion + 1,
+      width: Number(layout.width) || project.layout?.width || 1200,
+      height: Number(layout.height) || project.layout?.height || 800,
+      compassOrientation: Number(layout.compassOrientation) || 0,
+      blocks: Array.isArray(layout.blocks)
+        ? layout.blocks.map((b) => ({
+            id: String(b.id || b.name).trim(),
+            name: String(b.name || b.id).trim(),
+            color: b.color || "#3b82f6",
+            description: b.description ? String(b.description).trim() : "",
+          }))
+        : project.layout?.blocks || [],
+      roads: validatedRoads,
+      commonAreas: validatedCommonAreas,
+      regions: validatedRegions,
+    };
+
+    // Governance & Approval Workflow
+    // If project is awaiting initial approval, route changes to pendingUpdates
+    if (project.approvalStatus === "PENDING") {
+      project.pendingUpdates = project.pendingUpdates || {};
+      project.pendingUpdates.layout = updatedLayout;
+      project.hasPendingUpdates = true;
+      await project.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Project layout changes staged in pending approval queue.",
+        data: updatedLayout,
+        staged: true,
+      });
+    }
+
+    project.layout = updatedLayout;
+    await project.save();
+
+    // Now that replacement layout is safely committed to DB, if publicId changed, delete old asset
+    if (oldPublicId && newPublicId && oldPublicId !== newPublicId) {
+      storageService.deleteLayoutImage(oldPublicId, project._id).catch(() => {});
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Project layout saved and published successfully.",
+      data: project.layout,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Run semi-automatic site plan vectorization & OCR detection on project's reference image
+ * @route   POST /api/super-admin/projects/:id/layout/detect
+ * @access  Private (Super Admin)
+ */
+export const detectLayoutCandidatesSuperAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl: bodyImageUrl, config, provider: requestedProvider } = req.body || {};
+
+    const provider = String(requestedProvider || "opencv").toLowerCase().trim();
+    if (provider !== "opencv" && provider !== "gemini") {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid detection provider "${provider}". Supported providers: "opencv", "gemini".`,
+      });
+    }
+
+    const { tenantAdminIds } = await getTenantContext(req.user._id);
+    let referenceImageUrl = bodyImageUrl ? String(bodyImageUrl).trim() : "";
+
+    if (id && id !== "new" && id !== "undefined") {
+      const project = await findProjectByIdentifier(id);
+
+      if (!project || project.isArchived) {
+        return res.status(404).json({ success: false, message: "Project not found." });
+      }
+
+      if (!isProjectInTenant(project, req.user._id, tenantAdminIds)) {
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: You do not have permission to access layout for this project.",
+        });
+      }
+
+      if (!referenceImageUrl) {
+        referenceImageUrl =
+          project.layout?.referenceImageUrl || project.layout?.imageUrl || "";
+      }
+    }
+
+    if (!referenceImageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "No layout reference image provided or uploaded for this project. Please upload a site plan first.",
+      });
+    }
+
+    // Call vectorization service with secure Cloudinary retrieval and bounded provider execution
+    const detectionResult = await vectorizationService.detectCandidates(
+      referenceImageUrl,
+      config || {},
+      provider
+    );
+
+    // Candidates are returned as unconfirmed suggestions only.
+    // Zero authoritative database mutations are performed.
+    res.status(200).json({
+      success: true,
+      data: detectionResult,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 

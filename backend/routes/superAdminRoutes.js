@@ -18,6 +18,10 @@ import {
   createProjectSuperAdmin,
   getProjectPlotsSuperAdmin,
   getSubscriptionInfo,
+  uploadLayoutImageSuperAdmin,
+  getProjectLayoutSuperAdmin,
+  saveProjectLayoutSuperAdmin,
+  detectLayoutCandidatesSuperAdmin,
 } from "../controllers/superAdminController.js";
 import {
   getAllEnquiriesSuperAdmin,
@@ -56,6 +60,12 @@ router.patch("/projects/:id/approve", approveProject);
 router.patch("/projects/:id/reject", rejectProject);
 router.patch("/projects/:id/assign", assignProjectAdmin);
 router.delete("/projects/:id", archiveProject);
+
+// Interactive Layout Map Management
+router.post("/projects/:id/layout-image", uploadLayoutImageSuperAdmin);
+router.get("/projects/:id/layout", getProjectLayoutSuperAdmin);
+router.put("/projects/:id/layout", saveProjectLayoutSuperAdmin);
+router.post("/projects/:id/layout/detect", detectLayoutCandidatesSuperAdmin);
 
 // Plot Inventory Oversight
 router.get("/plots", getAllPlotsSuperAdmin);

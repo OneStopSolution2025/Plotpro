@@ -1,0 +1,997 @@
+/* ==========================================================================
+   PlotPro Layout Studio Modal — Site Terracotta & Clean Professional Theme
+   Primary: #a63d2f (Terracotta / Brand)
+   Primary Hover: #872e22
+   Accent: #d9835f (Warm coral/terracotta light)
+   Backgrounds: Clean slate / off-white with crisp borders
+   ========================================================================== */
+
+.layout-editor-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.5rem;
+}
+
+.layout-editor-modal-card {
+  width: 100%;
+  max-width: 1400px;
+  height: 92vh;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   Header Bar
+   ========================================================================== */
+.editor-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
+}
+
+.editor-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.editor-brand-icon {
+  color: #a63d2f;
+}
+
+.editor-title-texts {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.editor-title-texts h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.editor-project-badge {
+  font-size: 0.78rem;
+  background: #fdf2f0;
+  color: #a63d2f;
+  border: 1px solid #fecdd3;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.editor-rev-badge {
+  font-size: 0.72rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.editor-btn-secondary {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.editor-btn-secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.editor-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-btn-primary {
+  background: #a63d2f;
+  color: #ffffff;
+  border: none;
+  padding: 0.42rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.2s, transform 0.1s;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.editor-btn-primary:hover:not(:disabled) {
+  background: #872e22;
+}
+
+.editor-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editor-close-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
+  padding: 0.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-left: 0.25rem;
+}
+
+.editor-close-icon-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Opacity slider */
+.editor-opacity-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.editor-opacity-control input[type="range"] {
+  accent-color: #a63d2f;
+}
+
+/* Zoom group */
+.editor-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.editor-zoom-group button {
+  background: transparent;
+  border: none;
+  color: #475569;
+  padding: 0.42rem 0.55rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.editor-zoom-group button:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.editor-zoom-indicator {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  min-width: 44px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Alert banners */
+.editor-alert-warning {
+  background: #fffbeb;
+  color: #b45309;
+  border-bottom: 1px solid #fef3c7;
+  padding: 0.4rem 1.25rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.editor-alert-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-bottom: 1px solid #dbeafe;
+  padding: 0.4rem 1.25rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ==========================================================================
+   Body Split Layout
+   ========================================================================== */
+.editor-body-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+/* Left Sidebar Panel */
+.editor-sidebar-panel {
+  width: 360px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Studio Tabs */
+.studio-tabs-row {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  overflow-x: auto;
+}
+
+.studio-tab-btn {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.studio-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.studio-tab-btn.active {
+  color: #a63d2f;
+  border-bottom-color: #a63d2f;
+  background: #ffffff;
+  font-weight: 700;
+}
+
+/* Mode selector */
+.editor-sidebar-section {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.editor-mode-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.mode-tab-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0.38rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.2s;
+}
+
+.mode-tab-btn:hover {
+  color: #1e293b;
+}
+
+.mode-tab-btn.is-active {
+  background: #ffffff;
+  color: #a63d2f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Active In-Progress Box */
+.drawing-active-box {
+  background: #fdf2f0;
+  border-left: 3px solid #a63d2f;
+}
+
+.editor-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Search input */
+.plot-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.plot-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.plot-search-input {
+  width: 100%;
+  padding: 0.45rem 0.75rem 0.45rem 2.2rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #1e293b;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.plot-search-input:focus {
+  outline: none;
+  border-color: #a63d2f;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.1);
+}
+
+/* Plot inventory list */
+.plots-inventory-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.plot-inventory-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.plot-inventory-item:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.plot-inventory-item.selected-for-drawing {
+  border-color: #a63d2f;
+  background: #fdf2f0;
+  box-shadow: 0 0 0 2px rgba(166, 61, 47, 0.15);
+}
+
+.plot-inventory-item.is-mapped {
+  border-left: 3px solid #10b981;
+}
+
+.plot-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plot-num-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.plot-status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.plot-status-badge.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.plot-status-badge.reserved {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.plot-status-badge.sold {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.plot-item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.plot-mapped-indicator.mapped {
+  background: #ecfdf5;
+  color: #059669;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.plot-mapped-indicator.unmapped {
+  background: #f1f5f9;
+  color: #94a3b8;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.remove-boundary-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.remove-boundary-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Elements list (Blocks, Roads, Parks) */
+.elements-list-container {
+  margin-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.75rem;
+}
+
+.elements-list-container h4 {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 0.5rem 0;
+}
+
+.element-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.65rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.element-list-item:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.element-list-item.selected-block {
+  background: #fdf2f0;
+  border-color: #a63d2f;
+  box-shadow: 0 0 0 1px #a63d2f;
+}
+
+/* Candidates list */
+.candidates-list-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.candidate-review-card {
+  background: #f0fdf4;
+  border: 1px dashed #059669;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.candidate-plot-select {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #1e293b;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.45rem;
+}
+
+.candidate-accept-btn {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.candidate-accept-btn:hover {
+  background: #047857;
+}
+
+.candidate-dismiss-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.candidate-dismiss-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* ==========================================================================
+   Canvas Studio Workspace
+   ========================================================================== */
+.editor-canvas-workspace {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #f1f5f9;
+  cursor: crosshair;
+}
+
+.editor-canvas-workspace.pan-mode {
+  cursor: grab;
+}
+
+.editor-canvas-workspace.pan-mode.is-dragging {
+  cursor: grabbing;
+}
+
+.editor-canvas-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.editor-base-image {
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.editor-svg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.editor-polygon {
+  cursor: pointer;
+  transition: fill 0.2s, stroke 0.2s;
+  stroke-width: 2;
+}
+
+.editor-polygon.active-region {
+  stroke: #a63d2f !important;
+  fill: rgba(166, 61, 47, 0.35) !important;
+  stroke-width: 2.5;
+}
+
+.editor-vertex-handle {
+  fill: #ffffff;
+  stroke: #a63d2f;
+  stroke-width: 2;
+  cursor: move;
+  transition: transform 0.1s;
+}
+
+.editor-vertex-handle:hover {
+  transform: scale(1.3);
+  fill: #d9835f;
+}
+
+.drawing-in-progress-line {
+  stroke: #a63d2f;
+  stroke-width: 2;
+  stroke-dasharray: 4;
+}
+
+/* ==========================================================================
+   Footer Status Bar
+   ========================================================================== */
+.editor-footer-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.5rem 1.25rem;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.status-item.right {
+  margin-left: auto;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.green {
+  background: #10b981;
+}
+
+.status-dot.blue {
+  background: #a63d2f;
+}
+
+.status-dot.yellow {
+  background: #f59e0b;
+}
+
+/* Selected candidate card in sidebar */
+.candidate-review-card.selected-candidate-card {
+  border-color: #f59e0b;
+  border-style: solid;
+  background: #fffbeb;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+/* Floating Candidate Quick-Assignment Popover on Canvas */
+.candidate-canvas-popover {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.candidate-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #fdf2f0;
+  border-bottom: 1px solid #fee2e2;
+}
+
+.candidate-popover-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: #0f172a;
+}
+
+.candidate-popover-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.candidate-popover-conf {
+  font-size: 0.7rem;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.candidate-popover-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.2rem;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.candidate-popover-close:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.candidate-popover-body {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: #ffffff;
+}
+
+.candidate-popover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.candidate-popover-field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.candidate-popover-select {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.candidate-popover-select:focus {
+  border-color: #a63d2f;
+  background: #ffffff;
+}
+
+.candidate-popover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem 0.85rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.candidate-popover-btn-confirm {
+  background: #a63d2f;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: background 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.candidate-popover-btn-confirm:hover {
+  background: #872e22;
+}
+
+.candidate-popover-btn-discard {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.candidate-popover-btn-discard:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* ==========================================================================
+   Provider Selector & Badges
+   ========================================================================== */
+.editor-provider-group {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.editor-provider-select {
+  background: transparent;
+  border: none;
+  border-right: 1px solid #cbd5e1;
+  padding: 0.42rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+}
+
+.editor-provider-select:focus {
+  background: #ffffff;
+}
+
+.editor-provider-group .editor-btn-secondary {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.candidate-provider-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.candidate-provider-badge.gemini {
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.candidate-provider-badge.opencv {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Candidate Focus Button */
+.candidate-focus-btn {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.candidate-focus-btn:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #7dd3fc;
+}
+
+/* Candidate Vertex Interactive Handles in SVG */
+.candidate-vertex-handle {
+  transition: transform 0.1s ease, fill 0.15s ease;
+}
+
+.candidate-vertex-handle:hover {
+  transform-origin: center;
+  transform: scale(1.35);
+  fill: #dc2626 !important;
+}

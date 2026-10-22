@@ -227,6 +227,7 @@ export const normalizeProject = (p) => {
     approvalStatus: p.approvalStatus || "APPROVED",
     hasPendingUpdates: !!p.hasPendingUpdates,
     pendingUpdates: p.pendingUpdates || null,
+    layout: p.layout || p.pendingUpdates?.layout || null,
     rejectionReason: p.rejectionReason || "",
     isArchived: !!p.isArchived,
   };
@@ -280,7 +281,10 @@ export const ProjectProvider = ({ children }) => {
                   p.availablePlots === n.availablePlots &&
                   p.reservedPlots === n.reservedPlots &&
                   p.soldPlots === n.soldPlots &&
-                  p.approvalStatus === n.approvalStatus
+                  p.approvalStatus === n.approvalStatus &&
+                  p.layout?.version === n.layout?.version &&
+                  p.layout?.imageUrl === n.layout?.imageUrl &&
+                  (p.layout?.regions?.length || 0) === (n.layout?.regions?.length || 0)
                 );
               });
               if (isUnchanged) return prev;

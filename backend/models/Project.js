@@ -151,6 +151,72 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // Interactive Layout Map Configuration (Native Vector Site-Plan & Tracing Reference)
+    layout: {
+      referenceImageUrl: { type: String, default: "" },
+      imageUrl: { type: String, default: "" }, // Kept for reference compatibility
+      provider: { type: String, enum: ["cloudinary", "url", "volume"], default: "cloudinary" },
+      publicId: { type: String, default: "" },
+      version: { type: Number, default: 0 },
+      width: { type: Number, default: 1200 },
+      height: { type: Number, default: 800 },
+      compassOrientation: { type: Number, default: 0 }, // Degrees (0 = North up)
+      blocks: [
+        {
+          id: { type: String, required: true },
+          name: { type: String, required: true },
+          color: { type: String, default: "#3b82f6" },
+          description: { type: String, default: "" },
+        },
+      ],
+      roads: [
+        {
+          id: { type: String, required: true },
+          name: { type: String, default: "Main Road" },
+          widthFt: { type: String, default: "30 Ft" },
+          points: [
+            {
+              x: { type: Number, required: true, min: 0, max: 100 },
+              y: { type: Number, required: true, min: 0, max: 100 },
+            },
+          ],
+        },
+      ],
+      commonAreas: [
+        {
+          id: { type: String, required: true },
+          name: { type: String, default: "Park" },
+          type: { type: String, default: "park" },
+          points: [
+            {
+              x: { type: Number, required: true, min: 0, max: 100 },
+              y: { type: Number, required: true, min: 0, max: 100 },
+            },
+          ],
+        },
+      ],
+      regions: [
+        {
+          id: { type: String, required: true },
+          plotId: { type: mongoose.Schema.Types.ObjectId, ref: "Plot", required: true },
+          plotNumber: { type: String, required: true },
+          blockId: { type: String, default: "" },
+          block: { type: String, default: "" },
+          shapeType: { type: String, enum: ["polygon", "rect"], default: "polygon" },
+          points: [
+            {
+              x: { type: Number, required: true, min: 0, max: 100 },
+              y: { type: Number, required: true, min: 0, max: 100 },
+            },
+          ],
+          labelPosition: {
+            x: { type: Number, min: 0, max: 100 },
+            y: { type: Number, min: 0, max: 100 },
+          },
+        },
+      ],
+    },
   },
   {
     timestamps: true,

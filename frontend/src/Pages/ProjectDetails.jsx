@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import "../css/ProjectDetails.css";
 import PlotCard from "../components/PlotCard";
+import InteractiveLayoutMap from "../components/InteractiveLayoutMap";
 import Footer from '../components/Footer'
 
 import {
@@ -89,9 +90,9 @@ function ProjectDetails() {
     const [fetchedProject, setFetchedProject] = useState(null);
     const [isFetchingDirect, setIsFetchingDirect] = useState(false);
 
-    // Fallback: If project not currently in local memory, fetch via publicApi
+    // Fetch authoritative project details directly from backend API
     useEffect(() => {
-        if (!matchedProject && id) {
+        if (id) {
             let isMounted = true;
             setIsFetchingDirect(true);
             publicApi.getProjectById(id)
@@ -108,12 +109,10 @@ function ProjectDetails() {
                 });
 
             return () => { isMounted = false; };
-        } else if (matchedProject) {
-            setFetchedProject(null);
         }
-    }, [matchedProject, id]);
+    }, [id]);
 
-    const project = matchedProject || fetchedProject;
+    const project = fetchedProject || matchedProject;
     const projectIdKey = project?._id || project?.customId || project?.id;
 
     useEffect(() => {
@@ -364,6 +363,12 @@ function ProjectDetails() {
     // Project-specific amenities: no silent fallback to generic defaults
     const projectAmenities = Array.isArray(project.amenities) ? project.amenities : [];
 
+    const hasValidLayout = Boolean(
+        project?.layout &&
+        Array.isArray(project.layout.regions) &&
+        project.layout.regions.length > 0
+    );
+
 
     return (
         <>
@@ -387,37 +392,22 @@ function ProjectDetails() {
 
                 <section className="project-gallery">
 
-                    <div className="image-container">
-
-                        <div className="big-container">
-
-                            <img
-                                className="big-image"
-                                src={activeImage}
-                                alt={project.title}
-                                onError={(e) => {
-                                    if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
-                                        e.target.onerror = null;
-                                        e.target.src = DEFAULT_PROJECT_IMAGE;
-                                    }
-                                }}
+                    {/* Left Hero: Interactive Project Layout Diagram (if configured) or Project Image Carousel fallback */}
+                    {hasValidLayout ? (
+                        <div className="layout-hero-container" style={{ width: "100%", minWidth: 0 }}>
+                            <InteractiveLayoutMap
+                                project={project}
+                                plots={projectPlots}
+                                allProjects={projects}
                             />
-
                         </div>
-
-
-                        <div className="small-container">
-
-                            {projectImages.map((image, index) => (
-
+                    ) : (
+                        <div className="image-container">
+                            <div className="big-container">
                                 <img
-                                    key={index}
-                                    src={image}
+                                    className="big-image"
+                                    src={activeImage}
                                     alt={project.title}
-                                    className="thumbnail"
-                                    onClick={() =>
-                                        setSelectedImage(image)
-                                    }
                                     onError={(e) => {
                                         if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
                                             e.target.onerror = null;
@@ -425,12 +415,26 @@ function ProjectDetails() {
                                         }
                                     }}
                                 />
-
-                            ))}
-
+                            </div>
+                            <div className="small-container">
+                                {projectImages.map((image, index) => (
+                                    <img
+                                        key={index}
+                                        src={image}
+                                        alt={project.title}
+                                        className="thumbnail"
+                                        onClick={() => setSelectedImage(image)}
+                                        onError={(e) => {
+                                            if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
+                                                e.target.onerror = null;
+                                                e.target.src = DEFAULT_PROJECT_IMAGE;
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </div>
                         </div>
-
-                    </div>
+                    )}
 
                     <div className="project-details">
 
@@ -812,78 +816,6 @@ function ProjectDetails() {
                         >
                             Contact Us →
                         </button>
-
-                    </div>
-
-                </section>
-
-                <section className="plots-section project-reveal">
-
-                    <div className="plots-top">
-
-                        <div className="plots-heading">
-
-                            <p className="section-tag">
-                                AVAILABLE PLOTS
-                            </p>
-
-                            <h2>
-                                Available Plots
-                            </h2>
-
-                            <p>
-                                Choose a plot that suits your needs and budget.
-                            </p>
-
-                        </div>
-
-                        <div className="view-all-plots-wrapper">
-                            <Link
-                                to={`/project-plots/${getProjectRouteSlug(project, projects) || project.slug || project.id}`}
-                                className="view-all-plots-btn"
-                            >
-                                <span>View All Plots</span>
-                                <ArrowRight />
-                            </Link>
-                        </div>
-
-
-                    </div>
-
-                    <div className="plot-filters">
-
-                        <button className="active-filter">
-                            All ({project.totalPlots})
-                        </button>
-
-                        <button>
-                            Available ({project.availablePlots})
-                        </button>
-
-                        <button>
-                            Reserved ({project.reservedPlots})
-                        </button>
-
-                        <button>
-                            Sold ({project.soldPlots})
-                        </button>
-
-                    </div>
-
-                    <div className="plots-grid">
-
-                        {projectPlots.slice(0, 4).map((plot) => (<PlotCard
-                            key={plot.id}
-                            plotId={plot.id}
-                            plotNumber={plot.plotNumber}
-                            image={plot.image || project.defaultPlotImage || project.image || "/assets/plot.png"}
-                            size={plot.size}
-                            facing={plot.facing}
-                            price={plot.price}
-                            project={project}
-                            plot={plot}
-                        />
-                        ))}
 
                     </div>
 
