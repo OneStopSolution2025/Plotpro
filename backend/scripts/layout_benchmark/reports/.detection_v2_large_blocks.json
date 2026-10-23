@@ -1,0 +1,1003 @@
+{
+  "success": true,
+  "engine": "opencv-v2",
+  "referenceWidth": 1780,
+  "referenceHeight": 1280,
+  "rotationAngle": 0,
+  "skewConfidence": 1,
+  "skewMethod": "lines",
+  "skewReason": "ALREADY_ALIGNED",
+  "deskewApplied": false,
+  "legibility": {
+    "legible": false,
+    "reason": "NO_LABEL_MASS",
+    "reasons": [
+      "NO_LABEL_MASS"
+    ],
+    "recommendedMinWidth": 2913,
+    "metrics": {
+      "imageWidth": 1780,
+      "imageHeight": 1280,
+      "medianGlyphHeightPx": 11,
+      "medianContrast": 25.2,
+      "minContrast": 23.367,
+      "labelComponentCount": 3,
+      "blurVariance": 1168.27,
+      "contrastSamples": 3
+    }
+  },
+  "compassOrientation": 14.4,
+  "detectedBlocks": [
+    "D-13",
+    "D-15",
+    "D-14",
+    "D-16"
+  ],
+  "candidateCount": 17,
+  "candidates": [
+    {
+      "candidateId": "cand_0001_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 59.438,
+          "y": 69.844
+        },
+        {
+          "x": 61.124,
+          "y": 69.609
+        },
+        {
+          "x": 61.292,
+          "y": 70.391
+        },
+        {
+          "x": 59.494,
+          "y": 70.547
+        }
+      ],
+      "boundingBox": {
+        "x": 59.438,
+        "y": 69.609,
+        "width": 1.854,
+        "height": 0.938
+      },
+      "center": {
+        "x": 60.355,
+        "y": 70.099
+      },
+      "suggestedPlotNumber": "",
+      "suggestedBlock": "",
+      "ocrConfidence": 0,
+      "labelConfidence": 0,
+      "geometryConfidence": 0.468,
+      "classification": "uncertain",
+      "classificationSignals": {
+        "edgeSupport": 0.262,
+        "vegetation": 0.4,
+        "aspectRatio": 1.977,
+        "rectangularity": 0.862,
+        "hierarchyDepth": 1,
+        "borderDistance": 0.697,
+        "internalDividers": 0,
+        "areaPercent": 0.01315
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0003_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 54.663,
+          "y": 69.844
+        },
+        {
+          "x": 54.607,
+          "y": 70.547
+        },
+        {
+          "x": 52.809,
+          "y": 70.469
+        },
+        {
+          "x": 52.921,
+          "y": 69.688
+        },
+        {
+          "x": 53.427,
+          "y": 69.688
+        },
+        {
+          "x": 53.539,
+          "y": 70.078
+        },
+        {
+          "x": 53.82,
+          "y": 69.609
+        }
+      ],
+      "boundingBox": {
+        "x": 52.809,
+        "y": 69.609,
+        "width": 1.854,
+        "height": 0.938
+      },
+      "center": {
+        "x": 53.754,
+        "y": 70.122
+      },
+      "suggestedPlotNumber": "",
+      "suggestedBlock": "",
+      "ocrConfidence": 0,
+      "labelConfidence": 0,
+      "geometryConfidence": 0.431,
+      "classification": "uncertain",
+      "classificationSignals": {
+        "edgeSupport": 0.179,
+        "vegetation": 0.4,
+        "aspectRatio": 1.977,
+        "rectangularity": 0.833,
+        "hierarchyDepth": 1,
+        "borderDistance": 0.697,
+        "internalDividers": 0,
+        "areaPercent": 0.01361
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0005_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 46.124,
+          "y": 69.844
+        },
+        {
+          "x": 47.809,
+          "y": 69.688
+        },
+        {
+          "x": 48.034,
+          "y": 70.469
+        },
+        {
+          "x": 46.18,
+          "y": 70.547
+        }
+      ],
+      "boundingBox": {
+        "x": 46.124,
+        "y": 69.688,
+        "width": 1.91,
+        "height": 0.859
+      },
+      "center": {
+        "x": 47.055,
+        "y": 70.141
+      },
+      "suggestedPlotNumber": "",
+      "suggestedBlock": "",
+      "ocrConfidence": 0,
+      "labelConfidence": 0,
+      "geometryConfidence": 0.442,
+      "classification": "uncertain",
+      "classificationSignals": {
+        "edgeSupport": 0.205,
+        "vegetation": 0.4,
+        "aspectRatio": 2.036,
+        "rectangularity": 0.824,
+        "hierarchyDepth": 1,
+        "borderDistance": 0.696,
+        "internalDividers": 0,
+        "areaPercent": 0.01329
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0000_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 58.202,
+          "y": 58.203
+        },
+        {
+          "x": 58.202,
+          "y": 85.469
+        },
+        {
+          "x": 64.888,
+          "y": 85.547
+        },
+        {
+          "x": 64.888,
+          "y": 58.203
+        }
+      ],
+      "boundingBox": {
+        "x": 58.483,
+        "y": 58.125,
+        "width": 6.405,
+        "height": 27.422
+      },
+      "center": {
+        "x": 61.714,
+        "y": 71.877
+      },
+      "suggestedPlotNumber": "12/23",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9967,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.967,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.926,
+        "vegetation": 0.4,
+        "aspectRatio": 0.236,
+        "rectangularity": 0.991,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.656,
+        "internalDividers": 0,
+        "areaPercent": 1.73598
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0013_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 58.202,
+          "y": 19.141
+        },
+        {
+          "x": 58.202,
+          "y": 46.406
+        },
+        {
+          "x": 64.888,
+          "y": 46.484
+        },
+        {
+          "x": 64.888,
+          "y": 19.141
+        }
+      ],
+      "boundingBox": {
+        "x": 58.483,
+        "y": 19.062,
+        "width": 6.405,
+        "height": 27.422
+      },
+      "center": {
+        "x": 61.714,
+        "y": 32.814
+      },
+      "suggestedPlotNumber": "9/20",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9008,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.85,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.667,
+        "vegetation": 0.4,
+        "aspectRatio": 0.236,
+        "rectangularity": 0.991,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.765,
+        "internalDividers": 0,
+        "areaPercent": 1.73595
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0002_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 51.517,
+          "y": 58.203
+        },
+        {
+          "x": 51.517,
+          "y": 85.469
+        },
+        {
+          "x": 58.202,
+          "y": 85.547
+        },
+        {
+          "x": 58.202,
+          "y": 58.203
+        }
+      ],
+      "boundingBox": {
+        "x": 51.798,
+        "y": 58.125,
+        "width": 6.404,
+        "height": 27.422
+      },
+      "center": {
+        "x": 55.028,
+        "y": 71.876
+      },
+      "suggestedPlotNumber": "11/22",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9993,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.79,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.533,
+        "vegetation": 0.4,
+        "aspectRatio": 0.234,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.656,
+        "internalDividers": 0,
+        "areaPercent": 1.73584
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0014_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 51.517,
+          "y": 19.141
+        },
+        {
+          "x": 51.517,
+          "y": 46.406
+        },
+        {
+          "x": 58.202,
+          "y": 46.484
+        },
+        {
+          "x": 58.202,
+          "y": 19.141
+        }
+      ],
+      "boundingBox": {
+        "x": 51.798,
+        "y": 19.062,
+        "width": 6.404,
+        "height": 27.422
+      },
+      "center": {
+        "x": 55.028,
+        "y": 32.813
+      },
+      "suggestedPlotNumber": "8/19",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.999,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.7,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.333,
+        "vegetation": 0.4,
+        "aspectRatio": 0.234,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.765,
+        "internalDividers": 0,
+        "areaPercent": 1.73581
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0004_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 45.281,
+          "y": 58.125
+        },
+        {
+          "x": 45.169,
+          "y": 85.469
+        },
+        {
+          "x": 51.798,
+          "y": 85.469
+        },
+        {
+          "x": 51.91,
+          "y": 58.205
+        }
+      ],
+      "boundingBox": {
+        "x": 45.169,
+        "y": 58.125,
+        "width": 6.348,
+        "height": 27.422
+      },
+      "center": {
+        "x": 48.371,
+        "y": 71.877
+      },
+      "suggestedPlotNumber": "10/21",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9952,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.936,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.857,
+        "vegetation": 0.4,
+        "aspectRatio": 0.231,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.656,
+        "internalDividers": 0,
+        "areaPercent": 1.72053
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0006_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 27.303,
+          "y": 58.203
+        },
+        {
+          "x": 27.303,
+          "y": 85.469
+        },
+        {
+          "x": 33.989,
+          "y": 85.547
+        },
+        {
+          "x": 33.989,
+          "y": 58.203
+        }
+      ],
+      "boundingBox": {
+        "x": 27.584,
+        "y": 58.125,
+        "width": 6.405,
+        "height": 27.422
+      },
+      "center": {
+        "x": 30.815,
+        "y": 71.877
+      },
+      "suggestedPlotNumber": "6/17",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9719,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.871,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.714,
+        "vegetation": 0.4,
+        "aspectRatio": 0.234,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.386,
+        "internalDividers": 0,
+        "areaPercent": 1.73598
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0007_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 20.618,
+          "y": 58.203
+        },
+        {
+          "x": 20.618,
+          "y": 85.469
+        },
+        {
+          "x": 27.303,
+          "y": 85.547
+        },
+        {
+          "x": 27.303,
+          "y": 58.203
+        }
+      ],
+      "boundingBox": {
+        "x": 20.899,
+        "y": 58.125,
+        "width": 6.404,
+        "height": 27.422
+      },
+      "center": {
+        "x": 24.129,
+        "y": 71.876
+      },
+      "suggestedPlotNumber": "5/16",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9513,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.679,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.286,
+        "vegetation": 0.4,
+        "aspectRatio": 0.234,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.229,
+        "internalDividers": 0,
+        "areaPercent": 1.73584
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0008_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 14.382,
+          "y": 58.125
+        },
+        {
+          "x": 14.27,
+          "y": 85.469
+        },
+        {
+          "x": 20.899,
+          "y": 85.469
+        },
+        {
+          "x": 21.011,
+          "y": 58.205
+        }
+      ],
+      "boundingBox": {
+        "x": 14.27,
+        "y": 58.125,
+        "width": 6.348,
+        "height": 27.422
+      },
+      "center": {
+        "x": 17.472,
+        "y": 71.877
+      },
+      "suggestedPlotNumber": "4/15",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9959,
+      "labelConfidence": 1,
+      "geometryConfidence": 1,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 1,
+        "vegetation": 0.4,
+        "aspectRatio": 0.231,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.074,
+        "internalDividers": 0,
+        "areaPercent": 1.72053
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0015_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 45.281,
+          "y": 19.062
+        },
+        {
+          "x": 45.169,
+          "y": 46.406
+        },
+        {
+          "x": 51.798,
+          "y": 46.406
+        },
+        {
+          "x": 51.91,
+          "y": 19.143
+        }
+      ],
+      "boundingBox": {
+        "x": 45.169,
+        "y": 19.062,
+        "width": 6.348,
+        "height": 27.422
+      },
+      "center": {
+        "x": 48.371,
+        "y": 32.814
+      },
+      "suggestedPlotNumber": "7/18",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9988,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.871,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.714,
+        "vegetation": 0.4,
+        "aspectRatio": 0.231,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.765,
+        "internalDividers": 0,
+        "areaPercent": 1.7205
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0016_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 27.303,
+          "y": 19.141
+        },
+        {
+          "x": 27.303,
+          "y": 46.406
+        },
+        {
+          "x": 33.989,
+          "y": 46.484
+        },
+        {
+          "x": 33.989,
+          "y": 19.141
+        }
+      ],
+      "boundingBox": {
+        "x": 27.584,
+        "y": 19.062,
+        "width": 6.405,
+        "height": 27.422
+      },
+      "center": {
+        "x": 30.815,
+        "y": 32.814
+      },
+      "suggestedPlotNumber": "3/14",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9965,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.871,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.714,
+        "vegetation": 0.4,
+        "aspectRatio": 0.234,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.386,
+        "internalDividers": 0,
+        "areaPercent": 1.73595
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0017_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 20.618,
+          "y": 19.141
+        },
+        {
+          "x": 20.618,
+          "y": 46.406
+        },
+        {
+          "x": 27.303,
+          "y": 46.484
+        },
+        {
+          "x": 27.303,
+          "y": 19.141
+        }
+      ],
+      "boundingBox": {
+        "x": 20.899,
+        "y": 19.062,
+        "width": 6.404,
+        "height": 27.422
+      },
+      "center": {
+        "x": 24.129,
+        "y": 32.813
+      },
+      "suggestedPlotNumber": "2/13",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9975,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.807,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.571,
+        "vegetation": 0.4,
+        "aspectRatio": 0.234,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.229,
+        "internalDividers": 0,
+        "areaPercent": 1.73581
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0018_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 14.382,
+          "y": 19.062
+        },
+        {
+          "x": 14.27,
+          "y": 46.406
+        },
+        {
+          "x": 20.899,
+          "y": 46.406
+        },
+        {
+          "x": 21.011,
+          "y": 19.143
+        }
+      ],
+      "boundingBox": {
+        "x": 14.27,
+        "y": 19.062,
+        "width": 6.348,
+        "height": 27.422
+      },
+      "center": {
+        "x": 17.472,
+        "y": 32.814
+      },
+      "suggestedPlotNumber": "1/12",
+      "suggestedBlock": "",
+      "ocrConfidence": 0.9976,
+      "labelConfidence": 1,
+      "geometryConfidence": 0.936,
+      "classification": "plot",
+      "classificationSignals": {
+        "edgeSupport": 0.857,
+        "vegetation": 0.4,
+        "aspectRatio": 0.231,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.074,
+        "internalDividers": 0,
+        "areaPercent": 1.7205
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0023_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 88.034,
+          "y": 0
+        },
+        {
+          "x": 88.034,
+          "y": 99.922
+        },
+        {
+          "x": 99.944,
+          "y": 99.922
+        },
+        {
+          "x": 99.944,
+          "y": 0
+        }
+      ],
+      "boundingBox": {
+        "x": 88.371,
+        "y": 0,
+        "width": 11.573,
+        "height": 99.922
+      },
+      "center": {
+        "x": 94.157,
+        "y": 49.961
+      },
+      "suggestedPlotNumber": "",
+      "suggestedBlock": "",
+      "ocrConfidence": 0,
+      "labelConfidence": 0,
+      "geometryConfidence": 0.55,
+      "classification": "block",
+      "classificationSignals": {
+        "edgeSupport": 0,
+        "vegetation": 0,
+        "aspectRatio": 0.116,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.135,
+        "internalDividers": 0,
+        "areaPercent": 11.56397
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [
+        "UNRESOLVED_BLOCK"
+      ],
+      "sourceProvider": "opencv"
+    },
+    {
+      "candidateId": "cand_0024_enclosed",
+      "shapeType": "polygon",
+      "points": [
+        {
+          "x": 79.888,
+          "y": 0
+        },
+        {
+          "x": 79.888,
+          "y": 99.922
+        },
+        {
+          "x": 88.371,
+          "y": 99.922
+        },
+        {
+          "x": 88.371,
+          "y": 0
+        }
+      ],
+      "boundingBox": {
+        "x": 79.888,
+        "y": 0,
+        "width": 8.146,
+        "height": 99.922
+      },
+      "center": {
+        "x": 83.961,
+        "y": 49.961
+      },
+      "suggestedPlotNumber": "",
+      "suggestedBlock": "",
+      "ocrConfidence": 0,
+      "labelConfidence": 0,
+      "geometryConfidence": 0.663,
+      "classification": "block",
+      "classificationSignals": {
+        "edgeSupport": 0.25,
+        "vegetation": 0,
+        "aspectRatio": 0.082,
+        "rectangularity": 1,
+        "hierarchyDepth": 0,
+        "borderDistance": 0.373,
+        "internalDividers": 0,
+        "areaPercent": 8.13965
+      },
+      "regularizationMethod": "conservative_simplify",
+      "source": "enclosed",
+      "warnings": [
+        "UNRESOLVED_BLOCK"
+      ],
+      "sourceProvider": "opencv"
+    }
+  ],
+  "warnings": [
+    "LABELS_MAY_BE_UNREADABLE",
+    "SKEW_NOT_CORRECTED"
+  ],
+  "stats": {
+    "rawCandidates": 17,
+    "mergedCandidates": 17,
+    "finalCandidates": 17,
+    "rejected": [],
+    "rejectedCount": 0,
+    "mergeStats": {
+      "merged": 0,
+      "duplicatesRemoved": 0
+    },
+    "subdivision": {
+      "attempted": 26,
+      "subdivided": 0,
+      "reason": "OK"
+    },
+    "gridSuppression": {
+      "applied": false,
+      "reason": "NO_REGULAR_LINE_FAMILY"
+    },
+    "fillSegmentation": {
+      "reason": "NO_FILL_CLUSTER",
+      "score": null,
+      "chosenCluster": null,
+      "clusters": []
+    },
+    "segmentCount": 277,
+    "fusedEdgeCount": 88,
+    "closeInfo": {
+      "kernelSize": 3,
+      "iterations": 1,
+      "pixelsBefore": 85114,
+      "pixelsAfter": 85829,
+      "pixelsAdded": 715,
+      "addedPercent": 0.84
+    },
+    "snap": {
+      "snappedVertices": 36,
+      "pairs": 18,
+      "rejected": 0,
+      "tolerance": 0.6,
+      "candidatesUpdated": 17
+    },
+    "ocr": {
+      "read": true,
+      "tokenCount": 12,
+      "assignmentCount": 12,
+      "fragmentCount": 0,
+      "suggestionsApplied": 0,
+      "flags": [],
+      "duplicateIdentifiers": [],
+      "blocks": [
+        "D-13",
+        "D-15",
+        "D-14",
+        "D-16"
+      ]
+    },
+    "ocrDropped": []
+  },
+  "processingTimeMs": 3619
+}
