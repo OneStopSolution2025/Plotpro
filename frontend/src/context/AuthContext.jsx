@@ -128,6 +128,15 @@ export const AuthProvider = ({ children }) => {
         setUser(response.user);
         return { success: true, user: response.user };
       }
+      // Pass through device challenge responses without throwing an error:
+      if (
+        response?.requiresDeviceOtp ||
+        response?.requiresFirstDeviceEnrollmentOtp ||
+        response?.requiresTransferApproval ||
+        response?.requiresDeviceRecovery
+      ) {
+        return response;
+      }
       throw new Error(response?.message || "Login failed");
     } finally {
       setIsLoading(false);
@@ -160,25 +169,39 @@ export const AuthProvider = ({ children }) => {
         setUser(response.user);
         return { success: true, user: response.user };
       }
+      if (
+        response?.requiresDeviceOtp ||
+        response?.requiresFirstDeviceEnrollmentOtp ||
+        response?.requiresTransferApproval ||
+        response?.requiresDeviceRecovery
+      ) {
+        return response;
+      }
       throw new Error(response?.message || "Google authentication failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setAuthToken(null);
-    setTokenState(null);
-    setUser(null);
+  const logout = async () => {
     try {
-      localStorage.removeItem("dreamcity-projects");
-      localStorage.removeItem("dreamcity-plots-v2");
-      localStorage.removeItem("dreamcity-enquiries");
-      localStorage.removeItem("dreamcity-site-visits");
-      localStorage.removeItem("dreamcity-customers");
-      localStorage.removeItem("dreamcity-admin-profile");
+      await authApi.logout();
     } catch (e) {
-      console.warn("[Auth] Failed to clean localStorage on logout:", e);
+      console.warn("[Auth] Server logout notice:", e.message);
+    } finally {
+      setAuthToken(null);
+      setTokenState(null);
+      setUser(null);
+      try {
+        localStorage.removeItem("dreamcity-projects");
+        localStorage.removeItem("dreamcity-plots-v2");
+        localStorage.removeItem("dreamcity-enquiries");
+        localStorage.removeItem("dreamcity-site-visits");
+        localStorage.removeItem("dreamcity-customers");
+        localStorage.removeItem("dreamcity-admin-profile");
+      } catch (e) {
+        console.warn("[Auth] Failed to clean localStorage on logout:", e);
+      }
     }
   };
 

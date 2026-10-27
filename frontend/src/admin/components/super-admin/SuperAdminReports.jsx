@@ -550,7 +550,7 @@ const SuperAdminReports = ({ projects, plots, admins }) => {
         <div className="sa-report-card">
           <div className="sa-report-card-head">
             <div>
-              <h3>Projects by Administrator</h3>
+              <h3>Projects by Branch Administrator</h3>
             </div>
             <span className="sa-report-tag">
               <FaBuilding /> {adminProjectRows.length}{" "}
@@ -560,7 +560,7 @@ const SuperAdminReports = ({ projects, plots, admins }) => {
 
           <div className="sa-report-chart-container">
             {adminProjectRows.length === 0 ? (
-              <div className="sa-reports-empty">No administrator project records.</div>
+              <div className="sa-reports-empty">No branch administrator project records.</div>
             ) : (
               <div className="sa-admin-bars-list">
                 {adminProjectRows.map((row) => (

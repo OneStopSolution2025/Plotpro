@@ -277,15 +277,6 @@
    COMMON SECTION
 ========================================================= */
 
-.dashboard-section {
-  border: 1px solid #e5eaf0;
-  border-radius: 19px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 4px 18px rgba(15, 23, 42, 0.035);
-}
 
 .dashboard-section-header {
   display: flex;

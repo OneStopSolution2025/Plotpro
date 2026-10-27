@@ -21,13 +21,23 @@ import {
   uploadLayoutImageSuperAdmin,
   getProjectLayoutSuperAdmin,
   saveProjectLayoutSuperAdmin,
-  detectLayoutCandidatesSuperAdmin,
 } from "../controllers/superAdminController.js";
 import {
   getAllEnquiriesSuperAdmin,
   updateEnquiryStatusSuperAdmin,
 } from "../controllers/enquiryController.js";
-import { getAllSiteVisitsSuperAdmin } from "../controllers/siteVisitController.js";
+import {
+  getBranches,
+  createBranch,
+  getBranchDetail,
+  updateBranch,
+  toggleBranchStatus,
+  deleteBranch,
+} from "../controllers/branchController.js";
+import {
+  getAllSiteVisitsSuperAdmin,
+  updateSiteVisitStatusSuperAdmin,
+} from "../controllers/siteVisitController.js";
 import {
   getAdminProfile,
   updateAdminProfile,
@@ -61,11 +71,10 @@ router.patch("/projects/:id/reject", rejectProject);
 router.patch("/projects/:id/assign", assignProjectAdmin);
 router.delete("/projects/:id", archiveProject);
 
-// Interactive Layout Map Management
+// Project Layout Image Management
 router.post("/projects/:id/layout-image", uploadLayoutImageSuperAdmin);
 router.get("/projects/:id/layout", getProjectLayoutSuperAdmin);
 router.put("/projects/:id/layout", saveProjectLayoutSuperAdmin);
-router.post("/projects/:id/layout/detect", detectLayoutCandidatesSuperAdmin);
 
 // Plot Inventory Oversight
 router.get("/plots", getAllPlotsSuperAdmin);
@@ -74,8 +83,17 @@ router.get("/plots", getAllPlotsSuperAdmin);
 router.get("/enquiries", getAllEnquiriesSuperAdmin);
 router.patch("/enquiries/:id/status", updateEnquiryStatusSuperAdmin);
 router.get("/site-visits", getAllSiteVisitsSuperAdmin);
+router.patch("/site-visits/:id/status", updateSiteVisitStatusSuperAdmin);
 
 // Profile & Security
+// Branch Management (tenant-scoped, seat-safe)
+router.get("/branches", getBranches);
+router.post("/branches", createBranch);
+router.get("/branches/:id", getBranchDetail);
+router.put("/branches/:id", updateBranch);
+router.patch("/branches/:id/status", toggleBranchStatus);
+router.delete("/branches/:id", deleteBranch);
+
 router.get("/profile", getAdminProfile);
 router.put("/profile", updateAdminProfile);
 router.put("/profile/password", changeAdminPassword);

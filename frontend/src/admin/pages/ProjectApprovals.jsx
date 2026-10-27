@@ -1116,7 +1116,7 @@ const ProjectApprovals = () => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "4px" }}>
                         <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a" }}>
-                          {inspectingAdmin ? inspectingAdmin.name : "Unassigned Administrator"}
+                          {inspectingAdmin ? inspectingAdmin.name : "Unassigned Branch Administrator"}
                         </h4>
                         {inspectingAdmin && (
                           <span className={`sa-badge ${inspectingAdmin.status === "Active" ? "sa-badge-active" : "sa-badge-inactive"}`}>

@@ -98,7 +98,7 @@ function MainNavbar() {
                                     <Link
                                         to={isSuperAdmin ? "/super-admin" : "/admin"}
                                         className="nav-admin-link"
-                                        title="Admin Dashboard"
+                                        title={isSuperAdmin ? "Super Admin Dashboard" : "Branch Admin Dashboard"}
                                     >
                                         Dashboard
                                     </Link>

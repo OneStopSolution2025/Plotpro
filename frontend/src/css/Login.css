@@ -5,14 +5,13 @@
 .login-page {
     min-height: 100vh;
     width: 100%;
-
     background: #f3f5f8;
-
-    padding: 0;
-
+    padding: 30px 40px;
     position: relative;
-
     overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 
@@ -21,44 +20,43 @@
 ========================================= */
 
 .login-wrapper {
-
     position: relative;
-
     width: min(1390px, 100%);
-
-    height: 98vh;
-
-    margin: 8px auto 0;
-
+    min-height: calc(100vh - 60px);
+    margin: 0 auto;
     display: grid;
-
     grid-template-columns: 1fr 1fr;
-
     background: #ffffff;
-
     border-radius: 24px;
-
     overflow: hidden;
-
-    box-shadow:
-        0 20px 60px rgba(20, 40, 70, 0.08);
+    box-shadow: 0 20px 60px rgba(20, 40, 70, 0.08);
 }
 
 .back-btn {
-    background-color: white;
-    border: 1px solid black;
-    padding: 10px;
-    color: black;
     position: absolute;
-    top: 35px;
-    left: 35px;
-    border-radius: 30px;
+    top: 24px;
+    left: 24px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #1e293b;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 }
 
 .back-btn:hover {
-    background-color: #872e22;
-    border: none;
-    color: white;
+    background-color: #a63d2f;
+    border-color: #a63d2f;
+    color: #ffffff;
+    transform: translateX(-2px);
+    box-shadow: 0 4px 14px rgba(166, 61, 47, 0.25);
 }
 
 
@@ -68,11 +66,10 @@
 
 .login-form-section {
     min-width: 0;
-
-    padding: 100px 8%;
-
+    padding: 70px 8% 40px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
 }
 
 
@@ -232,29 +229,208 @@
 
 .login-divider {
     width: 100%;
-
     display: flex;
     align-items: center;
-
     gap: 15px;
-
     margin: 22px 0;
 }
 
-.login-divider span {
+.login-divider::before,
+.login-divider::after {
+    content: "";
     flex: 1;
-
     height: 1px;
-
     background: #e6eaf0;
 }
 
-.login-divider p {
+.login-divider span {
     margin: 0;
-
     color: #8a94a4;
-
     font-size: 13px;
+    white-space: nowrap;
+}
+
+/* =========================================
+   ALERTS & FEEDBACK
+========================================= */
+
+.login-alert {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    animation: fadeInAlert 0.25s ease-out;
+}
+
+.login-alert.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+.login-alert.info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+}
+
+.login-alert svg {
+    flex-shrink: 0;
+}
+
+@keyframes fadeInAlert {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spinner {
+    animation: rotateSpinner 1.2s linear infinite;
+}
+
+@keyframes rotateSpinner {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================
+   DEVICE AUTHENTICATION CARDS (STEP B & C)
+========================================= */
+
+.login-step-card {
+    background: #fdfbfb;
+    border: 1px solid #f1e5e4;
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(166, 61, 47, 0.04);
+}
+
+.login-step-icon-wrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #fbf1ef;
+    border: 1px solid #f4dedb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    color: #a63d2f;
+}
+
+.login-step-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #121d31;
+    margin: 0 0 6px;
+    letter-spacing: -0.3px;
+}
+
+.login-step-card p {
+    font-size: 13.5px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.login-step-card p strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.login-otp-input {
+    font-size: 24px !important;
+    letter-spacing: 10px !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    color: #a63d2f !important;
+    font-family: monospace, inherit !important;
+}
+
+.login-step-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.login-resend-btn {
+    background: none;
+    border: none;
+    color: #a63d2f;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.login-resend-btn:hover:not(:disabled) {
+    background: #fbf1ef;
+    text-decoration: underline;
+}
+
+.login-resend-btn:disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.login-ghost-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.login-ghost-btn:hover {
+    color: #1e293b;
+    background: #f1f5f9;
+}
+
+/* Transfer Pending Card */
+.login-transfer-card {
+    background: #fffcfb;
+    border: 1px solid #f9deda;
+    border-radius: 16px;
+    padding: 28px 22px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(166, 61, 47, 0.05);
+}
+
+.login-transfer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fdf2f0;
+    border: 1px solid #fcdcd7;
+    color: #a63d2f;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-top: 14px;
+    letter-spacing: 0.3px;
 }
 
 
@@ -623,10 +799,10 @@
 
 .login-visual-content {
     position: absolute;
-
     left: 68px;
     right: 55px;
     top: 60px;
+    z-index: 2;
 }
 
 .login-visual-content h2 {

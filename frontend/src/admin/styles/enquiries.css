@@ -931,3 +931,979 @@
   color: #334155;
   white-space: pre-wrap;
 }
+
+/* =========================================================
+   SQUARE BRANCH CARDS & TABS STYLING
+========================================================= */
+
+.branch-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.branch-square-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 290px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.branch-square-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.09);
+  border-color: #cbd5e1;
+}
+
+.branch-square-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #a63d2f 0%, #dc2626 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.branch-square-card:hover::before {
+  opacity: 1;
+}
+
+.branch-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.branch-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(166, 61, 47, 0.12) 0%, rgba(220, 38, 38, 0.06) 100%);
+  color: #a63d2f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.branch-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.branch-status-badge.active {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.branch-status-badge.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.branch-card-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.branch-card-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.branch-admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 600;
+  margin-bottom: 20px;
+  max-width: 100%;
+}
+
+.branch-admin-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.branch-metric-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.branch-square-card:hover .branch-metric-box {
+  background: #f1f5f9;
+}
+
+.branch-metric-box .metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.branch-metric-box .metric-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.branch-metric-box .metric-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.metric-pill-new {
+  color: #2563eb;
+  font-weight: 700;
+  background: #eff6ff;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.metric-pill-followup {
+  color: #b45309;
+  font-weight: 700;
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.metric-pill-scheduled {
+  color: #0891b2;
+  font-weight: 700;
+  background: #ecfeff;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.branch-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px dashed #e2e8f0;
+  color: #a63d2f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.branch-card-footer .explore-arrow {
+  transition: transform 0.2s ease;
+}
+
+.branch-square-card:hover .explore-arrow {
+  transform: translateX(4px);
+}
+
+/* Branch Detail View Header */
+.branch-detail-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+}
+
+.branch-detail-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.back-to-branches-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 9px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-to-branches-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.branch-detail-title-group h2 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.branch-detail-sub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.branch-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.branch-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.branch-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+.branch-tab-btn .tab-badge {
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.branch-tab-btn.active .tab-badge {
+  background: #a63d2f;
+  color: #ffffff;
+}
+
+/* Pulse animation for live sync */
+.live-sync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 6px 12px;
+  border-radius: 9999px;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* =========================================================
+   REFINED TABLE, ACTIONS, AND EMPTY STATE STYLING
+========================================================= */
+
+.enquiries-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-top: 1px solid #edf1f5;
+  background: #ffffff;
+}
+
+.branch-data-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 960px;
+}
+
+/* Explicit, balanced column widths */
+.branch-data-table th.col-customer,
+.branch-data-table td.col-customer {
+  width: 27%;
+}
+
+.branch-data-table th.col-project,
+.branch-data-table td.col-project {
+  width: 19%;
+}
+
+.branch-data-table th.col-date,
+.branch-data-table td.col-date {
+  width: 13%;
+}
+
+.branch-data-table th.col-status,
+.branch-data-table td.col-status {
+  width: 12%;
+}
+
+.branch-data-table th.col-activity,
+.branch-data-table td.col-activity {
+  width: 16%;
+}
+
+.branch-data-table th.col-actions,
+.branch-data-table td.col-actions {
+  width: 13%;
+  text-align: right !important;
+}
+
+.branch-data-table thead th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #edf1f5;
+  white-space: nowrap;
+  text-align: left !important;
+}
+
+.branch-data-table tbody td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+  font-size: 13px;
+  text-align: left !important;
+}
+
+.branch-data-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.branch-data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.branch-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Customer Cell — Strictly Left Aligned */
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  text-align: left !important;
+  gap: 4px;
+  width: 100%;
+}
+
+.customer-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: left !important;
+}
+
+.customer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12px;
+  text-align: left !important;
+}
+
+.customer-dot {
+  color: #94a3b8;
+  font-weight: 700;
+  margin: 0 1px;
+}
+
+/* Project & Plot Cell — Strictly Left Aligned */
+.project-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start !important;
+  text-align: left !important;
+  width: 100%;
+}
+
+.project-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: left !important;
+}
+
+.plot-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  text-align: left !important;
+}
+
+.plot-pill strong {
+  color: #0f172a;
+}
+
+/* Activity Cell — Strictly Left Aligned */
+.activity-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  text-align: left !important;
+  gap: 3px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.activity-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left !important;
+}
+
+.activity-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-align: left !important;
+}
+
+/* Action Buttons Cell (Uniform row, clean spacing, no ugly red border or dot) */
+.action-buttons-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.enquiry-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+  outline: none;
+}
+
+.enquiry-action-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.enquiry-action-btn.call-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+.enquiry-action-btn.whatsapp-btn:hover {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.enquiry-action-btn.email-btn:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.enquiry-action-btn.edit-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* More Actions Dropdown Menu */
+.more-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.more-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  min-width: 190px;
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: enquiryMenuIn 0.15s ease;
+}
+
+.more-dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.more-dropdown button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.more-dropdown button svg {
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Empty State Styling (Centered, beautifully spaced) */
+.enquiries-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 24px;
+}
+
+.enquiries-empty-icon-wrap {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  margin-bottom: 18px;
+}
+
+.enquiries-empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.enquiries-empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+/* Filter Dropdown & Search Bar Enhancements */
+.enquiries-toolbar-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  flex-wrap: wrap;
+}
+
+.enquiries-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 14px;
+  height: 42px;
+  min-width: 280px;
+  flex: 1;
+  max-width: 420px;
+  transition: border-color 0.15s ease;
+}
+
+.enquiries-search-input-wrap:focus-within {
+  border-color: #a63d2f;
+  background: #ffffff;
+}
+
+.enquiries-search-input-wrap input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.enquiries-search-input-wrap svg {
+  color: #94a3b8;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.enquiries-filter-select-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 42px;
+}
+
+.enquiries-filter-select-box select {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  padding-right: 8px;
+}
+
+.enquiries-filter-select-box svg {
+  color: #64748b;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   BRANCH CARD V2 (IMPECCABLE ACCEPTED)
+   ========================================================= */
+
+.branch-v2-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.branch-v2-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(23, 36, 15, 0.09);
+}
+
+.v2-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.v2-badge-pill.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.v2-badge-pill.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.v2-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 50px;
+  background: #f8fafc;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.v2-kpi-pill {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.v2-btn-action {
+  width: 100%;
+  padding: 12px;
+  border-radius: 50px;
+  background: #17240f;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s ease;
+}
+
+.branch-v2-card:hover .v2-btn-action {
+  background: #a63d2f;
+}
+
+
+/* =========================================================
+   ENQUIRY DETAILS MODAL V1 (IMPECCABLE ACCEPTED)
+   ========================================================= */
+
+.modal-body-v1 {
+  padding: 24px;
+  background: #ffffff;
+}
+
+.v1-customer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  background: #f8fafc;
+  border-radius: 16px;
+  border: 1px solid #edf2f7;
+  margin-bottom: 22px;
+}
+
+.v1-avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #17240f;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.v1-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.v1-field-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  transition: border-color 0.2s;
+}
+
+.v1-field-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.v1-field-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.v1-msg-box {
+  background: #fbfdfa;
+  border: 1px solid #e2ece0;
+  border-left: 4px solid #17240f;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 22px;
+}
+
+/* =========================================================
+   ACCEPTED VARIANT 1: REFINED FOREST CRM DATA TABLE
+========================================================= */
+
+.enq-v1-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.enq-v1-card .v1-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid #edf2f7;
+  background: #fafbfd;
+  gap: 16px;
+}
+
+.enq-v1-card .v1-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.enq-v1-card .v1-table th {
+  background: #f8fafc;
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.enq-v1-card .v1-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.enq-v1-card .v1-table tr:hover td {
+  background: #fbfdfa;
+}

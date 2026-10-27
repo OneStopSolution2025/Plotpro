@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -7,7 +7,7 @@ import {
   FaTrash,
   FaExclamationCircle,
   FaCheckCircle,
-  FaUserCheck,
+  FaBuilding,
   FaMapMarkedAlt,
 } from "react-icons/fa";
 import {
@@ -20,7 +20,6 @@ import {
   DEFAULT_NEW_PROJECT_AMENITIES,
 } from "../../data/projects";
 
-import { useAdmins } from "../context/AdminContext";
 import { superAdminApi } from "../../services/api";
 import { useProjects } from "../../context/ProjectContext";
 import CustomDropdown from "../components/CustomDropdown";
@@ -90,13 +89,13 @@ const InputWithUnit = ({ value, onChange, placeholder, suffix, sanitize, ...rest
    ======================================================== */
 const SuperAdminProjectForm = () => {
   const navigate = useNavigate();
-  const { admins } = useAdmins();
   const { setProjects, projects } = useProjects();
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
-  const [selectedAdminId, setSelectedAdminId] = useState("");
+  const [branches, setBranches] = useState([]);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
 
   const [form, setForm] = useState({
@@ -140,9 +139,28 @@ const SuperAdminProjectForm = () => {
     sold >= 0 &&
     available + reserved + sold === total;
 
-  // Available normal admins
-  const activeAdmins = admins.filter((a) => a.status === "Active" || a.status === "ACTIVE");
-  const inactiveAdmins = admins.filter((a) => a.status !== "Active" && a.status !== "ACTIVE");
+  // Branch options (tenant-scoped, ACTIVE branches can receive projects)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await superAdminApi.getBranches();
+        if (!cancelled && res?.success) {
+          setBranches(res.data || []);
+        }
+      } catch {
+        /* non-fatal: assignment to branch stays optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeBranches = branches.filter((b) => b.status === "ACTIVE");
+  const selectedBranch = branches.find(
+    (b) => String(b.id) === String(selectedBranchId)
+  );
 
   const updateArrayField = (fieldName, index, value) => {
     setForm((prev) => {
@@ -249,8 +267,8 @@ const SuperAdminProjectForm = () => {
       highlights: form.highlights,
       amenities: form.amenities,
       layout: form.layout,
-      // Optional admin assignment
-      adminId: selectedAdminId || null,
+      // Optional branch association (server-validated against the tenant)
+      branchId: selectedBranchId || null,
     };
 
     try {
@@ -276,7 +294,7 @@ const SuperAdminProjectForm = () => {
       });
 
       setTimeout(() => {
-        navigate("/super-admin/assignments");
+        navigate("/super-admin/branches");
       }, 1200);
     } catch (err) {
       console.error("[SuperAdminProjectForm] Submit error:", err);
@@ -289,7 +307,7 @@ const SuperAdminProjectForm = () => {
     }
   };
 
-  const handleCancel = () => navigate("/super-admin/assignments");
+  const handleCancel = () => navigate("/super-admin/branches");
 
   return (
     <div className="admin-project-form-page">
@@ -327,44 +345,42 @@ const SuperAdminProjectForm = () => {
 
       <form onSubmit={handleSubmit} className="project-form" noValidate>
         {/* ==============================
-            ADMIN ASSIGNMENT (SA only)
+            BRANCH ASSOCIATION (SA only)
         ============================== */}
         <section className="form-section" style={{ border: "2px solid #fbf0ec", background: "#f0f9ff" }}>
           <h2 style={{ color: "#a63d2f" }}>
-            <FaUserCheck style={{ marginRight: 8, verticalAlign: "middle" }} />
-            Assign to Admin
+            <FaBuilding style={{ marginRight: 8, verticalAlign: "middle" }} />
+            Associate with Branch
           </h2>
           <div className="form-grid">
             <label className="full-width">
-              Select Administrator (Optional — can be assigned later from Assignments page)
+              Associate with Branch (Optional — associates the project with one of your branches)
               <CustomDropdown
-                value={selectedAdminId}
-                onChange={(e) => setSelectedAdminId(e.target.value)}
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(e.target.value)}
                 className="sa-select-input"
                 style={{ marginTop: "6px" }}
-                placeholder="— Leave Unassigned for now —"
+                placeholder="— No branch association —"
               >
-                <option value="">— Leave Unassigned for now —</option>
-                <optgroup label="Active Admins">
-                  {activeAdmins.map((admin) => (
-                    <option key={admin.id || admin._id} value={admin.id || admin._id}>
-                      {admin.name} — {admin.email}
-                    </option>
-                  ))}
-                </optgroup>
-                {inactiveAdmins.length > 0 && (
-                  <optgroup label="Inactive Admins (cannot assign)">
-                    {inactiveAdmins.map((admin) => (
-                      <option key={admin.id || admin._id} value="" disabled>
-                        {admin.name} (Inactive)
+                <option value="">— No branch association —</option>
+                {activeBranches.length > 0 ? (
+                  <optgroup label="Active Branches">
+                    {activeBranches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name} — {branch.city}
                       </option>
                     ))}
                   </optgroup>
+                ) : (
+                  <option disabled>
+                    No active branches yet (create one from the Branches page)
+                  </option>
                 )}
               </CustomDropdown>
-              {selectedAdminId && (
+
+              {selectedBranchId && (
                 <small style={{ color: "#059669", fontWeight: 600, marginTop: 4, display: "block" }}>
-                  ✓ Project will be assigned to this admin upon creation.
+                  ✓ Project will be associated with "{selectedBranch?.name}" ({selectedBranch?.city}).
                 </small>
               )}
             </label>
@@ -719,7 +735,7 @@ const SuperAdminProjectForm = () => {
               }}
             >
               <FaMapMarkedAlt />
-              <span>Open Interactive Layout Boundary Editor</span>
+              <span>Manage Project Layout Image</span>
             </button>
           </div>
         </section>
@@ -905,7 +921,7 @@ const SuperAdminProjectForm = () => {
               : (
                 <>
                   <FaSave /> Create & Approve Project
-                  {selectedAdminId && " & Assign"}
+                  {selectedBranchId && " to Branch"}
                 </>
               )}
           </button>

@@ -6,10 +6,10 @@ import Enquiry from "../models/Enquiry.js";
 import SiteVisit from "../models/SiteVisit.js";
 import Subscription from "../models/Subscription.js";
 import Plan from "../models/Plan.js";
+import Branch from "../models/Branch.js";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { createNotification } from "./notificationController.js";
 import { storageService } from "../services/storageService.js";
-import { vectorizationService } from "../services/vectorizationService.js";
 
 /**
  * Helper to resolve tenant admins, projects, and plot IDs for a Super Admin
@@ -150,12 +150,16 @@ export const createAdminAccount = async (req, res, next) => {
       status: "ACTIVE",
     });
 
-    const maxAllowedSeats = subscriptionToUse ? subscriptionToUse.getEffectiveSeats() : 3;
+    const maxAllowedSeats = subscriptionToUse ? subscriptionToUse.getEffectiveSeats() : 0;
+    const lifetimeAssigned = Math.max(
+      subscriptionToUse?.lifetimeAssignedSeats || 0,
+      currentActiveAdmins
+    );
 
-    if (currentActiveAdmins >= maxAllowedSeats) {
+    if (currentActiveAdmins >= maxAllowedSeats || lifetimeAssigned >= maxAllowedSeats) {
       return res.status(400).json({
         success: false,
-        message: `Admin seat limit reached (${maxAllowedSeats} max). Please upgrade your subscription to add more administrators.`,
+        message: `Admin seat limit reached (${maxAllowedSeats} max). Deleting an admin does not provide extra seats. Please upgrade your subscription plan.`,
       });
     }
 
@@ -167,11 +171,28 @@ export const createAdminAccount = async (req, res, next) => {
           _id: subscriptionToUse._id,
           status: { $in: ["ACTIVE", "TRIAL"] },
           expiryDate: { $gt: new Date() },
-          $expr: { $lt: ["$usedSeats", "$assignedSeats"] },
+          $expr: {
+            $and: [
+              { $lt: ["$usedSeats", "$assignedSeats"] },
+              { $lt: [{ $ifNull: ["$lifetimeAssignedSeats", 0] }, "$assignedSeats"] },
+            ],
+          },
         },
-        { $inc: { usedSeats: 1 } },
+        {
+          $inc: {
+            usedSeats: 1,
+            lifetimeAssignedSeats: 1,
+          },
+        },
         { returnDocument: "after" }
       );
+
+      if (!reservedSubscription) {
+        return res.status(400).json({
+          success: false,
+          message: `Admin seat limit reached (${maxAllowedSeats} max). Deleting an admin does not provide extra seats. Please upgrade your subscription plan.`,
+        });
+      }
     }
 
     const emailNormalized = email.trim().toLowerCase();
@@ -511,6 +532,14 @@ export const deleteAdminAccount = async (req, res, next) => {
       });
     }
 
+    // Tenant isolation guard (consistent with toggleAdminStatus)
+    if (String(admin.tenantId || "") !== String(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized. Admin belongs to another tenant.",
+      });
+    }
+
     // Release seat if admin was ACTIVE
     if (admin.status === "ACTIVE") {
       await Subscription.updateOne(
@@ -539,6 +568,12 @@ export const deleteAdminAccount = async (req, res, next) => {
 
     // 4. Delete the admin user record permanently from DB
     await User.findByIdAndDelete(admin._id);
+
+    // 5. Detach the admin from any branch they managed (branch itself is kept)
+    await Branch.updateMany(
+      { branchAdmin: admin._id },
+      { $set: { branchAdmin: null } }
+    );
 
     // Sync subscription usedSeats to actual count of active admins
     const actualRemainingCount = await User.countDocuments({
@@ -581,6 +616,7 @@ export const getAllProjectsSuperAdmin = async (req, res, next) => {
 
     const projects = await Project.find(query)
       .populate("adminId", "name email phone")
+      .populate("branchId", "name city status")
       .sort({ customId: 1, createdAt: -1 });
 
     const projectsWithCounts = await Promise.all(
@@ -671,6 +707,7 @@ export const getPendingProjects = async (req, res, next) => {
       ],
     })
       .populate("adminId", "name email phone")
+      .populate("branchId", "name city status")
       .sort({ updatedAt: -1 });
 
     res.status(200).json({
@@ -889,7 +926,7 @@ export const rejectProject = async (req, res, next) => {
 export const assignProjectAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { adminId } = req.body;
+    const { adminId, branchId: requestedBranchId } = req.body;
 
     const project = await findProjectByIdentifier(id);
     if (!project) {
@@ -904,6 +941,8 @@ export const assignProjectAdmin = async (req, res, next) => {
       });
     }
 
+    let assignedBranch = null;
+
     if (adminId) {
       // Must be a staff admin belonging to this Super Admin's tenant
       const adminUser = await User.findOne({ _id: adminId, role: "ADMIN", tenantId: req.user._id });
@@ -913,7 +952,65 @@ export const assignProjectAdmin = async (req, res, next) => {
           message: "Invalid admin user ID. Admin does not belong to your organization.",
         });
       }
+
+      // Branch consistency: a Branch Admin's projects must carry their branch;
+      // a legacy admin (no branch) can never own a branch-scoped project.
+      if (adminUser.branchId) {
+        const adminBranch = await Branch.findOne({
+          _id: adminUser.branchId,
+          tenantId: req.user._id,
+        });
+        if (!adminBranch) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Invalid admin assignment. The selected admin's branch no longer exists in your organization.",
+          });
+        }
+        if (
+          requestedBranchId &&
+          String(adminBranch._id) !== String(requestedBranchId)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "The selected admin belongs to a different branch.",
+          });
+        }
+        assignedBranch = adminBranch;
+      }
+
       project.adminId = adminUser._id;
+      project.branchId = assignedBranch ? assignedBranch._id : null;
+    } else if (requestedBranchId) {
+      // Branch-only association (no specific admin yet)
+      const branch = await Branch.findOne({
+        _id: requestedBranchId,
+        tenantId: req.user._id,
+      });
+      if (!branch) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branch ID. Branch does not belong to your organization.",
+        });
+      }
+
+      // Invariant guard: a project still owned by a legacy admin (no branch)
+      // cannot be branch-scoped without reassigning ownership.
+      if (project.adminId) {
+        const currentOwner = await User.findById(project.adminId);
+        const ownerBranchId = currentOwner?.branchId
+          ? String(currentOwner.branchId)
+          : null;
+        if (!ownerBranchId || ownerBranchId !== String(branch._id)) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "This project is owned by an admin without a matching branch assignment. Assign it to that branch's admin before scoping it to the branch.",
+          });
+        }
+      }
+
+      project.branchId = branch._id;
     } else {
       project.adminId = null; // Unassigned
     }
@@ -929,10 +1026,11 @@ export const assignProjectAdmin = async (req, res, next) => {
         senderName: req.user.name || "Super Admin",
         type: "PROJECT_ASSIGNED",
         title: "Project Assigned to You",
-        message: `Project "${project.title}" has been assigned to your portfolio by Super Administrator.`,
+        message: `Project "${project.title}" has been assigned to your portfolio${assignedBranch ? ` (${assignedBranch.name})` : ""} by Super Administrator.`,
         metadata: {
           projectId: String(project.customId || project._id),
           projectTitle: project.title,
+          branchId: assignedBranch ? String(assignedBranch._id) : null,
         },
       });
     }
@@ -1103,6 +1201,7 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       about, benefits, highlights, amenities, locationConnectivity,
       availablePlots: availableCount, reservedPlots: reservedCount,
       soldPlots: soldCount, adminId: assignedAdminId,
+      branchId: requestedBranchId,
       layout,
     } = req.body;
 
@@ -1137,8 +1236,68 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       if (!assignedAdmin || assignedAdmin.role !== "ADMIN") {
         return res.status(400).json({
           success: false,
-          message: "Invalid admin ID. Please select a valid Normal Administrator.",
+          message: "Invalid admin ID. Please select a valid Branch Administrator.",
         });
+      }
+      if (String(assignedAdmin.tenantId || "") !== String(req.user._id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid admin ID. Admin does not belong to your organization.",
+        });
+      }
+    }
+
+    // ── Branch assignment (server-validated; never trusted from the client) ──
+    // Invariants maintained:
+    //   • branchId set  ⇒ project.adminId is null OR owns/belongs to that branch
+    //   • a legacy admin (no branch) can never own a branch-scoped project
+    let assignedBranch = null;
+
+    if (requestedBranchId) {
+      assignedBranch = await Branch.findOne({
+        _id: requestedBranchId,
+        tenantId: req.user._id,
+      });
+      if (!assignedBranch) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branch ID. Branch does not belong to your organization.",
+        });
+      }
+    }
+
+    if (assignedAdmin) {
+      const adminBranchId = assignedAdmin.branchId
+        ? String(assignedAdmin.branchId)
+        : null;
+
+      if (requestedBranchId && !adminBranchId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "This admin account has no branch assignment. Branch-scoped projects require a Branch Admin account.",
+        });
+      }
+      if (assignedAdmin.branchId) {
+        // Verify the admin's branch is real & in-tenant
+        const adminBranch = await Branch.findOne({
+          _id: assignedAdmin.branchId,
+          tenantId: req.user._id,
+        });
+        if (!adminBranch) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Invalid admin assignment. The selected admin's branch no longer exists in your organization.",
+          });
+        }
+        if (assignedBranch && String(adminBranch._id) !== String(assignedBranch._id)) {
+          return res.status(400).json({
+            success: false,
+            message: "The selected admin belongs to a different branch.",
+          });
+        }
+        assignedBranch = adminBranch;
       }
     }
 
@@ -1189,7 +1348,8 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       amenities: amenities || [],
       locationConnectivity: locationConnectivity || [],
       customId: nextCustomId,
-      adminId: assignedAdmin ? assignedAdmin._id : null,
+      adminId: assignedAdmin ? assignedAdmin._id : (assignedBranch?.branchAdmin || null),
+      branchId: assignedBranch ? assignedBranch._id : null,
       // Super Admin projects are immediately APPROVED — no pending workflow
       approvalStatus: "APPROVED",
       approvedAt: new Date(),
@@ -1368,9 +1528,9 @@ export const getSubscriptionInfo = async (req, res, next) => {
           hasSubscription: false,
           status: "NONE",
           planName: "Default Workspace",
-          assignedSeats: 3,
+          assignedSeats: 0,
           usedSeats: activeAdminsCount,
-          remainingSeats: Math.max(0, 3 - activeAdminsCount),
+          remainingSeats: 0,
           expiryDate: null,
           isExpired: false,
           isCustomOverride: false,
@@ -1392,11 +1552,22 @@ export const getSubscriptionInfo = async (req, res, next) => {
     const isTrial = sub.status === "TRIAL";
     const isExpiringSoon = !isExpired && remainingDays <= 3;
 
+    // Keep lifetimeAssignedSeats at least equal to current active admins (high-water mark)
+    const currentLifetime = Math.max(sub.lifetimeAssignedSeats || 0, activeAdminsCount);
+    if ((sub.lifetimeAssignedSeats || 0) < currentLifetime) {
+      await Subscription.updateOne({ _id: sub._id }, { $set: { lifetimeAssignedSeats: currentLifetime } });
+      sub.lifetimeAssignedSeats = currentLifetime;
+    }
+
     // Always self-heal sub.usedSeats to match the actual active admins count
     if (sub.usedSeats !== activeAdminsCount) {
       await Subscription.updateOne({ _id: sub._id }, { $set: { usedSeats: activeAdminsCount } });
       sub.usedSeats = activeAdminsCount;
     }
+
+    // Remaining seats: If total seats provisioned or active reached effective limit, no more can be added even if an admin is deleted.
+    const effectiveUsed = Math.max(activeAdminsCount, sub.lifetimeAssignedSeats || 0);
+    const remainingSeats = Math.max(0, effectiveSeats - effectiveUsed);
 
     res.status(200).json({
       success: true,
@@ -1408,8 +1579,9 @@ export const getSubscriptionInfo = async (req, res, next) => {
         planName: sub.planId ? sub.planId.name : (isTrial ? "Trial Plan" : "Custom Plan"),
         assignedSeats: effectiveSeats,
         usedSeats: activeAdminsCount,
+        lifetimeAssignedSeats: sub.lifetimeAssignedSeats || activeAdminsCount,
         actualActiveAdmins: activeAdminsCount,
-        remainingSeats: Math.max(0, effectiveSeats - activeAdminsCount),
+        remainingSeats,
         isCustomOverride: sub.isCustomOverride || false,
         customOverrideReason: sub.customOverrideReason || "",
         startDate: sub.startDate,
@@ -1782,73 +1954,3 @@ export const saveProjectLayoutSuperAdmin = async (req, res, next) => {
     next(error);
   }
 };
-
-/**
- * @desc    Run semi-automatic site plan vectorization & OCR detection on project's reference image
- * @route   POST /api/super-admin/projects/:id/layout/detect
- * @access  Private (Super Admin)
- */
-export const detectLayoutCandidatesSuperAdmin = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { imageUrl: bodyImageUrl, config, provider: requestedProvider } = req.body || {};
-
-    const provider = String(requestedProvider || "opencv").toLowerCase().trim();
-    if (provider !== "opencv" && provider !== "gemini") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid detection provider "${provider}". Supported providers: "opencv", "gemini".`,
-      });
-    }
-
-    const { tenantAdminIds } = await getTenantContext(req.user._id);
-    let referenceImageUrl = bodyImageUrl ? String(bodyImageUrl).trim() : "";
-
-    if (id && id !== "new" && id !== "undefined") {
-      const project = await findProjectByIdentifier(id);
-
-      if (!project || project.isArchived) {
-        return res.status(404).json({ success: false, message: "Project not found." });
-      }
-
-      if (!isProjectInTenant(project, req.user._id, tenantAdminIds)) {
-        return res.status(403).json({
-          success: false,
-          message: "Forbidden: You do not have permission to access layout for this project.",
-        });
-      }
-
-      if (!referenceImageUrl) {
-        referenceImageUrl =
-          project.layout?.referenceImageUrl || project.layout?.imageUrl || "";
-      }
-    }
-
-    if (!referenceImageUrl) {
-      return res.status(400).json({
-        success: false,
-        message: "No layout reference image provided or uploaded for this project. Please upload a site plan first.",
-      });
-    }
-
-    // Call vectorization service with secure Cloudinary retrieval and bounded provider execution
-    const detectionResult = await vectorizationService.detectCandidates(
-      referenceImageUrl,
-      config || {},
-      provider
-    );
-
-    // Candidates are returned as unconfirmed suggestions only.
-    // Zero authoritative database mutations are performed.
-    res.status(200).json({
-      success: true,
-      data: detectionResult,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
-

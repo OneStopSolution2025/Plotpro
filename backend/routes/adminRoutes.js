@@ -12,6 +12,9 @@ import {
   createAdminProject,
   updateAdminProject,
   deleteAdminProject,
+  uploadProjectImageAdmin,
+  getProjectLayoutAdmin,
+  saveProjectLayoutAdmin,
 } from "../controllers/projectController.js";
 import {
   getAdminProjectPlots,
@@ -28,6 +31,7 @@ import {
 import {
   getAdminEnquiries,
   updateEnquiryStatusAdmin,
+  logEnquiryActivityAdmin,
 } from "../controllers/enquiryController.js";
 import {
   getAdminSiteVisits,
@@ -42,10 +46,26 @@ router.use(authorize("ADMIN"));
 
 // Project Management
 router.get("/projects", getAdminProjects);
+router.post("/projects/upload-image", requireActiveSubscription, uploadProjectImageAdmin);
+router.post("/projects/:id/upload-image", requireActiveSubscription, verifyProjectOwnership, uploadProjectImageAdmin);
 router.post("/projects", requireActiveSubscription, createAdminProject);
 router.get("/projects/:id", verifyProjectOwnership, getAdminProjectById);
 router.put("/projects/:id", requireActiveSubscription, verifyProjectOwnership, updateAdminProject);
 router.delete("/projects/:id", requireActiveSubscription, verifyProjectOwnership, deleteAdminProject);
+
+// Project Layout Management
+router.get("/projects/:id/layout", verifyProjectOwnership, getProjectLayoutAdmin);
+router.post(
+  "/projects/:id/layout-image",
+  requireActiveSubscription,
+  (req, res, next) => {
+    if (req.params.id === "new" || req.params.id === "undefined") {
+      return uploadProjectImageAdmin(req, res, next);
+    }
+    return verifyProjectOwnership(req, res, () => uploadProjectImageAdmin(req, res, next));
+  }
+);
+router.put("/projects/:id/layout", requireActiveSubscription, verifyProjectOwnership, saveProjectLayoutAdmin);
 
 // Plot Management
 router.get("/projects/:id/plots", verifyProjectOwnership, getAdminProjectPlots);
@@ -57,6 +77,7 @@ router.delete("/plots/:id", requireActiveSubscription, verifyPlotOwnership, dele
 // Enquiries (Admin-specific leads)
 router.get("/enquiries", getAdminEnquiries);
 router.patch("/enquiries/:id/status", requireActiveSubscription, updateEnquiryStatusAdmin);
+router.post("/enquiries/:id/activity", requireActiveSubscription, logEnquiryActivityAdmin);
 
 // Site Visits (Admin-specific leads)
 router.get("/site-visits", getAdminSiteVisits);

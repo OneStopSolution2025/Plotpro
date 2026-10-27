@@ -477,8 +477,8 @@ const Projects = () => {
         recipient: "super_admin",
         type: "PROJECT_UPDATED",
         title: "Project Updated",
-        message: `${profile?.name || "Normal Admin"} updated "${editForm.title}" (${editForm.location}) — Total: ${newTotal}, Status: ${editForm.status}.`,
-        actorName: profile?.name || "Normal Admin",
+        message: `${profile?.name || "Branch Admin"} updated "${editForm.title}" (${editForm.location}) — Total: ${newTotal}, Status: ${editForm.status}.`,
+        actorName: profile?.name || "Branch Admin",
         projectId: projectId,
       });
     }

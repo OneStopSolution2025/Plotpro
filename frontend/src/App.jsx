@@ -43,14 +43,13 @@ import AdminProfile from "./admin/pages/AdminProfile.jsx";
 
 import SuperAdminLayout from "./admin/layouts/SuperAdminLayout.jsx";
 import SuperAdminDashboard from "./admin/pages/SuperAdminDashboard.jsx";
-import Admins from "./admin/pages/Admins.jsx";
-import AdminDetail from "./admin/pages/AdminDetail.jsx";
 import SuperAdminProfile from "./admin/pages/SuperAdminProfile.jsx";
 import ProjectApprovals from "./admin/pages/ProjectApprovals.jsx";
-import ProjectAssignments from "./admin/pages/ProjectAssignments.jsx";
 import SuperAdminProjectForm from "./admin/pages/SuperAdminProjectForm.jsx";
 import GeneralEnquiries from "./admin/pages/GeneralEnquiries.jsx";
 import SubscriptionDetails from "./admin/pages/super-admin/SubscriptionDetails.jsx";
+import BranchManagement from "./admin/pages/BranchManagement.jsx";
+import BranchDetail from "./admin/pages/BranchDetail.jsx";
 
 import SupremeAdminLayout from "./admin/layouts/SupremeAdminLayout.jsx";
 import SupremeOverview from "./admin/pages/supreme/SupremeOverview.jsx";
@@ -60,6 +59,8 @@ import SubscriptionManagement from "./admin/pages/supreme/SubscriptionManagement
 import SeatUsageOverview from "./admin/pages/supreme/SeatUsageOverview.jsx";
 import PlatformSettings from "./admin/pages/supreme/PlatformSettings.jsx";
 import SupremeAdminProfile from "./admin/pages/supreme/SupremeAdminProfile.jsx";
+import RetailerRequests from "./admin/pages/supreme/RetailerRequests.jsx";
+import TrustedDevices from "./admin/pages/supreme/TrustedDevices.jsx";
 
 
 function App() {
@@ -84,6 +85,9 @@ function App() {
                     <Route path="/projects/:id/plots" element={<ProjectPlots />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/signup" element={<Signup />} />
+                    <Route path="/signup-customer" element={<Signup initialType="customer" />} />
+                    <Route path="/signup-retailer" element={<Signup initialType="retailer" />} />
+                    <Route path="/signup/:type" element={<Signup />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/site-visit/:projectId" element={<SiteVisitForm />} />
                     <Route path="/enquiry/:projectId" element={<EnquiryForm />} />
@@ -135,11 +139,11 @@ function App() {
                   >
                     <Route index element={<SuperAdminDashboard />} />
                     <Route path="general-enquiries" element={<GeneralEnquiries />} />
-                    <Route path="admins" element={<Admins />} />
-                    <Route path="admins/:id" element={<AdminDetail />} />
+                    <Route path="general-enquiries/:branchSlug" element={<GeneralEnquiries />} />
+                    <Route path="branches" element={<BranchManagement />} />
+                    <Route path="branches/:id" element={<BranchDetail />} />
                     <Route path="profile" element={<SuperAdminProfile />} />
                     <Route path="approvals" element={<ProjectApprovals />} />
-                    <Route path="assignments" element={<ProjectAssignments />} />
                     <Route path="projects/new" element={<SuperAdminProjectForm />} />
                     <Route path="subscription" element={<SubscriptionDetails />} />
                   </Route>
@@ -154,10 +158,12 @@ function App() {
                     }
                   >
                     <Route index element={<SupremeOverview />} />
+                    <Route path="retailer-requests" element={<RetailerRequests />} />
                     <Route path="subscribers" element={<SubscriberManagement />} />
                     <Route path="plans" element={<PlanManagement />} />
                     <Route path="subscriptions" element={<SubscriptionManagement />} />
                     <Route path="seat-usage" element={<SeatUsageOverview />} />
+                    <Route path="trusted-devices" element={<TrustedDevices />} />
                     <Route path="settings" element={<PlatformSettings />} />
                     <Route path="profile" element={<SupremeAdminProfile />} />
                   </Route>

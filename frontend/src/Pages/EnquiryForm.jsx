@@ -3,6 +3,8 @@ import "../css/EnquiryForm.css";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PhoneInputField from "../components/PhoneInputField";
+import { formatFullPhone } from "../utils/phoneUtils";
 import { ArrowRight, MapPin, User, Phone, Mail, AlertCircle, CheckCircle, MessageSquare, Smartphone, Mail as MailIcon } from "lucide-react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useProjects, getProjectRouteSlug, findProjectByIdentifier } from "../context/ProjectContext";
@@ -60,6 +62,7 @@ export default function EnquiryForm() {
         navigate("/projects");
     };
 
+    const [countryCode, setCountryCode] = useState("+91");
     const [form, setForm] = useState({
         fullName: "",
         mobile: "",
@@ -87,7 +90,7 @@ export default function EnquiryForm() {
 
     const validateMobile = (mobile) => {
         const cleaned = mobile.replace(/\D/g, "");
-        return cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned);
+        return cleaned.length >= 7 && cleaned.length <= 12;
     };
 
     const validateEmail = (email) => {
@@ -105,7 +108,7 @@ export default function EnquiryForm() {
         if (!form.mobile.trim()) {
             newErrors.mobile = "Mobile number is required";
         } else if (!validateMobile(form.mobile)) {
-            newErrors.mobile = "Enter a valid 10-digit Indian mobile number";
+            newErrors.mobile = "Please enter a valid mobile number (e.g. 10 digits)";
         }
 
         if (!validateEmail(form.email)) {
@@ -141,7 +144,7 @@ export default function EnquiryForm() {
         try {
             await publicApi.submitEnquiry({
                 fullName: form.fullName,
-                mobile: form.mobile,
+                mobile: formatFullPhone(countryCode, form.mobile),
                 email: form.email,
                 plot: form.plot,
                 contactMethod: form.contactMethod || "phone",
@@ -227,19 +230,22 @@ export default function EnquiryForm() {
 
                             <div className="field">
                                 <label htmlFor="mobile">Mobile Number <span className="required">*</span></label>
-                                <div className="input-wrapper">
-                                    <Phone size={18} />
-                                    <input
-                                        id="mobile"
-                                        type="tel"
-                                        className={`input ${errors.mobile ? "error" : ""}`}
-                                        placeholder="Enter 10-digit mobile number"
-                                        value={form.mobile}
-                                        onChange={updateForm("mobile")}
-                                        maxLength={10}
-                                        disabled={isSubmitting}
-                                    />
-                                </div>
+                                <PhoneInputField
+                                    id="mobile"
+                                    name="mobile"
+                                    countryCode={countryCode}
+                                    onCountryCodeChange={(code) => setCountryCode(code)}
+                                    value={form.mobile}
+                                    onChange={(digits) => {
+                                        setForm((prev) => ({ ...prev, mobile: digits }));
+                                        setErrors((prev) => ({ ...prev, mobile: undefined }));
+                                    }}
+                                    placeholder="10-digit number"
+                                    maxLength={10}
+                                    disabled={isSubmitting}
+                                    error={Boolean(errors.mobile)}
+                                    icon={Phone}
+                                />
                                 {errors.mobile && <span className="error-text">{errors.mobile}</span>}
                             </div>
 

@@ -1,0 +1,542 @@
+/* ==========================================================================
+   ProjectPlotPanel.css — PlotPro Responsive Slide-Over Plot Selection Drawer
+   Theme: PlotPro Brand Terracotta (#a63d2f), Warm Cream (#fdfbf9) & Clean Slate
+   ========================================================================== */
+
+/* Overlay backdrop */
+.plot-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.plot-panel-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Slide-over Drawer Container */
+.plot-panel-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 520px;
+  max-width: 94vw;
+  height: 100vh;
+  background: #ffffff;
+  z-index: 1050;
+  box-shadow: -10px 0 35px rgba(15, 23, 42, 0.16);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.plot-panel-drawer.open {
+  transform: translateX(0);
+}
+
+/* Header */
+.plot-panel-header {
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  gap: 1rem;
+}
+
+.plot-panel-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.plot-panel-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #fdf2f0;
+  color: #a63d2f;
+  border: 1px solid #fecdd3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.plot-panel-heading {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plot-panel-subheading {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plot-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.plot-panel-btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.plot-panel-btn-icon:hover {
+  background: #fdf2f0;
+  color: #a63d2f;
+  border-color: #fecdd3;
+}
+
+.plot-panel-btn-icon:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Interactive Status Metrics Filter Strip
+   Single source of truth for plot counts & interactive filtering
+   ========================================================================== */
+.plot-panel-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  background: #fafaf9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.metric-pill {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.65rem 0.4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  font-family: inherit;
+  outline: none;
+}
+
+.metric-pill:hover {
+  background: #fdf8f6;
+  border-color: #edd5cf;
+  transform: translateY(-1px);
+}
+
+.metric-pill .metric-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  transition: color 0.15s ease;
+}
+
+.metric-pill .metric-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  transition: color 0.15s ease;
+}
+
+/* Status colors on inactive cards */
+.metric-pill.available .metric-val {
+  color: #15803d;
+}
+.metric-pill.reserved .metric-val {
+  color: #d97706;
+}
+.metric-pill.sold .metric-val {
+  color: #64748b;
+}
+
+/* Active states for each filter card */
+.metric-pill.is-active {
+  background: #a63d2f !important;
+  border-color: #872e22 !important;
+  box-shadow: 0 4px 12px rgba(166, 61, 47, 0.25);
+  transform: translateY(-1px);
+}
+
+.metric-pill.is-active .metric-val,
+.metric-pill.is-active .metric-lbl {
+  color: #ffffff !important;
+}
+
+.metric-pill.available.is-active {
+  background: #15803d !important;
+  border-color: #166534 !important;
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.25);
+}
+
+.metric-pill.reserved.is-active {
+  background: #d97706 !important;
+  border-color: #b45309 !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+}
+
+.metric-pill.sold.is-active {
+  background: #475569 !important;
+  border-color: #334155 !important;
+  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.25);
+}
+
+/* ==========================================================================
+   Search Bar
+   ========================================================================== */
+.plot-panel-controls {
+  padding: 0.85rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.plot-panel-search {
+  position: relative;
+  width: 100%;
+}
+
+.plot-panel-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.plot-panel-search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 2.2rem 0 2.5rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #fafaf9;
+  font-size: 0.88rem;
+  color: #1e293b;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.plot-panel-search-input:focus {
+  background: #ffffff;
+  border-color: #a63d2f;
+  box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.12);
+}
+
+.plot-panel-search-clear {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.plot-panel-search-clear:hover {
+  color: #a63d2f;
+}
+
+/* ==========================================================================
+   Scrollable Plot Cards Body
+   ========================================================================== */
+.plot-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #fdfbf9;
+}
+
+/* Plot Card Item */
+.plot-list-item {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.05rem 1.15rem;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.plot-list-item:hover {
+  border-color: #a63d2f;
+  box-shadow: 0 6px 18px rgba(166, 61, 47, 0.1);
+  transform: translateY(-2px);
+}
+
+.plot-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.plot-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.plot-item-number {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+/* Status Badges */
+.plot-status-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2.5px 8.5px;
+  border-radius: 20px;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.2px;
+}
+
+.plot-status-tag.available {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.plot-status-tag.reserved {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.plot-status-tag.sold {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Specs Badges (Dimensions & Facing) */
+.plot-item-specs {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.82rem;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.spec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Price Display (PlotPro Terracotta Accent) */
+.plot-item-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #a63d2f;
+  letter-spacing: -0.2px;
+}
+
+/* Action Arrow Pill */
+.plot-item-action {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fafaf9;
+  border: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.plot-list-item:hover .plot-item-action {
+  background: #a63d2f;
+  border-color: #a63d2f;
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
+   Loading, Empty, and Error States
+   ========================================================================== */
+.plot-panel-state {
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #64748b;
+}
+
+.plot-panel-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #fcebe8;
+  border-top-color: #a63d2f;
+  border-radius: 50%;
+  animation: plotpro-spin 0.8s linear infinite;
+}
+
+@keyframes plotpro-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.plot-panel-state-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fdf2f0;
+  color: #a63d2f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.plot-panel-state h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.plot-panel-state p {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 340px;
+  line-height: 1.45;
+}
+
+.plot-panel-reset-btn,
+.plot-panel-retry-btn {
+  margin-top: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  background: #a63d2f;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.plot-panel-reset-btn:hover,
+.plot-panel-retry-btn:hover {
+  background: #872e22;
+  box-shadow: 0 4px 12px rgba(166, 61, 47, 0.25);
+}
+
+/* Spinner helper */
+.spin {
+  animation: plotpro-spin 0.8s linear infinite;
+}
+
+/* Mobile Viewport Optimizations */
+@media (max-width: 640px) {
+  .plot-panel-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .plot-panel-header {
+    padding: 1rem 1.15rem;
+  }
+
+  .plot-panel-metrics {
+    padding: 0.75rem 1rem;
+    gap: 0.35rem;
+  }
+
+  .metric-pill {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .metric-pill .metric-val {
+    font-size: 1.1rem;
+  }
+
+  .metric-pill .metric-lbl {
+    font-size: 0.62rem;
+  }
+
+  .plot-panel-controls {
+    padding: 0.75rem 1rem;
+  }
+
+  .plot-panel-body {
+    padding: 0.85rem 1rem;
+  }
+}

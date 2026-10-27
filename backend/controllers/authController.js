@@ -1,9 +1,28 @@
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
+import TrustedDevice from "../models/TrustedDevice.js";
 import PlatformSettings from "../models/PlatformSettings.js";
+import SuperAdminRequest from "../models/SuperAdminRequest.js";
+import DeviceApprovalRequest from "../models/DeviceApprovalRequest.js";
 import { generateToken } from "../utils/generateToken.js";
+import {
+  sendDeviceEnrollmentOtpEmail,
+  sendPasswordResetOtpEmail,
+} from "../utils/smtpEmailService.js";
+import { generateSecureOtp, hashOtp, validateOtpSecretConfig } from "../utils/otpSecurity.js";
+import {
+  generateDeviceSecret,
+  hashDeviceSecret,
+  verifyDeviceSecret,
+  setDeviceCookie,
+  clearDeviceCookie,
+} from "../utils/deviceSecurity.js";
+
+const JWT_SECRET = process.env.JWT_SECRET || "dreamcity_super_secret_jwt_key_2026_dev";
 
 const googleClient = new OAuth2Client();
 
@@ -49,6 +68,20 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
+    // Reserve customer emails against pending retailer account requests,
+    // so Supreme Admin approval never collides with a fresh customer signup.
+    const pendingRetailerRequest = await SuperAdminRequest.findOne({
+      email: emailNormalized,
+      status: "PENDING",
+    });
+    if (pendingRetailerRequest) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This email is reserved for a retailer account request that is awaiting Supreme Admin approval.",
+      });
+    }
+
     // Hash password with bcrypt
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
@@ -84,6 +117,274 @@ export const registerUser = async (req, res, next) => {
 };
 
 /**
+ * Shared trusted-device enforcement handler for administrative logins (Password & Google OAuth).
+ * Strictly enforces:
+ * 1. Zero historical devices -> First-Device Bootstrap OTP
+ * 2. Historical devices exist, none approved (revoked/replaced) -> Supreme Admin Recovery Request Required
+ * 3. Approved device exists & presentation of matching HttpOnly cookie -> Same-Device Login (Active Session + Production JWT)
+ * 4. Approved device exists & cookie missing/mismatched -> Stage Transfer Request (PENDING_APPROVAL, Candidate Cookie & Polling Token)
+ */
+export const handleAdministrativeDeviceLogin = async (req, res, user) => {
+  const approvedDevice = await TrustedDevice.findOne({
+    userId: user._id,
+    status: "APPROVED",
+  });
+
+  const historicalCount = await TrustedDevice.countDocuments({
+    userId: user._id,
+  });
+
+  // ─── CHECK 1: Existing APPROVED_PENDING_CLAIM request matching this browser ───
+  // If Supreme Admin already clicked 'Approve' and this browser presents the matching candidate cookie,
+  // immediately complete the cutover right now upon login after thoroughly checking expiry, status, and candidate cookie!
+  const incomingDeviceCred = req.cookies?.plotpro_device_cred;
+
+  if (incomingDeviceCred) {
+    const approvedPendingClaim = await DeviceApprovalRequest.findOne({
+      userId: user._id,
+      status: "APPROVED_PENDING_CLAIM",
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (
+      approvedPendingClaim &&
+      verifyDeviceSecret(incomingDeviceCred, approvedPendingClaim.candidateTokenHash)
+    ) {
+      let session = null;
+      const useTx = supportsTransactions();
+      if (useTx) {
+        session = await mongoose.startSession();
+        session.startTransaction();
+      }
+
+      try {
+        // Atomic status transition from APPROVED_PENDING_CLAIM to CLAIMED
+        const query = DeviceApprovalRequest.findOneAndUpdate(
+          {
+            _id: approvedPendingClaim._id,
+            status: "APPROVED_PENDING_CLAIM",
+            expiresAt: { $gt: new Date() },
+          },
+          {
+            $set: {
+              status: "CLAIMED",
+              claimedAt: new Date(),
+            },
+          },
+          { new: true, session: session || undefined }
+        );
+        const claimedDoc = await query;
+
+        if (!claimedDoc) {
+          if (session) await session.abortTransaction();
+          return res.status(409).json({
+            success: false,
+            message: "Transfer claim was already consumed or expired. Please restart login.",
+          });
+        }
+
+        // Revoke the existing approved device if one exists
+        if (approvedDevice) {
+          approvedDevice.status = "REPLACED";
+          approvedDevice.isCurrentSession = false;
+          approvedDevice.revokedAt = new Date();
+          approvedDevice.revocationReason = `Replaced by workstation '${claimedDoc.deviceLabel}' via approved transfer cutover.`;
+          await approvedDevice.save(session ? { session } : undefined);
+        }
+
+        // Create the newly approved device
+        const newDevice = new TrustedDevice({
+          userId: claimedDoc.userId,
+          tenantId: claimedDoc.tenantId,
+          role: claimedDoc.role,
+          deviceId: crypto.randomUUID(),
+          deviceTokenHash: claimedDoc.candidateTokenHash,
+          isCurrentSession: true,
+          deviceLabel: claimedDoc.deviceLabel,
+          browser: claimedDoc.browser,
+          os: claimedDoc.os,
+          ipAddress: claimedDoc.ipAddress,
+          userAgent: claimedDoc.userAgent,
+          status: "APPROVED",
+          approvalType: "SUPREME_ADMIN_APPROVAL",
+          approvedAt: new Date(),
+          lastUsedAt: new Date(),
+        });
+        await newDevice.save(session ? { session } : undefined);
+
+        if (session) {
+          await session.commitTransaction();
+        }
+
+        const token = generateToken(user._id, user.role, newDevice._id);
+        return res.status(200).json({
+          success: true,
+          message: "Workstation transfer approved and activated. Session established.",
+          token,
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            phone: user.phone,
+            avatar: user.avatar,
+          },
+          device: {
+            _id: newDevice._id,
+            deviceLabel: newDevice.deviceLabel,
+          },
+        });
+      } catch (claimErr) {
+        if (session) {
+          try {
+            await session.abortTransaction();
+          } catch {
+            // ignore
+          }
+        }
+        throw claimErr;
+      } finally {
+        if (session) {
+          session.endSession();
+        }
+      }
+    }
+
+    // ─── CHECK 2: Existing PENDING_APPROVAL request matching this browser ───
+    // If this browser already has a candidate cookie matching an active pending request,
+    // do NOT regenerate the secret or cancel the request. Return the existing request!
+    const existingPending = await DeviceApprovalRequest.findOne({
+      userId: user._id,
+      status: "PENDING_APPROVAL",
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (
+      existingPending &&
+      verifyDeviceSecret(incomingDeviceCred, existingPending.candidateTokenHash)
+    ) {
+      const statusPollingToken = jwt.sign(
+        {
+          requestId: String(existingPending._id),
+          userId: String(user._id),
+          purpose: "DEVICE_TRANSFER_POLL",
+        },
+        JWT_SECRET,
+        { expiresIn: "30m" }
+      );
+
+      return res.status(200).json({
+        success: true,
+        requiresTransferApproval: true,
+        statusPollingToken,
+        requestId: existingPending._id,
+        deviceLabel: existingPending.deviceLabel,
+        currentDeviceLabel: approvedDevice?.deviceLabel || "Previous Workstation",
+        message:
+          "This workstation transfer request is awaiting Supreme Admin approval.",
+      });
+    }
+  }
+
+  // Approved Device Exists: Check possession of HttpOnly device credential cookie
+  const isRecognizedDevice =
+    approvedDevice &&
+    incomingDeviceCred &&
+    verifyDeviceSecret(incomingDeviceCred, approvedDevice.deviceTokenHash);
+
+  if (isRecognizedDevice) {
+    // SAME-DEVICE RE-LOGIN: Valid credential matches approved workstation
+    approvedDevice.isCurrentSession = true;
+    approvedDevice.lastUsedAt = new Date();
+    await approvedDevice.save();
+
+    const token = generateToken(user._id, user.role, approvedDevice._id);
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        phone: user.phone,
+        avatar: user.avatar,
+      },
+      device: {
+        _id: approvedDevice._id,
+        deviceLabel: approvedDevice.deviceLabel,
+      },
+    });
+  }
+
+  // ─── UNRECOGNIZED / NEW DEVICE (Both First Device & Device Transfer) ───
+  // A new/unrecognized device must ALWAYS complete Email OTP verification before:
+  // - Enrolling as first device (if historicalCount === 0), OR
+  // - Staging a PENDING_APPROVAL transfer request for Supreme Admin (if historicalCount > 0)
+  const freshUser = await User.findById(user._id).select(
+    "+deviceEnrollmentCooldownUntil"
+  );
+  if (
+    freshUser?.deviceEnrollmentCooldownUntil &&
+    new Date() < new Date(freshUser.deviceEnrollmentCooldownUntil)
+  ) {
+    const waitSeconds = Math.ceil(
+      (new Date(freshUser.deviceEnrollmentCooldownUntil) - new Date()) / 1000
+    );
+    return res.status(429).json({
+      success: false,
+      message: `Please wait ${waitSeconds}s before requesting another verification code.`,
+    });
+  }
+
+  const challengeId = crypto.randomUUID();
+  const otp = generateSecureOtp();
+  const otpHash = hashOtp(otp, challengeId);
+
+  await User.findByIdAndUpdate(user._id, {
+    $set: {
+      deviceEnrollmentChallengeId: challengeId,
+      deviceEnrollmentOtpHash: otpHash,
+      deviceEnrollmentOtpExpiry: new Date(Date.now() + 10 * 60 * 1000),
+      deviceEnrollmentAttempts: 0,
+      deviceEnrollmentCooldownUntil: new Date(Date.now() + 60 * 1000),
+    },
+  });
+
+  const emailResult = await sendDeviceEnrollmentOtpEmail({
+    to: user.email,
+    otp,
+    expiryMinutes: 10,
+  });
+  if (!emailResult.success) {
+    console.error("[Login] SMTP enrollment email dispatch failed:", emailResult.error);
+    return res.status(502).json({
+      success: false,
+      message:
+        "Unable to dispatch workstation verification email via SMTP. Please check server email configuration or try again.",
+    });
+  }
+
+  const [userPart, domainPart] = user.email.split("@");
+  const maskedEmail = `${userPart.substring(0, 3)}***@${domainPart}`;
+
+  return res.status(200).json({
+    success: true,
+    requiresDeviceOtp: true,
+    requiresFirstDeviceEnrollmentOtp: historicalCount === 0,
+    isTransfer: historicalCount > 0,
+    email: user.email,
+    maskedEmail,
+    challengeId,
+    message: historicalCount === 0
+      ? "First-time workstation enrollment required. A security verification code has been dispatched to your email address."
+      : "Unrecognized workstation detected. A security verification code has been dispatched to your email address to initiate device transfer.",
+  });
+};
+
+/**
  * @desc    Authenticate user & get token
  * @route   POST /api/auth/login
  * @access  Public
@@ -105,6 +406,31 @@ export const loginUser = async (req, res, next) => {
     const user = await User.findOne({ email: emailNormalized }).select("+passwordHash");
 
     if (!user) {
+      // Friendly feedback for pending / rejected retailer signup requests
+      const retailerRequest = await SuperAdminRequest.findOne({ email: emailNormalized })
+        .select("status reviewNote")
+        .sort({ createdAt: -1 });
+
+      if (retailerRequest) {
+        if (retailerRequest.status === "PENDING") {
+          return res.status(403).json({
+            success: false,
+            pendingApproval: true,
+            message:
+              "Your Super Admin (Retailer) account request is pending approval by the Supreme Administrator. You will be able to log in once it is approved.",
+          });
+        }
+        if (retailerRequest.status === "REJECTED") {
+          return res.status(403).json({
+            success: false,
+            requestRejected: true,
+            message: `Your retailer account request was rejected.${
+              retailerRequest.reviewNote ? ` Reason: ${retailerRequest.reviewNote}` : ""
+            }`,
+          });
+        }
+      }
+
       return res.status(401).json({
         success: false,
         message: "Invalid email or password.",
@@ -126,6 +452,13 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
+    // ─── Trusted Device Enforcement for Administrative Roles ───────────────────
+    // Applies strictly to SUPER_ADMIN and ADMIN. USER and SUPREME_ADMIN proceed directly.
+    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+      return await handleAdministrativeDeviceLogin(req, res, user);
+    }
+
+    // Standard public USER and SUPREME_ADMIN issue production tokens directly
     const token = generateToken(user._id, user.role);
 
     res.status(200).json({
@@ -160,6 +493,28 @@ export const getMe = async (req, res) => {
 };
 
 /**
+ * @desc    Logout user and invalidate active device session
+ * @route   POST /api/auth/logout
+ * @access  Private (protect middleware)
+ */
+export const logoutUser = async (req, res, next) => {
+  try {
+    if (req.trustedDevice) {
+      req.trustedDevice.isCurrentSession = false;
+      req.trustedDevice.lastUsedAt = new Date();
+      await req.trustedDevice.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Request OTP for password reset (step 1)
  * @route   POST /api/auth/forgot-password
  * @access  Public
@@ -188,49 +543,16 @@ export const forgotPassword = async (req, res, next) => {
     user.resetOtpExpiry = expiry;
     await user.save();
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error: emailError } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || "DreamCity <Dreamcityadmin.in>",
+    // Send password reset email via PlotPro Gmail SMTP service
+    const emailResult = await sendPasswordResetOtpEmail({
       to: user.email,
-      subject: "Your DreamCity Password Reset OTP",
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#f3f5f8;border-radius:12px;">
-          <div style="background:#ffffff;border-radius:10px;padding:32px;box-shadow:0 4px 16px rgba(20,40,70,0.08);">
-            <h2 style="margin:0 0 6px;color:#121d31;font-size:22px;font-weight:700;letter-spacing:-0.5px;">
-              DreamCity
-            </h2>
-            <p style="margin:0 0 24px;color:#718096;font-size:13px;">Real Estate Platform</p>
-
-            <h3 style="margin:0 0 8px;color:#121d31;font-size:18px;font-weight:600;">Password Reset OTP</h3>
-            <p style="margin:0 0 24px;color:#4a5568;font-size:14px;line-height:1.6;">
-              You requested a password reset for your DreamCity account.
-              Use the OTP below to continue. This code expires in <strong>10 minutes</strong>.
-            </p>
-
-            <div style="background:#f0f5ff;border:2px solid #1268d8;border-radius:10px;padding:20px;text-align:center;margin:0 0 24px;">
-              <p style="margin:0 0 4px;color:#718096;font-size:12px;letter-spacing:2px;text-transform:uppercase;">Your OTP Code</p>
-              <p style="margin:0;color:#1268d8;font-size:36px;font-weight:800;letter-spacing:10px;">${otp}</p>
-            </div>
-
-            <div style="background:#fff8f0;border-left:4px solid #d97706;border-radius:4px;padding:12px 16px;margin:0 0 24px;">
-              <p style="margin:0;color:#92400e;font-size:13px;line-height:1.5;">
-                🔒 <strong>Never share this OTP</strong> with anyone.
-                DreamCity staff will never ask for your OTP.
-                If you did not request a password reset, please ignore this email.
-              </p>
-            </div>
-
-            <p style="margin:0;color:#a0aec0;font-size:12px;text-align:center;">
-              © ${new Date().getFullYear()} DreamCity Real Estate. All rights reserved.
-            </p>
-          </div>
-        </div>
-      `,
+      otp,
+      expiryMinutes: 10,
     });
 
-    if (emailError) {
-      console.error("[RESEND] Failed to send OTP email:", emailError);
-      return res.status(500).json({ success: false, message: "Failed to send OTP email. Please try again." });
+    if (!emailResult.success) {
+      console.error("[SMTP] Failed to send password reset email:", emailResult.error);
+      return res.status(500).json({ success: false, message: "Failed to send reset code. Please try again." });
     }
 
     res.status(200).json({
@@ -433,6 +755,10 @@ export const googleAuth = async (req, res, next) => {
         await user.save();
       }
 
+      if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+        return await handleAdministrativeDeviceLogin(req, res, user);
+      }
+
       const token = generateToken(user._id, user.role);
       return res.status(200).json({
         success: true,
@@ -454,19 +780,24 @@ export const googleAuth = async (req, res, next) => {
     const existingEmailUser = await User.findOne({ email: emailNormalized });
 
     if (existingEmailUser) {
-      // Never allow administrative accounts to be commandeered or linked automatically via public Google OAuth
-      if (["ADMIN", "SUPER_ADMIN", "SUPREME_ADMIN"].includes(existingEmailUser.role)) {
-        return res.status(403).json({
-          success: false,
-          message: "Administrative accounts cannot be accessed via Google sign-in. Please use your administrator password.",
-        });
-      }
-
       if (existingEmailUser.status === "INACTIVE") {
         return res.status(403).json({
           success: false,
           message: "Your account has been deactivated. Please contact platform administration.",
         });
+      }
+
+      // Link the verified Google account safely without altering passwordHash or role
+      existingEmailUser.googleId = googleId;
+      existingEmailUser.isEmailVerified = true;
+      if (avatar && existingEmailUser.avatar !== avatar) {
+        existingEmailUser.avatar = avatar;
+      }
+      await existingEmailUser.save();
+
+      // Administrative roles must complete trusted-device verification!
+      if (existingEmailUser.role === "SUPER_ADMIN" || existingEmailUser.role === "ADMIN") {
+        return await handleAdministrativeDeviceLogin(req, res, existingEmailUser);
       }
 
       // For standard public USER role, link the verified Google account safely without altering passwordHash or role

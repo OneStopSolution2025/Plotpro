@@ -7,6 +7,7 @@ import {
   getSubscriberById,
   createSubscriber,
   toggleSubscriberStatus,
+  deleteSubscriber,
   assignSubscriberSubscription,
   toggleAdminStatusBySupreme,
   deleteAdminAccountBySupreme,
@@ -21,6 +22,21 @@ import {
   getPlatformSettings,
   updatePlatformSettings,
 } from "../controllers/supremeAdminController.js";
+import {
+  getRetailerRequests,
+  getRetailerRequestById,
+  approveRetailerRequest,
+  rejectRetailerRequest,
+  setPaymentVerification,
+} from "../controllers/retailerRequestController.js";
+import {
+  getPendingDeviceRequests,
+  getActiveTrustedDevices,
+  approveDeviceRequest,
+  rejectDeviceRequest,
+  revokeTrustedDevice,
+  emergencyDeviceReset,
+} from "../controllers/supremeDeviceController.js";
 
 const router = express.Router();
 
@@ -31,11 +47,19 @@ router.use(authorize("SUPREME_ADMIN"));
 // Overview
 router.get("/overview", getPlatformOverview);
 
+// Retailer (Super Admin) account creation requests — review & approval
+router.get("/retailer-requests", getRetailerRequests);
+router.get("/retailer-requests/:id", getRetailerRequestById);
+router.patch("/retailer-requests/:id/payment-verification", setPaymentVerification);
+router.patch("/retailer-requests/:id/approve", approveRetailerRequest);
+router.patch("/retailer-requests/:id/reject", rejectRetailerRequest);
+
 // Subscriber / Business Management
 router.get("/subscribers", getSubscribers);
 router.post("/subscribers", createSubscriber);
 router.get("/subscribers/:id", getSubscriberById);
 router.patch("/subscribers/:id/status", toggleSubscriberStatus);
+router.delete("/subscribers/:id", deleteSubscriber);
 router.post("/subscribers/:id/subscription", assignSubscriberSubscription);
 router.patch("/subscribers/:subscriberId/admins/:adminId/status", toggleAdminStatusBySupreme);
 router.delete("/subscribers/:subscriberId/admins/:adminId", deleteAdminAccountBySupreme);
@@ -57,5 +81,13 @@ router.get("/seat-usage", getSeatUsage);
 // Platform Settings
 router.get("/settings", getPlatformSettings);
 router.put("/settings", updatePlatformSettings);
+
+// ─── Trusted Device Oversight & Management ────────────────────────────────────
+router.get("/devices/pending", getPendingDeviceRequests);
+router.get("/devices/active", getActiveTrustedDevices);
+router.post("/devices/requests/:requestId/approve", approveDeviceRequest);
+router.post("/devices/requests/:requestId/reject", rejectDeviceRequest);
+router.post("/devices/:deviceId/revoke", revokeTrustedDevice);
+router.post("/devices/emergency-reset", emergencyDeviceReset);
 
 export default router;

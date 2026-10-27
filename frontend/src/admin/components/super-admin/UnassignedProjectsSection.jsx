@@ -113,13 +113,13 @@ const UnassignedProjectsSection = ({
       );
 
       if (!chosenAdmin) {
-        setFormError("The selected administrator was not found.");
+        setFormError("The selected branch administrator was not found.");
         return;
       }
 
       if (chosenAdmin.status !== "Active") {
         setFormError(
-          `Permission Denied: "${chosenAdmin.name}" is Inactive. Projects can only be assigned to Active administrators.`
+          `Permission Denied: "${chosenAdmin.name}" is Inactive. Projects can only be assigned to Active branch administrators.`
         );
         return;
       }
@@ -259,8 +259,8 @@ const UnassignedProjectsSection = ({
               {unassignedProjects.length > 1 ? "s" : ""} Awaiting Assignment
             </strong>
             <p>
-              These projects currently have no designated normal administrator.
-              Assign them to available active admins below to grant operational
+              These projects currently have no designated branch administrator.
+              Assign them to available active branch admins below to grant operational
               management.
             </p>
           </div>
@@ -272,7 +272,7 @@ const UnassignedProjectsSection = ({
             <strong>All Projects Fully Assigned</strong>
             <p>
               All {projects.length} projects are currently allocated to active
-              administrators. You can review or reassign any project at any time.
+              branch administrators. You can review or reassign any project at any time.
             </p>
           </div>
         </div>
@@ -282,7 +282,7 @@ const UnassignedProjectsSection = ({
       <div className="sa-table-scroll">
         <table className="sa-table">
           <caption className="sr-only">
-            Project assignment status and administrator allocation list.
+            Project assignment status and branch administrator allocation list.
           </caption>
 
           <thead>
@@ -291,7 +291,7 @@ const UnassignedProjectsSection = ({
               <th scope="col">Type &amp; Status</th>
               <th scope="col">Plots (Avail / Total)</th>
               <th scope="col">Price</th>
-              <th scope="col">Assigned Admin</th>
+              <th scope="col">Assigned Branch Admin</th>
               <th scope="col">Permission &amp; Action</th>
             </tr>
           </thead>
@@ -419,7 +419,7 @@ const UnassignedProjectsSection = ({
                         onClick={() => handleOpenAssignModal(project)}
                       >
                         <FaUserCheck style={{ marginRight: 6 }} />
-                        {isUnassigned ? "Assign Admin" : "Reassign"}
+                        {isUnassigned ? "Assign Branch Admin" : "Reassign"}
                       </button>
                     </td>
                   </tr>
@@ -455,7 +455,7 @@ const UnassignedProjectsSection = ({
           >
             <div className="sa-modal-header" style={{ flexShrink: 0 }}>
               <h3 id="assign-modal-title">
-                {targetProject.adminId ? "Reassign Project" : "Assign Project to Administrator"}
+                {targetProject.adminId ? "Reassign Project" : "Assign Project to Branch Administrator"}
               </h3>
               <button
                 type="button"
@@ -505,7 +505,7 @@ const UnassignedProjectsSection = ({
               {/* Administrator Selection */}
               <div className="sa-form-field">
                 <label htmlFor="assign-admin-select">
-                  Select Normal Administrator <span style={{ color: "#dc2626" }}>*</span>
+                  Select Branch Administrator <span style={{ color: "#dc2626" }}>*</span>
                 </label>
 
                 <CustomDropdown
@@ -520,7 +520,7 @@ const UnassignedProjectsSection = ({
                 >
                   <option value="">-- Leave Unassigned (None) --</option>
 
-                  <optgroup label="Available Normal Admins (Active)">
+                  <optgroup label="Available Branch Admins (Active)">
                     {availableAdmins.map((admin) => (
                       <option key={admin.id} value={admin.id}>
                         {admin.name} — ({adminWorkload[admin.id] || 0} projects currently)
@@ -529,7 +529,7 @@ const UnassignedProjectsSection = ({
                   </optgroup>
 
                   {inactiveAdmins.length > 0 && (
-                    <optgroup label="Inactive Admins (Permission Denied)">
+                    <optgroup label="Inactive Branch Admins (Permission Denied)">
                       {inactiveAdmins.map((admin) => (
                         <option key={admin.id} value={admin.id} disabled>
                           {admin.name} (Inactive — cannot assign)
@@ -542,7 +542,7 @@ const UnassignedProjectsSection = ({
                 <div className="sa-field-permission-note">
                   <FaUserCheck style={{ color: "#a63d2f", marginRight: 4 }} />
                   <span>
-                    <strong>Permission Rule:</strong> Only normal administrators with{" "}
+                    <strong>Permission Rule:</strong> Only branch administrators with{" "}
                     <span style={{ color: "#059669", fontWeight: 700 }}>Active</span> status
                     are permitted to be assigned projects.
                   </span>

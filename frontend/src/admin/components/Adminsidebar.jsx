@@ -20,6 +20,7 @@ import {
   FaProjectDiagram,
   FaUserCheck,
   FaCreditCard,
+  FaSitemap,
 } from "react-icons/fa";
 
 /* Nav items reference icons by key so the nav config can live in
@@ -32,6 +33,7 @@ const ICONS = {
   users: FaUsers,
   grid: FaThLarge,
   shield: FaUserShield,
+  branch: FaSitemap,
   chart: FaChartLine,
   history: FaHistory,
   cog: FaCog,

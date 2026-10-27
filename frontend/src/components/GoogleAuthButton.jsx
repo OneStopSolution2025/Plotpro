@@ -60,12 +60,16 @@ const GoogleAuthButton = ({ onSuccess, onError, isSubmitting = false }) => {
     }
 
     try {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
+      // Avoid redundant initialize calls if already configured with this client_id
+      if (window.__plotpro_gsi_client_id !== clientId) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        window.__plotpro_gsi_client_id = clientId;
+      }
 
       // Clear any prior renders
       containerRef.current.innerHTML = "";

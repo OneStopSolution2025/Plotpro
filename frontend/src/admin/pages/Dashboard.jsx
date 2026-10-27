@@ -202,7 +202,7 @@ const Dashboard = () => {
         <div className="dashboard-welcome-text">
           <span className="dashboard-kicker">WELCOME BACK</span>
           <h1>
-            Good Morning, <span>{user?.name || "Admin"}</span>
+            Good Morning, <span>{user?.name || "Branch Admin"}</span>
           </h1>
           <p>Here&apos;s what&apos;s happening with your projects today.</p>
         </div>

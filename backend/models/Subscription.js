@@ -37,14 +37,21 @@ const subscriptionSchema = new mongoose.Schema(
     assignedSeats: {
       type: Number,
       required: [true, "Assigned seats count is required"],
-      min: [1, "Assigned seats must be at least 1"],
-      default: 3,
+      min: [0, "Assigned seats cannot be negative"],
+      default: 0,
     },
     // Atomic counter for active admin accounts belonging to this subscriber
     usedSeats: {
       type: Number,
       default: 0,
       min: [0, "Used seats cannot be negative"],
+    },
+    // High-water mark / lifetime assigned seats under this subscription period.
+    // Once limit is reached, deleting an admin does not allow creating replacement admins to bypass the seat limit.
+    lifetimeAssignedSeats: {
+      type: Number,
+      default: 0,
+      min: [0, "Lifetime assigned seats cannot be negative"],
     },
     // Flag indicating if assignedSeats is a custom override granted by Supreme Admin
     isCustomOverride: {
@@ -70,13 +77,13 @@ const subscriptionSchema = new mongoose.Schema(
 
 // Helper method to compute authoritative effective seat limit
 subscriptionSchema.methods.getEffectiveSeats = function () {
-  if (this.isCustomOverride) {
+  if (this.isCustomOverride && typeof this.assignedSeats === "number") {
     return this.assignedSeats;
   }
-  if (this.planId && this.planId.maxAdminSeats) {
+  if (this.planId && typeof this.planId.maxAdminSeats === "number") {
     return this.planId.maxAdminSeats;
   }
-  return this.assignedSeats;
+  return typeof this.assignedSeats === "number" ? this.assignedSeats : 0;
 };
 
 // Virtual to check if subscription is dynamically active and not expired

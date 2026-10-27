@@ -17,10 +17,13 @@ const SubscriptionManagement = () => {
   const [statusFilter, setStatusFilter] = useState("");
 
   // Quick Action Modal
+  const [plans, setPlans] = useState([]);
   const [actionTarget, setActionTarget] = useState(null);
   const [actionForm, setActionForm] = useState({
+    planId: "",
     status: "ACTIVE",
-    extendDays: 30,
+    durationDays: 30,
+    assignedSeats: 0,
   });
   const [updating, setUpdating] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -54,6 +57,21 @@ const SubscriptionManagement = () => {
     }
   }, [statusFilter]);
 
+  const fetchPlans = useCallback(async () => {
+    try {
+      const res = await supremeAdminApi.getPlans();
+      if (res?.success) {
+        setPlans(res.data || []);
+      }
+    } catch (err) {
+      console.error("[SubscriptionManagement] Plans fetch error:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
+
   useEffect(() => {
     fetchSubscriptions(false);
 
@@ -77,9 +95,13 @@ const SubscriptionManagement = () => {
 
   const handleOpenAction = (sub) => {
     setActionTarget(sub);
+    const existingPlanId = sub.planId?._id || sub.planId || "";
+    const matchedPlan = plans.find((p) => p._id === existingPlanId) || plans[0] || null;
     setActionForm({
+      planId: matchedPlan?._id || existingPlanId,
       status: sub.effectiveStatus === "EXPIRED" ? "ACTIVE" : sub.status,
-      extendDays: 30,
+      durationDays: matchedPlan?.durationDays || 30,
+      assignedSeats: matchedPlan ? (matchedPlan.maxAdminSeats ?? 0) : (sub.assignedSeats ?? 0),
     });
   };
 
@@ -185,14 +207,20 @@ const SubscriptionManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {subscriptions.map((sub) => {
-                  const isExp = sub.effectiveStatus === "EXPIRED";
-                  return (
-                    <tr key={sub._id}>
-                      <td style={{ padding: "14px 16px" }}>
-                        <strong style={{ color: "#1e293b" }}>{sub.subscriberId?.name || "Subscriber"}</strong>
-                        <div style={{ fontSize: "12px", color: "#64748b" }}>{sub.subscriberId?.email}</div>
-                      </td>
+                {subscriptions
+                  .filter((s) => s.subscriberId && (s.subscriberId._id || s.subscriberId.id || s.subscriberId.email))
+                  .map((sub) => {
+                    const isExp = sub.effectiveStatus === "EXPIRED";
+                    return (
+                      <tr key={sub._id}>
+                        <td style={{ padding: "14px 16px" }}>
+                          <strong style={{ color: "#1e293b", fontSize: "14px" }}>
+                            {sub.subscriberId?.businessName || sub.subscriberId?.name || "Subscriber"}
+                          </strong>
+                          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                            Owner: <strong>{sub.subscriberId?.name}</strong> • {sub.subscriberId?.email}
+                          </div>
+                        </td>
                       <td>
                         <span className="badge bg-light text-dark" style={{ border: "1px solid #cbd5e1" }}>
                           {sub.planId?.name || "Plan"}
@@ -244,63 +272,144 @@ const SubscriptionManagement = () => {
       {/* Action Modal */}
       {actionTarget && (
         <div className="sa-modal-responsive">
-          <div className="sa-modal-responsive-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #e2e8f0" }}>
-              <h4 style={{ margin: 0, fontSize: "17px", fontWeight: 700 }}>
-                Manage Subscription
-              </h4>
-              <button type="button" className="btn-close" onClick={() => setActionTarget(null)} />
+          <div className="sa-modal-responsive-card" style={{ maxWidth: "560px", overflow: "visible" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#0f172a" }}>
+                  Manage Subscription
+                </h4>
+                <div style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>
+                  {actionTarget.subscriberId?.businessName || actionTarget.subscriberId?.name || "Subscriber"}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setActionTarget(null)}
+                style={{ cursor: "pointer", border: "none", background: "none", fontSize: "16px", color: "#64748b" }}
+              />
             </div>
 
-            <div className="sa-modal-body-scroll">
-              <form onSubmit={handleActionSubmit}>
-                <div className="mb-3">
-                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
-                    Subscription Status
+            <form onSubmit={handleActionSubmit}>
+              <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Select Subscription Plan */}
+                <div>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px", color: "#334155", marginBottom: "6px" }}>
+                    Select Subscription Plan
                   </label>
                   <CustomDropdown
-                    value={actionForm.status}
-                    onChange={(e) => setActionForm({ ...actionForm, status: e.target.value })}
+                    value={actionForm.planId}
+                    onChange={(e) => {
+                      const sel = plans.find((p) => p._id === e.target.value);
+                      setActionForm({
+                        ...actionForm,
+                        planId: e.target.value,
+                        durationDays: sel ? sel.durationDays : actionForm.durationDays,
+                        assignedSeats: sel ? (sel.maxAdminSeats ?? 0) : actionForm.assignedSeats,
+                      });
+                    }}
+                    placeholder="Select a subscription plan..."
                   >
-                    <option value="ACTIVE">Active</option>
-                    <option value="SUSPENDED">Suspended</option>
-                    <option value="EXPIRED">Expired</option>
-                    <option value="TRIAL">Trial</option>
+                    <option value="">Select a subscription plan...</option>
+                    {plans.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.name} — ₹{p.price} ({p.maxAdminSeats} seats, {p.durationDays} days)
+                      </option>
+                    ))}
                   </CustomDropdown>
                 </div>
 
-                <div className="mb-3">
-                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
-                    Extend Term by Days (Optional)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={actionForm.extendDays}
-                    onChange={(e) => setActionForm({ ...actionForm, extendDays: Number(e.target.value) })}
-                    placeholder="e.g. 30"
-                  />
-                  <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                    Adding days will extend the current expiry date or set from today if already expired.
+                {/* Seat Quota & Status */}
+                <div className="row g-3">
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label" style={{ fontWeight: 600, fontSize: "13px", color: "#334155", marginBottom: "6px" }}>
+                      Branch Admin Seats
+                    </label>
+                    <div
+                      style={{
+                        padding: "8px 14px",
+                        backgroundColor: "#f8fafc",
+                        border: "1.5px solid #e2e8f0",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        minHeight: "40px",
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, color: "#1e293b", fontSize: "14px" }}>
+                        {actionForm.assignedSeats >= 999999
+                          ? "Unlimited"
+                          : `${actionForm.assignedSeats} Seat${actionForm.assignedSeats === 1 ? "" : "s"}`}
+                      </span>
+                      <span className="badge bg-secondary" style={{ fontSize: "11px", fontWeight: 600 }}>
+                        Package Defined
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label" style={{ fontWeight: 600, fontSize: "13px", color: "#334155", marginBottom: "6px" }}>
+                      Subscription Status
+                    </label>
+                    <CustomDropdown
+                      value={actionForm.status}
+                      direction="bottom"
+                      onChange={(e) => setActionForm({ ...actionForm, status: e.target.value })}
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="SUSPENDED">Suspended</option>
+                      <option value="EXPIRED">Expired</option>
+                      <option value="TRIAL">Trial</option>
+                    </CustomDropdown>
                   </div>
                 </div>
+              </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setActionTarget(null)}
-                    disabled={updating}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary" disabled={updating}>
-                    {updating ? "Saving..." : "Update Subscription"}
-                  </button>
-                </div>
-              </form>
-            </div>
+              {/* Modal Footer */}
+              <div
+                style={{
+                  padding: "16px 24px",
+                  borderTop: "1px solid #e2e8f0",
+                  backgroundColor: "#f8fafc",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "10px",
+                  borderBottomLeftRadius: "12px",
+                  borderBottomRightRadius: "12px",
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActionTarget(null)}
+                  disabled={updating}
+                  style={{
+                    backgroundColor: "#64748b",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    padding: "8px 18px",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={updating}
+                  style={{
+                    backgroundColor: "#a63d2f",
+                    borderColor: "#a63d2f",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    padding: "8px 20px",
+                  }}
+                >
+                  {updating ? "Saving..." : "Update & Renew Subscription"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

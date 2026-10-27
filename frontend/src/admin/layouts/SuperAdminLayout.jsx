@@ -189,7 +189,7 @@ const SuperAdminLayout = () => {
                   })
                 : "recently"}
             </strong>
-            . Access to projects, staff administrator dashboards, customer leads, and inventory management has been completely locked.
+            . Access to projects, branch administrator dashboards, customer leads, and inventory management has been completely locked.
           </p>
 
           {/* Plan Info Card */}
@@ -210,7 +210,7 @@ const SuperAdminLayout = () => {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
               <span style={{ color: "#64748b" }}>Allocated Seats:</span>
-              <strong style={{ color: "#0f172a" }}>{subscriptionInfo?.assignedSeats || 0} Staff Admins</strong>
+              <strong style={{ color: "#0f172a" }}>{subscriptionInfo?.assignedSeats || 0} Branch Admins</strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={{ color: "#64748b" }}>Status:</span>
@@ -433,11 +433,11 @@ const SuperAdminLayout = () => {
                 }}
               >
                 <div style={{ fontWeight: 700, marginBottom: "4px" }}>Why should you renew now?</div>
-                Once expired, administrator staff logins and property assignments will be suspended until renewal is confirmed by the Supreme Administrator.
+                Once expired, branch administrator logins and property assignments will be suspended until renewal is confirmed by the Supreme Administrator.
               </div>
 
               <p style={{ margin: "0 0 16px 0" }}>
-                Please reach out to the <strong>Supreme Administrator (Platform Owner)</strong> to extend your subscription, upgrade admin seats, or convert your trial account into an active commercial plan.
+                Please reach out to the <strong>Supreme Administrator (Platform Owner)</strong> to extend your subscription, upgrade branch admin seats, or convert your trial account into an active commercial plan.
               </p>
 
               <div

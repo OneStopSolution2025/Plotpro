@@ -46,6 +46,7 @@ const Enquiries = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [changeStatusId, setChangeStatusId] = useState(null);
+  const [statusNote, setStatusNote] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,8 +77,20 @@ const Enquiries = () => {
               month: "short",
               year: "numeric",
             }),
-            status: e.status === "NEW" ? "New" : e.status === "CONTACTED" ? "Contacted" : "Closed",
+            status:
+              e.status === "NEW"
+                ? "New"
+                : e.status === "CONTACTED"
+                ? "Contacted"
+                : e.status === "FOLLOW_UP"
+                ? "Follow Up"
+                : "Closed",
             message: e.message || "",
+            activityLog: e.activityLog || [],
+            branch: e.branchId?.name || "",
+            branchCity: e.branchId?.city || "",
+            assignedAdminName: e.assignedAdminId?.name || "",
+            plotDetails: e.plotDetails || null,
           }));
           setEnquiries(formatted);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
@@ -125,7 +138,7 @@ const Enquiries = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleCall = (phone) => {
+  const handleCall = (phone, id) => {
     if (isSubscriptionExpired) {
       alert("Workspace subscription has expired. Direct calling is restricted. Please contact your Super Administrator.");
       return;
@@ -134,10 +147,13 @@ const Enquiries = () => {
       alert("Phone number is not available.");
       return;
     }
+    if (id) {
+      adminApi.logEnquiryActivity(id, { action: "CONTACTED_CALL", notes: "Placed phone call to customer." }).catch(() => {});
+    }
     window.location.href = `tel:${cleanPhone(phone)}`;
   };
 
-  const handleWhatsApp = (phone, name) => {
+  const handleWhatsApp = (phone, name, id) => {
     if (isSubscriptionExpired) {
       alert("Workspace subscription has expired. WhatsApp messaging is restricted. Please contact your Super Administrator.");
       return;
@@ -146,7 +162,10 @@ const Enquiries = () => {
       alert("Phone number is not available.");
       return;
     }
-    const message = `Hello ${name}, this is DreamCity regarding your enquiry.`;
+    if (id) {
+      adminApi.logEnquiryActivity(id, { action: "CONTACTED_WHATSAPP", notes: "Initiated WhatsApp chat with customer." }).catch(() => {});
+    }
+    const message = `Hello ${name}, this is Plotpro regarding your enquiry.`;
     window.open(
       `https://wa.me/${cleanPhone(phone)}?text=${encodeURIComponent(message)}`,
       "_blank",
@@ -154,7 +173,7 @@ const Enquiries = () => {
     );
   };
 
-  const handleEmail = (email) => {
+  const handleEmail = (email, id) => {
     if (isSubscriptionExpired) {
       alert("Workspace subscription has expired. Direct emailing is restricted. Please contact your Super Administrator.");
       return;
@@ -162,6 +181,9 @@ const Enquiries = () => {
     if (!email) {
       alert("Email address is not available.");
       return;
+    }
+    if (id) {
+      adminApi.logEnquiryActivity(id, { action: "CONTACTED_EMAIL", notes: "Opened email composer for customer." }).catch(() => {});
     }
     window.location.href = `mailto:${email}`;
   };
@@ -178,6 +200,7 @@ const Enquiries = () => {
 
   const handleChangeStatus = (id) => {
     setChangeStatusId(id);
+    setStatusNote("");
     setSelectedId(null);
   };
 
@@ -187,17 +210,40 @@ const Enquiries = () => {
   };
 
   const confirmStatusChange = async (id, newStatus) => {
-    const backendStatus = newStatus === "New" ? "NEW" : newStatus === "Contacted" ? "CONTACTED" : "CLOSED";
+    const backendStatus =
+      newStatus === "New"
+        ? "NEW"
+        : newStatus === "Contacted"
+        ? "CONTACTED"
+        : newStatus === "Follow Up"
+        ? "FOLLOW_UP"
+        : "CLOSED";
     try {
-      await adminApi.updateEnquiryStatus(id, backendStatus);
+      const res = await adminApi.updateEnquiryStatus(id, backendStatus, statusNote);
+      if (res?.success && res.data) {
+        setEnquiries((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  status: newStatus,
+                  activityLog: res.data.activityLog || item.activityLog,
+                }
+              : item
+          )
+        );
+      } else {
+        setEnquiries((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
+        );
+      }
     } catch (e) {
       console.warn("Failed to update enquiry status on server:", e);
+      setEnquiries((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
+      );
     }
-    setEnquiries((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: newStatus } : item
-      )
-    );
+    setStatusNote("");
     setChangeStatusId(null);
   };
 
@@ -344,7 +390,7 @@ const Enquiries = () => {
                       className={(!enquiry.contactMethod || enquiry.contactMethod === "phone") ? "enquiry-action-preferred phone-preferred" : ""}
                       title={isSubscriptionExpired ? "Calling disabled (Subscription expired)" : (!enquiry.contactMethod || enquiry.contactMethod === "phone") ? `Customer's Preferred Contact: Call ${enquiry.name}` : `Call ${enquiry.name}`}
                       aria-label={`Call ${enquiry.name}`}
-                      onClick={() => handleCall(enquiry.phone)}
+                      onClick={() => handleCall(enquiry.phone, enquiry.id)}
                       disabled={isSubscriptionExpired}
                       style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
                     >
@@ -355,7 +401,7 @@ const Enquiries = () => {
                       className={enquiry.contactMethod === "whatsapp" ? "enquiry-action-preferred whatsapp-preferred" : ""}
                       title={isSubscriptionExpired ? "WhatsApp disabled (Subscription expired)" : enquiry.contactMethod === "whatsapp" ? `Customer's Preferred Contact: WhatsApp ${enquiry.name}` : `WhatsApp ${enquiry.name}`}
                       aria-label={`WhatsApp ${enquiry.name}`}
-                      onClick={() => handleWhatsApp(enquiry.phone, enquiry.name)}
+                      onClick={() => handleWhatsApp(enquiry.phone, enquiry.name, enquiry.id)}
                       disabled={isSubscriptionExpired}
                       style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
                     >
@@ -366,7 +412,7 @@ const Enquiries = () => {
                       className={enquiry.contactMethod === "email" ? "enquiry-action-preferred email-preferred" : ""}
                       title={isSubscriptionExpired ? "Emailing disabled (Subscription expired)" : enquiry.contactMethod === "email" ? `Customer's Preferred Contact: Email ${enquiry.name}` : `Email ${enquiry.name}`}
                       aria-label={`Email ${enquiry.name}`}
-                      onClick={() => handleEmail(enquiry.email)}
+                      onClick={() => handleEmail(enquiry.email, enquiry.id)}
                       disabled={isSubscriptionExpired}
                       style={isSubscriptionExpired ? { opacity: 0.4, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
                     >
@@ -470,12 +516,102 @@ const Enquiries = () => {
                   {selectedEnquiry.status}
                 </span>
               </div>
+              {selectedEnquiry.branch && (
+                <div className="enquiry-detail-row">
+                  <label>Branch</label>
+                  <span>
+                    <strong>{selectedEnquiry.branch}</strong>
+                    {selectedEnquiry.branchCity ? ` • ${selectedEnquiry.branchCity}` : ""}
+                  </span>
+                </div>
+              )}
+              {selectedEnquiry.plotDetails && (
+                <div className="enquiry-detail-row">
+                  <label>Plot Inventory</label>
+                  <span style={{ display: "inline-flex", gap: "8px", alignItems: "center" }}>
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        backgroundColor:
+                          selectedEnquiry.plotDetails.status === "Available"
+                            ? "#ecfdf5"
+                            : selectedEnquiry.plotDetails.status === "Reserved"
+                            ? "#fef3c7"
+                            : "#fee2e2",
+                        color:
+                          selectedEnquiry.plotDetails.status === "Available"
+                            ? "#059669"
+                            : selectedEnquiry.plotDetails.status === "Reserved"
+                            ? "#d97706"
+                            : "#dc2626",
+                      }}
+                    >
+                      {selectedEnquiry.plotDetails.status}
+                    </span>
+                    <small style={{ color: "#64748b" }}>
+                      {selectedEnquiry.plotDetails.size} • {selectedEnquiry.plotDetails.facing}
+                    </small>
+                  </span>
+                </div>
+              )}
               {selectedEnquiry.message && (
                 <div className="enquiry-detail-row enquiry-message-row">
                   <label>Message</label>
                   <span className="enquiry-message-text">{selectedEnquiry.message}</span>
                 </div>
               )}
+
+              {/* Activity & History Log */}
+              <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid #e2e8f0" }}>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: "#334155", display: "block", marginBottom: "8px" }}>
+                  Activity & Status History
+                </label>
+                {(!selectedEnquiry.activityLog || selectedEnquiry.activityLog.length === 0) ? (
+                  <span style={{ fontSize: "12px", color: "#94a3b8" }}>No recorded activity yet.</span>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "180px", overflowY: "auto" }}>
+                    {selectedEnquiry.activityLog.map((act, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          fontSize: "12px",
+                          padding: "8px 10px",
+                          background: "#f8fafc",
+                          borderRadius: "6px",
+                          border: "1px solid #e2e8f0",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
+                          <strong>{act.performedByName || "Staff"} ({act.performedByRole || "ADMIN"})</strong>
+                          <small style={{ color: "#94a3b8" }}>
+                            {new Date(act.timestamp).toLocaleString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </small>
+                        </div>
+                        <div style={{ marginTop: "3px", color: "#1e293b" }}>
+                          {act.action === "STATUS_CHANGE"
+                            ? `Status updated: ${act.previousStatus || "NEW"} → ${act.newStatus}`
+                            : act.action === "ENQUIRY_CREATED"
+                            ? "Enquiry submitted by customer"
+                            : act.action.replace(/_/g, " ")}
+                        </div>
+                        {act.notes && (
+                          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px", fontStyle: "italic" }}>
+                            "{act.notes}"
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="enquiry-modal-footer">
               <button className="enquiry-btn-primary" onClick={() => setViewDetailsId(null)}>
@@ -502,6 +638,27 @@ const Enquiries = () => {
             </div>
             <div className="enquiry-modal-body">
               <p>Update status for <strong>{changeStatusEnquiry.name}</strong></p>
+
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
+                  Follow-up Note (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={statusNote}
+                  onChange={(e) => setStatusNote(e.target.value)}
+                  placeholder="e.g., Spoke with customer, interested in plot visit next week"
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "13px",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
               <div className="enquiry-status-options">
                 {ENQUIRY_STATUSES.map((status) => (
                   <button

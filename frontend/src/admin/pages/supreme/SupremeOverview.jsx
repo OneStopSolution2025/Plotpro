@@ -12,6 +12,7 @@ import {
   FaArrowRight,
   FaSync,
   FaInfinity,
+  FaClock,
 } from "react-icons/fa";
 import "../../styles/super-admin.css";
 
@@ -89,7 +90,7 @@ const SupremeOverview = () => {
     );
   }
 
-  const { subscribers, subscriptions, admins, platform, renewalsList } = data || {};
+  const { subscribers, subscriptions, admins, platform, renewalsList, retailerRequests } = data || {};
 
   return (
     <div className="dashboard-page sa-page">
@@ -145,13 +146,33 @@ const SupremeOverview = () => {
           </div>
         </div>
 
+        {/* Retailer Approval Requests */}
+        <Link to="/supreme-admin/retailer-requests" style={{ textDecoration: "none" }}>
+          <div
+            className="dashboard-stat-card"
+            style={{
+              cursor: "pointer",
+              borderLeft: "3px solid " + ((retailerRequests?.pending || 0) > 0 ? "#d97706" : "transparent"),
+            }}
+          >
+            <div className="stat-icon" style={{ background: "#fff4e5", color: "#b45309" }}>
+              <FaClock />
+            </div>
+            <div className="stat-content">
+              <span className="stat-title">Pending Approvals</span>
+              <h2>{retailerRequests?.pending ?? 0}</h2>
+              <p>Retailer accounts awaiting review</p>
+            </div>
+          </div>
+        </Link>
+
         {/* Staff Admins */}
         <div className="dashboard-stat-card">
           <div className="stat-icon" style={{ background: "#fbf0ec", color: "#a63d2f" }}>
             <FaUserShield />
           </div>
           <div className="stat-content">
-            <span className="stat-title">Total Staff Admins</span>
+            <span className="stat-title">Total Staff Admins (Branch Admins)</span>
             <h2>{admins?.total || 0}</h2>
             <p>
               {admins?.active || 0} Active Agents

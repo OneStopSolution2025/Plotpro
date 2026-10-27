@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Subscription from "../models/Subscription.js";
+import TrustedDevice from "../models/TrustedDevice.js";
 
 /**
  * Authentication Middleware.
@@ -72,6 +73,45 @@ export const protect = async (req, res, next) => {
             message: "Your organization's subscription has been suspended. Access temporarily paused.",
           });
         }
+      }
+
+      // ─── Trusted Device Verification for Administrative Roles ────────────────
+      // Applies strictly to SUPER_ADMIN and ADMIN. USER and SUPREME_ADMIN are exempt.
+      if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+        const deviceId = decoded.deviceId;
+        if (!deviceId) {
+          return res.status(401).json({
+            success: false,
+            deviceRevoked: true,
+            message: "Access blocked: This administrative session is not bound to a trusted device.",
+          });
+        }
+
+        const approvedDevice = await TrustedDevice.findOne({
+          _id: deviceId,
+          userId: user._id,
+          status: "APPROVED",
+        });
+
+        if (!approvedDevice) {
+          return res.status(401).json({
+            success: false,
+            deviceRevoked: true,
+            message:
+              "Access blocked: This device's authorization has been revoked or replaced by another approved device.",
+          });
+        }
+
+        if (!approvedDevice.isCurrentSession) {
+          return res.status(401).json({
+            success: false,
+            deviceRevoked: true,
+            message:
+              "Session expired or logged out. Please log in again to activate this workstation session.",
+          });
+        }
+
+        req.trustedDevice = approvedDevice;
       }
 
       req.user = user;

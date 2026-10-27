@@ -1,8 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "../../context/ProjectContext";
 import { usePlots } from "../../context/PlotContext";
-import { FaArrowLeft, FaSave, FaPlus, FaTrash, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaSave,
+  FaPlus,
+  FaTrash,
+  FaExclamationCircle,
+  FaCloudUploadAlt,
+  FaImage,
+  FaSpinner,
+  FaTimes,
+} from "react-icons/fa";
+import { adminApi } from "../../services/api";
 import {
   commonBenefits,
   AVAILABLE_BENEFITS,
@@ -118,9 +129,7 @@ const AdminProjectForm = () => {
   const [form, setForm] = useState({
     title: "",
     location: "",
-    city: "",
     category: "Residential",
-    budget: "below10",
     status: "Active",
     plotPrice: "",
     plotType: "Residential",
@@ -142,6 +151,101 @@ const AdminProjectForm = () => {
     highlights: DEFAULT_NEW_PROJECT_HIGHLIGHTS,
     amenities: DEFAULT_NEW_PROJECT_AMENITIES,
   });
+
+  // Auto-populate location from branch (read-only)
+  useEffect(() => {
+    if (profile?.branch?.city) {
+      const branchLocation = profile.branch.region
+        ? `${profile.branch.city}, ${profile.branch.region}`
+        : profile.branch.city;
+      setForm((prev) => ({ ...prev, location: branchLocation }));
+    }
+  }, [profile?.branch]);
+
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImageFileChange = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select a valid image file (PNG, JPG, or WebP)." });
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image file size exceeds the 20MB limit." });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setMessage(null);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const dataUrl = evt.target.result;
+      const img = new Image();
+      img.onload = async () => {
+        const detectedWidth = img.naturalWidth || 1200;
+        const detectedHeight = img.naturalHeight || 800;
+
+        try {
+          const targetId = projectId || "new";
+          const res = await adminApi.uploadProjectImage(
+            {
+              fileData: dataUrl,
+              mimeType: file.type,
+              width: detectedWidth,
+              height: detectedHeight,
+            },
+            targetId
+          );
+
+          if (res?.success && res.data?.imageUrl) {
+            const uploadedUrl = res.data.imageUrl;
+            setForm((prev) => {
+              const newImgs = [...prev.images];
+              if (newImgs.length === 0) newImgs.push(uploadedUrl);
+              else newImgs[0] = uploadedUrl;
+              return { ...prev, image: uploadedUrl, images: newImgs };
+            });
+            setMessage({ type: "success", text: "Project layout / cover image uploaded successfully!" });
+          } else {
+            setMessage({ type: "error", text: res?.message || "Failed to upload image." });
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          setMessage({ type: "error", text: err.data?.message || err.message || "Upload failed." });
+        } finally {
+          setIsUploadingImage(false);
+        }
+      };
+      img.onerror = () => {
+        setIsUploadingImage(false);
+        setMessage({ type: "error", text: "Failed to read image dimensions." });
+      };
+      img.src = dataUrl;
+    };
+    reader.onerror = () => {
+      setIsUploadingImage(false);
+      setMessage({ type: "error", text: "Failed to read image file." });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setForm((prev) => {
+      const newImgs = [...prev.images];
+      if (newImgs.length > 0 && newImgs[0] === prev.image) {
+        newImgs.shift();
+      }
+      return { ...prev, image: "", images: newImgs };
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const total = Number(form.totalPlots) || 0;
   const available = Number(form.availablePlots) || 0;
@@ -168,12 +272,12 @@ const AdminProjectForm = () => {
         const rawProjectSize = extractValue(project.projectSize, "Acres");
         const rawPlotSizes = extractValue(project.plotSizes, "Sq.ft");
         
+        // Location is auto-set from branch (read-only), not from project
+        // City and Budget are no longer in form - they come from branch context
         setForm({
           title: project.title,
-          location: project.location,
-          city: project.city || "",
+          location: project.location, // Kept for reference but will be overridden by branch
           category: project.category || "Residential",
-          budget: project.budget || "below10",
           status: project.status,
           plotPrice: rawPlotPrice,
           plotType: project.plotType,
@@ -474,6 +578,11 @@ const AdminProjectForm = () => {
       return;
     }
 
+    // Build location and city from branch (read-only)
+    const branchCity = profile?.branch?.city || "";
+    const branchRegion = profile?.branch?.region || "";
+    const branchLocation = branchRegion ? `${branchCity}, ${branchRegion}` : branchCity;
+
     setValidationErrors([]);
     setSaving(true);
     setMessage(null);
@@ -492,14 +601,21 @@ const AdminProjectForm = () => {
           existingProject.reservedPlots !== newReserved ||
           existingProject.soldPlots !== newSold;
 
+        const coverImageUrl = form.image || (form.images && form.images[0]) || "";
         const updatePayload = {
           title: form.title.trim(),
-          location: form.location.trim(),
-          city: form.city,
+          location: branchLocation,
+          city: branchCity,
           category: form.category,
-          budget: form.budget,
           status: form.status,
-          image: form.image || (form.images && form.images[0]) || "",
+          image: coverImageUrl,
+          ...(coverImageUrl
+            ? {
+                layout: existingProject?.layout
+                  ? { ...existingProject.layout, imageUrl: coverImageUrl, referenceImageUrl: coverImageUrl }
+                  : { imageUrl: coverImageUrl, referenceImageUrl: coverImageUrl },
+              }
+            : {}),
           defaultPlotImage: form.defaultPlotImage ? form.defaultPlotImage.trim() : "",
           plotPrice: combineWithSuffix(form.plotPrice, "Lakh"),
           priceLakhs: parsePriceLakhs(combineWithSuffix(form.plotPrice, "Lakh")),
@@ -554,8 +670,8 @@ const AdminProjectForm = () => {
             recipient: "super_admin",
             type: "PROJECT_UPDATED",
             title: "Project Details Updated",
-            message: `${profile?.name || "Normal Admin"} updated project "${form.title}" (${form.location || form.city || "Tamil Nadu"}).`,
-            actorName: profile?.name || "Normal Admin",
+            message: `${profile?.name || "Branch Admin"} updated project "${form.title}" (${branchLocation || "Tamil Nadu"}).`,
+            actorName: profile?.name || "Branch Admin",
             projectId: projectId,
           });
         }
@@ -566,14 +682,17 @@ const AdminProjectForm = () => {
         }, 600);
       } else {
         const priceLakhsValue = parsePriceLakhs(form.plotPrice);
+        const coverImageUrl = form.image || (form.images && form.images[0]) || "";
         const newProjectPayload = {
           title: form.title.trim(),
-          location: form.location.trim(),
-          city: form.city || (form.location ? form.location.split(",")[0].trim() : "Tamil Nadu"),
+          location: branchLocation,
+          city: branchCity,
           category: form.category,
-          budget: form.budget,
           status: form.status,
-          image: form.image || (form.images && form.images[0]) || "",
+          image: coverImageUrl,
+          ...(coverImageUrl
+            ? { layout: { imageUrl: coverImageUrl, referenceImageUrl: coverImageUrl } }
+            : {}),
           defaultPlotImage: form.defaultPlotImage ? form.defaultPlotImage.trim() : "",
           plotType: form.plotType,
           plotPrice: combineWithSuffix(form.plotPrice, "Lakh"),
@@ -604,8 +723,8 @@ const AdminProjectForm = () => {
             recipient: "super_admin",
             type: "PROJECT_CREATED",
             title: "New Project Added",
-            message: `${profile?.name || "Normal Admin"} added new project "${form.title}" in ${form.location || form.city || "Tamil Nadu"} with ${newTotal} plots.`,
-            actorName: profile?.name || "Normal Admin",
+            message: `${profile?.name || "Branch Admin"} added new project "${form.title}" in ${branchLocation || "Tamil Nadu"} with ${newTotal} plots.`,
+            actorName: profile?.name || "Branch Admin",
             projectId: targetId,
           });
         }
@@ -667,21 +786,19 @@ const AdminProjectForm = () => {
               />
             </label>
             <label>
-              Location *
+              Location * (Auto-set from branch)
               <input
                 type="text"
                 value={form.location}
-                onChange={(e) => setForm({ ...form, location: sanitizeTextNoDigits(e.target.value) })}
-                required
+                readOnly
+                style={{ backgroundColor: "#f8fafc", cursor: "not-allowed" }}
               />
-            </label>
-            <label>
-              City
-              <input
-                type="text"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: sanitizeTextNoDigits(e.target.value) })}
-              />
+              {profile?.branch && (
+                <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                  Auto-filled from your branch: {profile.branch.name} ({profile.branch.city}
+                  {profile.branch.region ? `, ${profile.branch.region}` : ""})
+                </small>
+              )}
             </label>
             <label>
               Category
@@ -692,18 +809,6 @@ const AdminProjectForm = () => {
                 <option value="Residential">Residential</option>
                 <option value="Commercial">Commercial</option>
                 <option value="Agriculture">Agriculture</option>
-              </CustomDropdown>
-            </label>
-            <label>
-              Budget Range
-              <CustomDropdown
-                value={form.budget}
-                onChange={(e) => setForm({ ...form, budget: e.target.value })}
-              >
-                <option value="below10">Below ₹10 Lakh</option>
-                <option value="10-25">₹10 - ₹25 Lakh</option>
-                <option value="25-50">₹25 - ₹50 Lakh</option>
-                <option value="above50">Above ₹50 Lakh</option>
               </CustomDropdown>
             </label>
             <label>
@@ -883,37 +988,108 @@ const AdminProjectForm = () => {
 
         <section className="form-section">
           <h2>Project Cover & Gallery Images</h2>
-          <label className="full-width" style={{ marginBottom: "1.25rem" }}>
-            Cover Image URL (Shows on Project Card)
+          <div className="project-image-upload-wrapper" style={{ marginBottom: "1.75rem" }}>
+            <label className="project-image-field-label">
+              Project Layout & Cover Image
+              <span className="project-image-field-hint">
+                Upload the master layout or site plan. This image is displayed on the project card and rendered as the primary layout viewer on the project details page.
+              </span>
+            </label>
+
             <input
-              type="url"
-              placeholder="e.g. https://images.unsplash.com/..."
-              value={form.image}
+              type="file"
+              ref={fileInputRef}
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              style={{ display: "none" }}
               onChange={(e) => {
-                const val = e.target.value;
-                setForm((prev) => {
-                  const newImgs = [...prev.images];
-                  if (val) {
-                    if (newImgs.length === 0) newImgs.push(val);
-                    else newImgs[0] = val;
-                  }
-                  return { ...prev, image: val, images: newImgs };
-                });
+                const file = e.target.files?.[0];
+                if (file) handleImageFileChange(file);
+                e.target.value = "";
               }}
             />
-          </label>
-          {form.image && (
-            <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <img
-                src={form.image}
-                alt="Cover preview"
-                style={{ width: "200px", height: "120px", objectFit: "cover", borderRadius: "8px", border: "1px solid #ddd" }}
-                onError={(e) => { e.target.style.display = "none"; }}
-                onLoad={(e) => { e.target.style.display = "block"; }}
-              />
-              <span style={{ fontSize: "0.85rem", color: "#666" }}>Preview of card cover image</span>
-            </div>
-          )}
+
+            {form.image ? (
+              <div className="project-image-preview-card">
+                <div className="project-image-preview-media">
+                  <img
+                    src={form.image}
+                    alt="Project layout preview"
+                    className="project-image-preview-img"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                    onLoad={(e) => { e.target.style.display = "block"; }}
+                  />
+                </div>
+                <div className="project-image-preview-info">
+                  <div className="project-image-preview-badge">
+                    <FaImage /> Master Layout & Cover Image
+                  </div>
+                  <p className="project-image-preview-desc">
+                    Active layout image displayed to buyers and used as the default cover.
+                  </p>
+                  <div className="project-image-preview-actions">
+                    <button
+                      type="button"
+                      className="project-image-action-btn project-image-replace-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                    >
+                      {isUploadingImage ? <FaSpinner className="fa-spin" /> : <FaCloudUploadAlt />}
+                      {isUploadingImage ? "Uploading..." : "Replace Image"}
+                    </button>
+                    <button
+                      type="button"
+                      className="project-image-action-btn project-image-remove-btn"
+                      onClick={handleRemoveImage}
+                      disabled={isUploadingImage}
+                    >
+                      <FaTimes /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`project-image-dropzone ${isDragOver ? "drag-over" : ""} ${isUploadingImage ? "uploading" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleImageFileChange(file);
+                }}
+                onClick={() => {
+                  if (!isUploadingImage) fileInputRef.current?.click();
+                }}
+              >
+                {isUploadingImage ? (
+                  <div className="dropzone-content">
+                    <FaSpinner className="dropzone-icon fa-spin" />
+                    <p className="dropzone-primary-text">Uploading image to cloud...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                  </div>
+                ) : (
+                  <div className="dropzone-content">
+                    <div className="dropzone-icon-wrap">
+                      <FaCloudUploadAlt className="dropzone-icon" />
+                    </div>
+                    <p className="dropzone-primary-text">
+                      Drag & drop your layout image here, or <span className="dropzone-browse-link">browse</span>
+                    </p>
+                    <span className="dropzone-secondary-text">
+                      PNG, JPG, JPEG, WEBP supported (up to 20MB)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <label className="full-width" style={{ marginBottom: "1.25rem" }}>
             Default Plot Image URL (Applies to all plots created in this project)

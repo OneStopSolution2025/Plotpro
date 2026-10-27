@@ -505,12 +505,16 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .price-range-inputs {
     display: flex;
     gap: 12px;
     justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .price-range-inputs label {
@@ -520,6 +524,8 @@
     font-size: 12px;
     font-weight: 500;
     color: #555;
+    flex: 1;
+    min-width: 0;
 }
 
 .price-range-inputs input {
@@ -528,7 +534,7 @@
     border-radius: 8px;
     font-size: 13px;
     width: 100%;
-    min-width: 80px;
+    box-sizing: border-box;
 }
 
 .price-range-inputs input:focus {
@@ -548,6 +554,8 @@
     height: 32px;
     display: flex;
     align-items: center;
+    padding: 0 10px;
+    box-sizing: border-box;
 }
 
 .price-track {
@@ -556,6 +564,7 @@
     height: 6px;
     background: #e5e5e5;
     border-radius: 999px;
+    cursor: pointer;
 }
 
 .price-range-fill {
@@ -580,8 +589,9 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     cursor: grab;
     z-index: 2;
-    border: none;
     appearance: none;
+    box-sizing: border-box;
+    transition: transform 0.1s ease;
 }
 
 .price-thumb:hover {
@@ -610,8 +620,9 @@
     justify-content: space-between;
     font-size: 12px;
     color: #666;
-    margin-top: 8px;
+    margin-top: 4px;
     font-weight: 500;
+    padding: 0 2px;
 }
 
 .price-range-labels span {

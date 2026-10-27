@@ -20,6 +20,7 @@ import {
   FaEye,
   FaEyeSlash,
   FaInfoCircle,
+  FaTrash,
 } from "react-icons/fa";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import CustomDropdown from "../../components/CustomDropdown";
@@ -47,6 +48,7 @@ const SubscriberManagement = () => {
 
   // Action Modals
   const [confirmTarget, setConfirmTarget] = useState(null); // for activate/suspend
+  const [deleteTarget, setDeleteTarget] = useState(null); // for permanently deleting subscriber
   const [assignTarget, setAssignTarget] = useState(null); // for assigning plan
   const [viewAdminsTarget, setViewAdminsTarget] = useState(null); // for managing tenant admins
   const [tenantAdmins, setTenantAdmins] = useState([]);
@@ -204,7 +206,7 @@ const SubscriberManagement = () => {
       password: "",
       planId: defaultPlan?._id || "",
       durationDays: defaultPlan?.durationDays || 30,
-      assignedSeats: defaultPlan?.maxAdminSeats || 3,
+      assignedSeats: defaultPlan ? (defaultPlan.maxAdminSeats ?? 0) : 0,
       status: "ACTIVE",
       notes: "",
     });
@@ -279,18 +281,31 @@ const SubscriberManagement = () => {
 
   const handleOpenAssign = (sub) => {
     setAssignTarget(sub);
-    const initialPlan = plans[0] || null;
-    const isOverride = Boolean(sub.subscription?.isCustomOverride);
+    const existingPlanId = sub.subscription?.planId?._id || sub.subscription?.planId;
+    const currentPlan = plans.find((p) => p._id === existingPlanId) || plans[0] || null;
     setAssignForm({
-      planId: sub.subscription?.planId?._id || sub.subscription?.planId || initialPlan?._id || "",
-      durationDays: 30,
-      assignedSeats: isOverride
-        ? sub.subscription?.assignedSeats
-        : initialPlan?.maxAdminSeats || 3,
-      isCustomOverride: isOverride,
-      customOverrideReason: sub.subscription?.customOverrideReason || "",
+      planId: currentPlan?._id || "",
+      durationDays: currentPlan?.durationDays || 30,
+      assignedSeats: currentPlan ? (currentPlan.maxAdminSeats ?? 0) : 0,
       notes: sub.subscription?.notes || "",
     });
+  };
+
+  const handleDeleteSubscriber = async () => {
+    if (!deleteTarget) return;
+    setActionLoading(true);
+    try {
+      const res = await supremeAdminApi.deleteSubscriber(deleteTarget._id || deleteTarget.id);
+      if (res?.success) {
+        showToast("success", res.message || "Subscriber account permanently deleted.");
+        setDeleteTarget(null);
+        fetchSubscribers();
+      }
+    } catch (err) {
+      showToast("error", err.message || "Failed to delete subscriber.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleOpenAdminsModal = async (sub) => {
@@ -304,7 +319,7 @@ const SubscriberManagement = () => {
         setTenantAdmins([]);
       }
     } catch (err) {
-      showToast("error", err.message || "Failed to load staff admins.");
+      showToast("error", err.message || "Failed to load branch admins.");
       setTenantAdmins([]);
     } finally {
       setLoadingAdmins(false);
@@ -317,7 +332,7 @@ const SubscriberManagement = () => {
     try {
       const res = await supremeAdminApi.toggleAdminStatus(viewAdminsTarget._id, admin._id);
       if (res?.success) {
-        showToast("success", res.message || "Admin status updated.");
+        showToast("success", res.message || "Branch admin status updated.");
         // Refresh modal list & subscriber table
         const subRes = await supremeAdminApi.getSubscriberById(viewAdminsTarget._id);
         if (subRes?.success && subRes.data) {
@@ -326,7 +341,7 @@ const SubscriberManagement = () => {
         fetchSubscribers();
       }
     } catch (err) {
-      showToast("error", err.message || "Failed to update admin status.");
+      showToast("error", err.message || "Failed to update branch admin status.");
     } finally {
       setActionLoading(false);
     }
@@ -338,7 +353,7 @@ const SubscriberManagement = () => {
     try {
       const res = await supremeAdminApi.deleteAdmin(viewAdminsTarget._id, confirmDeleteAdminTarget._id);
       if (res?.success) {
-        showToast("success", res.message || "Admin deleted successfully.");
+        showToast("success", res.message || "Branch admin deleted successfully.");
         setConfirmDeleteAdminTarget(null);
         // Refresh modal list & subscriber table
         const subRes = await supremeAdminApi.getSubscriberById(viewAdminsTarget._id);
@@ -348,7 +363,7 @@ const SubscriberManagement = () => {
         fetchSubscribers();
       }
     } catch (err) {
-      showToast("error", err.message || "Failed to delete admin.");
+      showToast("error", err.message || "Failed to delete branch admin.");
     } finally {
       setActionLoading(false);
     }
@@ -357,6 +372,21 @@ const SubscriberManagement = () => {
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
     if (!assignTarget) return;
+
+    const requestedLimit = Number(assignForm.assignedSeats);
+    if (!Number.isInteger(requestedLimit) || requestedLimit < 0) {
+      showToast("error", "Branch Admin seat limit must be a non-negative integer (0 or greater).");
+      return;
+    }
+
+    if (requestedLimit < (assignTarget.activeAdminCount || 0)) {
+      showToast(
+        "error",
+        `Cannot reduce seat limit to ${requestedLimit}. Subscriber currently has ${assignTarget.activeAdminCount} active Branch Admin(s). Please deactivate or delete surplus branch admins first.`
+      );
+      return;
+    }
+
     setActionLoading(true);
     try {
       const res = await supremeAdminApi.assignSubscription(assignTarget._id, assignForm);
@@ -472,27 +502,33 @@ const SubscriberManagement = () => {
           </div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0" style={{ fontSize: "14px" }}>
+            <table className="table table-hover align-middle mb-0" style={{ fontSize: "14px", minWidth: "1100px" }}>
               <thead style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
                 <tr style={{ color: "#475569", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  <th style={{ padding: "14px 16px" }}>Subscriber / Company</th>
-                  <th>Status</th>
-                  <th>Subscription</th>
-                  <th>Admin Seats</th>
-                  <th>Projects</th>
-                  <th style={{ textAlign: "right", paddingRight: "16px" }}>Actions</th>
+                  <th style={{ width: "24%", padding: "14px 16px" }}>Subscriber / Company</th>
+                  <th style={{ width: "10%" }}>Status</th>
+                  <th style={{ width: "18%" }}>Subscription</th>
+                  <th style={{ width: "14%" }}>Branch Admin Seats</th>
+                  <th style={{ width: "8%", textAlign: "center" }}>Projects</th>
+                  <th style={{ width: "26%", textAlign: "right", paddingRight: "16px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {subscribers.map((sub) => {
-                  const subStatus = sub.subscription?.status || "NO_PLAN";
                   return (
-                    <tr key={sub.id}>
+                    <tr key={sub.id || sub._id}>
                       <td style={{ padding: "14px 16px" }}>
-                        <strong style={{ color: "#1e293b", fontSize: "14px" }}>{sub.businessName || "Registered Business"}</strong>
-                        <div style={{ fontSize: "12px", color: "#475569" }}>
-                          Owner: <strong>{sub.ownerName || sub.name}</strong> • {sub.email}
+                        <div style={{ color: "#1e293b", fontSize: "14px", fontWeight: 700 }}>
+                          {sub.businessName || "Registered Business"}
                         </div>
+                        <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                          Owner: <strong style={{ color: "#334155" }}>{sub.ownerName || sub.name}</strong> • {sub.email}
+                        </div>
+                        {sub.phone && (
+                          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                            {sub.phone}
+                          </div>
+                        )}
                       </td>
                       <td>
                         {(() => {
@@ -559,11 +595,6 @@ const SubscriberManagement = () => {
                                 {sub.subscription.planName}
                               </span>
                             )}
-                            {sub.subscription.isCustomOverride && sub.subscription.status !== "TRIAL" && (
-                              <span className="badge bg-warning text-dark ms-1" style={{ fontSize: "10px" }} title={sub.subscription.customOverrideReason}>
-                                Override
-                              </span>
-                            )}
                             <div
                               style={{
                                 fontSize: "11px",
@@ -584,36 +615,52 @@ const SubscriberManagement = () => {
                           <span>
                             <strong>{sub.activeAdminCount}</strong> /{" "}
                             {sub.subscription.assignedSeats >= 999999 ? "∞" : `${sub.subscription.assignedSeats} seats`}
+                            {sub.subscription.assignedSeats > 0 && sub.subscription.assignedSeats < 999999 && (
+                              <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "4px" }}>
+                                ({Math.max(0, sub.subscription.assignedSeats - sub.activeAdminCount)} left)
+                              </span>
+                            )}
                           </span>
                         ) : (
                           <span className="text-muted">{sub.activeAdminCount} created</span>
                         )}
                       </td>
-                      <td>
-                        <span className="badge bg-light text-dark">{sub.projectCount}</span>
+                      <td style={{ textAlign: "center" }}>
+                        <span className="badge bg-light text-dark border">{sub.projectCount || 0}</span>
                       </td>
-                      <td style={{ textAlign: "right", paddingRight: "16px" }}>
+                      <td style={{ textAlign: "right", paddingRight: "16px", whiteSpace: "nowrap" }}>
                         <button
                           type="button"
                           className="sa-btn-table-outline me-2"
                           onClick={() => handleOpenAdminsModal(sub)}
-                          title="Manage staff admin accounts under this subscriber"
+                          title="Manage branch admin accounts under this subscriber"
                         >
-                          Admins ({sub.activeAdminCount})
+                          Branch Admins ({sub.activeAdminCount})
                         </button>
                         <button
                           type="button"
                           className="sa-btn-table-brand me-2"
                           onClick={() => handleOpenAssign(sub)}
+                          title="Assign or update subscription package"
                         >
                           Plan / Seats
                         </button>
                         <button
                           type="button"
-                          className={sub.status === "ACTIVE" ? "sa-btn-table-danger" : "sa-btn-table-success"}
+                          className={sub.status === "ACTIVE" ? "sa-btn-table-outline me-2" : "sa-btn-table-success me-2"}
                           onClick={() => setConfirmTarget(sub)}
+                          title={sub.status === "ACTIVE" ? "Suspend workspace access" : "Activate workspace access"}
                         >
                           {sub.status === "ACTIVE" ? "Suspend" : "Activate"}
+                        </button>
+                        <button
+                          type="button"
+                          className="sa-btn-table-danger"
+                          onClick={() => setDeleteTarget(sub)}
+                          title="Permanently delete this subscriber account"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                        >
+                          <FaTrash style={{ fontSize: "11px" }} /> Delete
                         </button>
                       </td>
                     </tr>
@@ -632,16 +679,32 @@ const SubscriberManagement = () => {
           title={confirmTarget.status === "ACTIVE" ? "Suspend Subscriber Account" : "Activate Subscriber Account"}
           message={`Are you sure you want to ${
             confirmTarget.status === "ACTIVE" ? "suspend" : "activate"
-          } "${confirmTarget.name}" (${confirmTarget.email})? ${
+          } "${confirmTarget.businessName || confirmTarget.name}" (${confirmTarget.email})?`}
+          subMessage={
             confirmTarget.status === "ACTIVE"
-              ? "All staff administrators under this subscriber will immediately lose operational access. All project and plot data will remain securely preserved."
+              ? "All branch administrators under this subscriber will immediately lose operational access. All project and plot data will remain securely preserved."
               : "Access will be immediately restored."
-          }`}
-          confirmLabel={confirmTarget.status === "ACTIVE" ? "Yes, Suspend Account" : "Yes, Activate Account"}
-          confirmVariant={confirmTarget.status === "ACTIVE" ? "danger" : "primary"}
+          }
+          confirmText={confirmTarget.status === "ACTIVE" ? "Yes, Suspend Account" : "Yes, Activate Account"}
+          type={confirmTarget.status === "ACTIVE" ? "danger" : "success"}
           isLoading={actionLoading}
           onConfirm={handleToggleStatus}
           onCancel={() => setConfirmTarget(null)}
+        />
+      )}
+
+      {/* Confirmation Modal for Permanent Subscriber Deletion */}
+      {deleteTarget && (
+        <ConfirmationModal
+          isOpen={!!deleteTarget}
+          title="Permanently Delete Subscriber Account"
+          message={`Are you sure you want to PERMANENTLY DELETE "${deleteTarget.businessName || deleteTarget.name}" (${deleteTarget.email})?`}
+          subMessage="This action is completely IRREVERSIBLE. All branches, projects, plot inventories, customer enquiries, site visits, branch admin accounts, and subscription records belonging to this tenant will be permanently erased."
+          confirmText="Yes, Delete Permanently"
+          type="danger"
+          isLoading={actionLoading}
+          onConfirm={handleDeleteSubscriber}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
 
@@ -691,19 +754,31 @@ const SubscriberManagement = () => {
                 <div className="row mb-3">
                   <div className="col-12 col-sm-6 mb-2 mb-sm-0">
                     <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
-                      Assigned Admin Seats
+                      Branch Admin Seats
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      className="form-control"
-                      value={assignForm.assignedSeats}
-                      disabled={!assignForm.isCustomOverride}
-                      onChange={(e) => setAssignForm({ ...assignForm, assignedSeats: Number(e.target.value) })}
-                      required
-                    />
-                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                      Current active admins: {assignTarget.activeAdminCount}
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        backgroundColor: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        minHeight: "42px",
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, color: "#1e293b", fontSize: "14px" }}>
+                        {assignForm.assignedSeats >= 999999
+                          ? "Unlimited"
+                          : `${assignForm.assignedSeats} Seat${assignForm.assignedSeats === 1 ? "" : "s"}`}
+                      </span>
+                      <span className="badge bg-secondary" style={{ fontSize: "11px", fontWeight: 600 }}>
+                        Package Defined
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
+                      Active branch admins: <strong>{assignTarget.activeAdminCount || 0}</strong>
                     </div>
                   </div>
                   <div className="col-12 col-sm-6">
@@ -721,49 +796,6 @@ const SubscriberManagement = () => {
                   </div>
                 </div>
 
-                {/* Custom Seat Override Checkbox & Reason */}
-                <div className="mb-3 p-3" style={{ background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="customOverrideCheck"
-                      checked={assignForm.isCustomOverride}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        const sel = plans.find((p) => p._id === assignForm.planId);
-                        setAssignForm({
-                          ...assignForm,
-                          isCustomOverride: checked,
-                          assignedSeats: checked ? assignForm.assignedSeats : (sel ? sel.maxAdminSeats : 3),
-                        });
-                      }}
-                    />
-                    <label className="form-check-label" htmlFor="customOverrideCheck" style={{ fontWeight: 600, fontSize: "13px" }}>
-                      Grant Custom Seat Override
-                    </label>
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                    Enable to assign seat limits higher than the plan quota (e.g. promotional grants or custom agreements).
-                  </div>
-
-                  {assignForm.isCustomOverride && (
-                    <div className="mt-2">
-                      <label className="form-label" style={{ fontWeight: 600, fontSize: "12px", color: "#334155" }}>
-                        Reason for Override <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="e.g. VIP partner promotional quota"
-                        value={assignForm.customOverrideReason}
-                        onChange={(e) => setAssignForm({ ...assignForm, customOverrideReason: e.target.value })}
-                        required={assignForm.isCustomOverride}
-                      />
-                    </div>
-                  )}
-                </div>
-
                 <div className="mb-3">
                   <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
                     Notes (Optional)
@@ -773,7 +805,7 @@ const SubscriberManagement = () => {
                     rows="2"
                     value={assignForm.notes}
                     onChange={(e) => setAssignForm({ ...assignForm, notes: e.target.value })}
-                    placeholder="e.g. Granted promotional seat override..."
+                    placeholder="e.g. Standard plan assignment, billing renewal..."
                   />
                 </div>
 
@@ -812,10 +844,10 @@ const SubscriberManagement = () => {
             >
               <div>
                 <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#1e293b" }}>
-                  Staff Admins: {viewAdminsTarget.businessName || viewAdminsTarget.name}
+                  Branch Admins: {viewAdminsTarget.businessName || viewAdminsTarget.name}
                 </h3>
                 <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>
-                  Manage staff accounts under this subscriber ({tenantAdmins.filter(a => a.status === 'ACTIVE').length} active / {tenantAdmins.length} total)
+                  Manage branch admin accounts under this subscriber ({tenantAdmins.filter(a => a.status === 'ACTIVE').length} active / {tenantAdmins.length} total)
                 </p>
               </div>
               <button
@@ -832,18 +864,18 @@ const SubscriberManagement = () => {
             <div className="sa-modal-body-scroll">
               {loadingAdmins ? (
                 <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-                  Loading staff admins...
+                  Loading branch admins...
                 </div>
               ) : tenantAdmins.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-                  No staff admin accounts found for this subscriber.
+                  No branch admin accounts found for this subscriber.
                 </div>
               ) : (
                 <div className="table-responsive">
                   <table className="table align-middle" style={{ margin: 0 }}>
                     <thead>
                       <tr style={{ fontSize: "12px", textTransform: "uppercase", color: "#64748b", borderBottom: "2px solid #e2e8f0" }}>
-                        <th>Admin Details</th>
+                        <th>Branch Admin Details</th>
                         <th>Phone</th>
                         <th>Status</th>
                         <th style={{ textAlign: "right" }}>Actions</th>
@@ -890,7 +922,7 @@ const SubscriberManagement = () => {
                               className="btn btn-sm btn-outline-danger"
                               onClick={() => setConfirmDeleteAdminTarget(admin)}
                               disabled={actionLoading}
-                              title="Permanently remove staff admin account"
+                              title="Permanently remove branch admin account"
                             >
                               Delete
                             </button>
@@ -1344,16 +1376,21 @@ const SubscriberManagement = () => {
 
                     <div className="col-md-6">
                       <label className="form-label" style={{ fontWeight: 600, fontSize: "13px", color: "#334155", marginBottom: "6px" }}>
-                        Admin Seat Limit <span className="text-danger">*</span>
+                        Branch Admin Seat Limit <span className="text-danger">*</span>
                       </label>
                       <div style={{ position: "relative" }}>
                         <FaUsers style={{ position: "absolute", left: "14px", top: "12px", color: "#94a3b8" }} />
                         <input
                           type="number"
-                          min="1"
+                          min="0"
                           className="form-control sa-input-modern"
                           value={createForm.assignedSeats}
-                          onChange={(e) => setCreateForm({ ...createForm, assignedSeats: Number(e.target.value) })}
+                          onChange={(e) =>
+                            setCreateForm({
+                              ...createForm,
+                              assignedSeats: Math.max(0, parseInt(e.target.value, 10) || 0),
+                            })
+                          }
                           required
                           style={{ paddingLeft: "40px", borderRadius: "8px", height: "42px", borderColor: "#cbd5e1" }}
                         />
@@ -1430,9 +1467,9 @@ const SubscriberManagement = () => {
       {confirmDeleteAdminTarget && (
         <ConfirmationModal
           isOpen={!!confirmDeleteAdminTarget}
-          title="Permanently Delete Staff Admin"
+          title="Permanently Delete Branch Admin"
           message={`Are you sure you want to permanently delete "${confirmDeleteAdminTarget.name}" (${confirmDeleteAdminTarget.email})? If this admin is active, 1 seat will be released. Any projects or leads assigned to them will be safely unassigned.`}
-          confirmText="Yes, Delete Admin"
+          confirmText="Yes, Delete Branch Admin"
           cancelText="Cancel"
           isDanger={true}
           onConfirm={handleDeleteTenantAdmin}

@@ -12,6 +12,8 @@ import {
 } from "react-icons/fa";
 
 import { useAdminProfile } from "../context/AdminProfileContext";
+import PhoneInputField from "../../components/PhoneInputField";
+import { parsePhoneString, formatFullPhone } from "../../utils/phoneUtils";
 import "../styles/admin-profile.css";
 
 const MAX_AVATAR_BYTES = 1024 * 1024; // 1 MB
@@ -35,8 +37,10 @@ const AdminProfile = () => {
     hasPassword,
   } = useAdminProfile();
 
+  const initialPhoneParsed = parsePhoneString(profile.mobile || "");
+  const [countryCode, setCountryCode] = useState(initialPhoneParsed.countryCode);
   const [name, setName] = useState(profile.name);
-  const [mobile, setMobile] = useState(profile.mobile);
+  const [mobile, setMobile] = useState(initialPhoneParsed.digits);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar || "");
   const [avatarError, setAvatarError] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -45,7 +49,11 @@ const AdminProfile = () => {
 
   useEffect(() => {
     if (profile.name) setName(profile.name);
-    if (profile.mobile !== undefined) setMobile(profile.mobile);
+    if (profile.mobile !== undefined) {
+      const parsed = parsePhoneString(profile.mobile || "");
+      setCountryCode(parsed.countryCode);
+      setMobile(parsed.digits);
+    }
     if (profile.avatar !== undefined) setAvatarPreview(profile.avatar || "");
   }, [profile.name, profile.mobile, profile.avatar]);
 
@@ -119,8 +127,8 @@ const AdminProfile = () => {
 
     if (!trimmedMobile) {
       errors.mobile = "Mobile number is required.";
-    } else if (!/^\+?[\d\s-]{10,15}$/.test(trimmedMobile)) {
-      errors.mobile = "Enter a valid mobile number.";
+    } else if (trimmedMobile.length < 7 || trimmedMobile.length > 12) {
+      errors.mobile = "Enter a valid mobile number (e.g. 10 digits).";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -131,10 +139,11 @@ const AdminProfile = () => {
     setProfileErrors({});
     setIsSavingProfile(true);
     try {
-      await updateProfile({ name: trimmedName, mobile: trimmedMobile });
+      const fullMobile = formatFullPhone(countryCode, trimmedMobile);
+      await updateProfile({ name: trimmedName, mobile: fullMobile });
       setName(trimmedName);
       setMobile(trimmedMobile);
-      flash(setProfileSuccess, "Admin profile saved successfully.");
+      flash(setProfileSuccess, "Branch Admin profile saved successfully.");
     } catch (err) {
       setProfileErrors({ general: err.message || "Failed to update profile." });
     } finally {
@@ -179,14 +188,14 @@ const AdminProfile = () => {
           type="button"
           className="admin-profile-back"
           onClick={() => navigate("/admin")}
-          aria-label="Back to Admin dashboard"
+          aria-label="Back to Branch Admin dashboard"
         >
           <FaArrowLeft />
         </button>
 
         <div className="admin-profile-title-group">
           <span className="admin-profile-kicker">ACCOUNT SETTINGS</span>
-          <h1>Admin Profile</h1>
+          <h1>Branch Admin Profile</h1>
         </div>
       </div>
 
@@ -197,7 +206,7 @@ const AdminProfile = () => {
             {avatarPreview ? (
               <img
                 src={avatarPreview}
-                alt="Admin avatar"
+                alt="Branch Admin avatar"
                 className="admin-avatar-image"
               />
             ) : (
@@ -224,7 +233,30 @@ const AdminProfile = () => {
 
           <div className="admin-avatar-meta">
             <h2>{name || profile.name}</h2>
-            <span className="admin-role-badge">{profile.role || "Administrator"}</span>
+            <span className="admin-role-badge">{profile.role || "Branch Administrator"}</span>
+
+            {profile.branch && (
+              <span
+                className="admin-role-badge"
+                style={{
+                  background: profile.branch.status === "ACTIVE" ? "#ecfdf5" : "#fef2f2",
+                  color: profile.branch.status === "ACTIVE" ? "#047857" : "#b91c1c",
+                  border: "1px solid",
+                  borderColor: profile.branch.status === "ACTIVE" ? "#a7f3d0" : "#fecaca",
+                  marginTop: "6px",
+                  fontSize: "12px",
+                }}
+                title={
+                  profile.branch.status === "ACTIVE"
+                    ? "You are the Branch Admin of this branch"
+                    : "This branch is deactivated — your operational access is paused"
+                }
+              >
+                Branch: {profile.branch.name}
+                {profile.branch.city ? ` (${profile.branch.city})` : ""}
+                {profile.branch.status === "ACTIVE" ? "" : " — Inactive"}
+              </span>
+            )}
 
             {avatarPreview && (
               <button
@@ -293,21 +325,19 @@ const AdminProfile = () => {
                 Mobile Number <span className="required">*</span>
               </label>
 
-              <input
+              <PhoneInputField
                 id="admin-mobile"
-                type="tel"
-                className={
-                  profileErrors.mobile
-                    ? "admin-profile-input error"
-                    : "admin-profile-input"
-                }
+                name="mobile"
+                countryCode={countryCode}
+                onCountryCodeChange={(code) => setCountryCode(code)}
                 value={mobile}
-                onChange={(e) => {
-                  setMobile(e.target.value);
+                onChange={(digits) => {
+                  setMobile(digits);
                   setProfileErrors((prev) => ({ ...prev, mobile: undefined }));
                 }}
-                placeholder="+91 98765 43210"
-                autoComplete="tel"
+                placeholder="10-digit number"
+                maxLength={10}
+                error={Boolean(profileErrors.mobile)}
               />
 
               {profileErrors.mobile && (

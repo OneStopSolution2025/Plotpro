@@ -8,10 +8,10 @@ const STORAGE_KEY = "dreamcity-admin-profile";
 
 const DEFAULT_PROFILE = {
   id: "admin",
-  name: "Administrator",
+  name: "Branch Admin",
   mobile: "",
   email: "",
-  role: "Administrator",
+  role: "Branch Administrator",
   avatar: "",
 };
 
@@ -22,13 +22,13 @@ export const AdminProfileProvider = ({ children }) => {
     if (authUser) {
       return {
         id: String(authUser._id || authUser.id),
-        name: authUser.name || "Administrator",
+        name: authUser.name || "Branch Admin",
         email: authUser.email || "",
         mobile: authUser.phone || "",
         role:
           authUser.role === "SUPER_ADMIN"
             ? "Super Administrator"
-            : "Administrator",
+            : "Branch Administrator",
         avatar: authUser.avatar || "",
       };
     }
@@ -60,6 +60,8 @@ export const AdminProfileProvider = ({ children }) => {
             name: res.data.name || prev.name,
             email: res.data.email || prev.email,
             mobile: res.data.phone || prev.mobile,
+            // Branch context for Branch Admin accounts (null for legacy admins)
+            branch: res.data.branch || null,
           }));
         }
       }
@@ -79,7 +81,7 @@ export const AdminProfileProvider = ({ children }) => {
         role:
           authUser.role === "SUPER_ADMIN"
             ? "Super Administrator"
-            : "Administrator",
+            : "Branch Administrator",
         avatar: authUser.avatar || "",
       };
       setProfile(synced);
@@ -120,7 +122,7 @@ export const AdminProfileProvider = ({ children }) => {
             role:
               updatedUser.role === "SUPER_ADMIN"
                 ? "Super Administrator"
-                : "Administrator",
+                : "Branch Administrator",
             avatar: updatedUser.avatar || "",
           };
           setProfile(synced);
@@ -159,7 +161,7 @@ export const AdminProfileProvider = ({ children }) => {
       name: admin.name,
       email: admin.email,
       mobile: admin.mobile || prev.mobile,
-      role: admin.role || "Administrator",
+      role: admin.role || "Branch Administrator",
     }));
   }, []);
 

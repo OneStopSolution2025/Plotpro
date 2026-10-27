@@ -59,13 +59,36 @@ function ProjectPlots() {
 
     const projectPlots = useMemo(() => {
         if (!project) return [];
-        return plots.filter((plot) =>
-            String(plot.projectId) === String(project.id) ||
-            String(plot.projectCustomId) === String(project.customId) ||
-            String(plot.projectMongoId) === String(project._id) ||
-            String(plot.projectId) === String(project._id) ||
-            String(plot.projectId) === String(project.customId)
-        );
+        const seenIds = new Set();
+        const seenNumbers = new Set();
+
+        return plots
+            .filter((plot) => {
+                const matchesProject =
+                    String(plot.projectId) === String(project.id) ||
+                    String(plot.projectCustomId) === String(project.customId) ||
+                    String(plot.projectMongoId) === String(project._id) ||
+                    String(plot.projectId) === String(project._id) ||
+                    String(plot.projectId) === String(project.customId);
+
+                if (!matchesProject) return false;
+
+                const plotKey = String(plot._id || plot.id || "");
+                const plotNum = String(plot.plotNumber || "").trim().toLowerCase();
+
+                if (plotKey && seenIds.has(plotKey)) return false;
+                if (plotNum && seenNumbers.has(plotNum)) return false;
+
+                if (plotKey) seenIds.add(plotKey);
+                if (plotNum) seenNumbers.add(plotNum);
+
+                return true;
+            })
+            .sort((a, b) => {
+                const numA = String(a.plotNumber || "").trim();
+                const numB = String(b.plotNumber || "").trim();
+                return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
+            });
     }, [plots, project]);
 
     const availablePlots = useMemo(() => {

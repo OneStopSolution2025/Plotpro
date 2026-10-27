@@ -101,7 +101,7 @@ const PlanManagement = () => {
       currency: "INR",
       billingInterval: "MONTHLY",
       durationDays: 30,
-      maxAdminSeats: 3,
+      maxAdminSeats: 0,
       isUnlimitedSeats: false,
       maxProjects: 10,
       features: "Lead Management, Project Showcase, Admin Controls",
@@ -112,7 +112,6 @@ const PlanManagement = () => {
 
   const handleOpenEdit = (plan) => {
     setEditingPlan(plan);
-    const isUnlimited = Boolean(plan.isUnlimitedSeats || plan.maxAdminSeats >= 999999);
     setFormData({
       name: plan.name,
       description: plan.description || "",
@@ -120,8 +119,8 @@ const PlanManagement = () => {
       currency: plan.currency || "INR",
       billingInterval: plan.billingInterval || "MONTHLY",
       durationDays: plan.durationDays || 30,
-      maxAdminSeats: isUnlimited ? 10 : (plan.maxAdminSeats || 3),
-      isUnlimitedSeats: isUnlimited,
+      maxAdminSeats: plan.maxAdminSeats ?? 0,
+      isUnlimitedSeats: false,
       maxProjects: plan.maxProjects || 20,
       features: Array.isArray(plan.features) ? plan.features.join(", ") : "",
       isActive: plan.isActive,
@@ -137,8 +136,8 @@ const PlanManagement = () => {
         ...formData,
         price: Number(formData.price),
         durationDays: Number(formData.durationDays),
-        maxAdminSeats: formData.isUnlimitedSeats ? 999999 : Number(formData.maxAdminSeats),
-        isUnlimitedSeats: Boolean(formData.isUnlimitedSeats),
+        maxAdminSeats: Math.max(0, parseInt(formData.maxAdminSeats, 10) || 0),
+        isUnlimitedSeats: false,
         maxProjects: Number(formData.maxProjects),
         features: formData.features
           ? formData.features
@@ -222,7 +221,7 @@ const PlanManagement = () => {
             Subscription <span>Plans</span>
           </h1>
           <p className="sa-page-subtitle">
-            Create, price, and manage feature limits and Admin seat entitlements across plans.
+            Create, price, and manage feature limits and Branch admin seat entitlements across plans.
           </p>
         </div>
         <div>
@@ -298,7 +297,7 @@ const PlanManagement = () => {
 
                 <div style={{ margin: "16px 0" }}>
                   <div style={{ fontSize: "13px", marginBottom: "8px", color: "#334155", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <strong>Admin Seats:</strong>
+                    <strong>Branch Admin Seats:</strong>
                     {p.isUnlimitedSeats || p.maxAdminSeats >= 999999 ? (
                       <span className="badge bg-primary d-inline-flex align-items-center gap-1" style={{ fontSize: "11px" }}>
                         <FaInfinity /> Unlimited Seats
@@ -425,17 +424,21 @@ const PlanManagement = () => {
 
               <div className="row mb-3">
                 <div className="col-6">
-                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>Max Admin Seats</label>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
+                    Branch Admin Seats (0+)
+                  </label>
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     className="form-control"
-                    value={formData.isUnlimitedSeats ? "" : formData.maxAdminSeats}
-                    disabled={formData.isUnlimitedSeats}
-                    onChange={(e) => setFormData({ ...formData, maxAdminSeats: e.target.value })}
-                    placeholder={formData.isUnlimitedSeats ? "Unlimited" : "e.g. 5"}
-                    required={!formData.isUnlimitedSeats}
+                    value={formData.maxAdminSeats}
+                    onChange={(e) => setFormData({ ...formData, maxAdminSeats: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                    placeholder="e.g. 0, 2, 3"
+                    required
                   />
+                  <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                    Set to 0 if this package does not allow branch administrators.
+                  </div>
                 </div>
                 <div className="col-6">
                   <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>Duration (Days)</label>
@@ -450,30 +453,6 @@ const PlanManagement = () => {
                 </div>
               </div>
 
-              {/* Unlimited Admin Seats Toggle */}
-              <div className="form-check form-switch mb-3 p-2 rounded" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <input
-                  className="form-check-input ms-0 me-2"
-                  type="checkbox"
-                  id="unlimitedSeatsCheck"
-                  checked={formData.isUnlimitedSeats}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      isUnlimitedSeats: e.target.checked,
-                      maxAdminSeats: e.target.checked ? 999999 : 5,
-                    })
-                  }
-                />
-                <label className="form-check-label fw-bold" htmlFor="unlimitedSeatsCheck" style={{ fontSize: "13px", color: "#1e293b" }}>
-                  <FaInfinity style={{ color: "#a63d2f", marginRight: "6px" }} />
-                  Set Unlimited Admin Seats (No limit on staff accounts)
-                </label>
-                <div style={{ fontSize: "11px", color: "#64748b", marginLeft: "28px" }}>
-                  Subscribers on this tier can create unlimited Staff Admin accounts without quota limits.
-                </div>
-              </div>
-
               <div className="mb-3">
                 <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
                   Features (Comma separated)
@@ -483,7 +462,7 @@ const PlanManagement = () => {
                   rows="2"
                   value={formData.features}
                   onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                  placeholder="e.g. 10 Admin Seats, Custom Plot Layouts, Priority Support"
+                  placeholder="e.g. 10 Branch Admin Seats, Custom Plot Layouts, Priority Support"
                 />
               </div>
 

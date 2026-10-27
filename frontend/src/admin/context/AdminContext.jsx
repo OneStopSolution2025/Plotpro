@@ -59,7 +59,7 @@ export const AdminProvider = ({ children }) => {
           name: a.name,
           email: a.email,
           mobile: a.phone || "",
-          role: "Administrator",
+          role: "Branch Administrator",
           status: a.status === "ACTIVE" ? "Active" : "Inactive",
           deactivatedBySupreme: Boolean(a.deactivatedBySupreme),
           assignedProjectsCount: a.assignedProjectsCount || 0,
@@ -142,7 +142,7 @@ export const AdminProvider = ({ children }) => {
             name: res.data.name,
             email: res.data.email,
             mobile: res.data.phone || "",
-            role: "Administrator",
+            role: "Branch Administrator",
             status: "Active",
             assignedProjectsCount: 0,
           };
@@ -157,10 +157,10 @@ export const AdminProvider = ({ children }) => {
           fetchSubscriptionInfo();
           return { success: true, admin: newAdmin };
         }
-        return { success: false, error: res?.message || "Failed to create administrator account." };
+        return { success: false, error: res?.message || "Failed to create branch administrator account." };
       } catch (err) {
         console.error("[AdminContext] createAdmin API call failed:", err.message);
-        return { success: false, error: err.message || "Failed to create administrator account." };
+        return { success: false, error: err.message || "Failed to create branch administrator account." };
       }
     },
     [fetchSubscriptionInfo]
@@ -240,7 +240,7 @@ export const AdminProvider = ({ children }) => {
               adminName: a.name,
               type: "DEACTIVATED",
               title: "Account Deactivated",
-              message: `Super Admin deactivated your administrator account on ${dateStr} at ${timeStr}. Your operational access and permissions have been paused.`,
+              message: `Super Admin deactivated your branch admin account on ${dateStr} at ${timeStr}. Your operational access and permissions have been paused.`,
             });
           } else {
             addNotification({
@@ -248,7 +248,7 @@ export const AdminProvider = ({ children }) => {
               adminName: a.name,
               type: "ACTIVATED",
               title: "Account Activated",
-              message: `Super Admin activated your administrator account on ${dateStr} at ${timeStr}. Full administrator privileges have been restored.`,
+              message: `Super Admin activated your branch admin account on ${dateStr} at ${timeStr}. Full branch administrator privileges have been restored.`,
             });
           }
 

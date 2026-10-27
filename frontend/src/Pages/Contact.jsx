@@ -3,6 +3,8 @@ import "../css/Contact.css";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PhoneInputField from "../components/PhoneInputField";
+import { formatFullPhone } from "../utils/phoneUtils";
 import { ArrowRight } from "lucide-react";
 import { publicApi } from "../services/api";
 
@@ -124,6 +126,7 @@ function Icon({
 ========================================================= */
 
 export default function Contact() {
+    const [countryCode, setCountryCode] = useState("+91");
     const [form, setForm] = useState({
         firstName: "",
         lastName: "",
@@ -170,8 +173,8 @@ export default function Contact() {
 
         if (!form.mobile.trim()) {
             errors.mobile = "Mobile number required";
-        } else if (!/^[0-9+\s\-()]{7,15}$/.test(form.mobile.trim())) {
-            errors.mobile = "Enter a valid mobile number";
+        } else if (form.mobile.trim().length < 7 || form.mobile.trim().length > 12) {
+            errors.mobile = "Enter a valid mobile number (e.g. 10 digits)";
         }
 
         if (form.message.trim().length < 10) {
@@ -201,7 +204,7 @@ export default function Contact() {
             await publicApi.submitEnquiry({
                 fullName: `${form.firstName} ${form.lastName}`.trim(),
                 email: form.email.trim(),
-                mobile: form.mobile.trim(),
+                mobile: formatFullPhone(countryCode, form.mobile),
                 contactMethod: "email",
                 message: form.message.trim(),
                 projectId: null,
@@ -397,27 +400,20 @@ export default function Contact() {
 
                             <div className="field">
 
-                                <input
-                                    className={
-                                        "input" +
-                                        (
-                                            errors.mobile
-                                                ? " error"
-                                                : ""
-                                        )
-                                    }
+                                <PhoneInputField
+                                    id="contact-mobile"
+                                    name="mobile"
+                                    countryCode={countryCode}
+                                    onCountryCodeChange={(code) => setCountryCode(code)}
+                                    value={form.mobile}
+                                    onChange={(digits) => {
+                                        setForm((prev) => ({ ...prev, mobile: digits }));
+                                        setErrors((prev) => ({ ...prev, mobile: undefined }));
+                                    }}
                                     placeholder="Mobile Number*"
-                                    type="tel"
-                                    value={
-                                        form.mobile
-                                    }
-                                    onChange={
-                                        updateForm(
-                                            "mobile"
-                                        )
-                                    }
+                                    maxLength={10}
+                                    error={Boolean(errors.mobile)}
                                 />
-
 
                                 {errors.mobile && (
                                     <span className="error-text">

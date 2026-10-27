@@ -6,6 +6,9 @@ import Project from "../models/Project.js";
 import Enquiry from "../models/Enquiry.js";
 import SiteVisit from "../models/SiteVisit.js";
 import PlatformSettings from "../models/PlatformSettings.js";
+import SuperAdminRequest from "../models/SuperAdminRequest.js";
+import Branch from "../models/Branch.js";
+import Notification from "../models/Notification.js";
 import { createNotification } from "./notificationController.js";
 
 /**
@@ -27,6 +30,10 @@ export const getPlatformOverview = async (req, res, next) => {
     });
     const suspendedSubscriptions = await Subscription.countDocuments({ status: "SUSPENDED" });
     const trialSubscriptions = await Subscription.countDocuments({ status: "TRIAL", expiryDate: { $gt: now } });
+
+    // Retailer (Super Admin) account creation requests awaiting approval
+    const retailerRequestsPending = await SuperAdminRequest.countDocuments({ status: "PENDING" });
+    const retailerRequestsTotal = await SuperAdminRequest.countDocuments({});
 
     // Renewals due soon (within 7 days)
     const sevenDaysFromNow = new Date();
@@ -94,6 +101,14 @@ export const getPlatformOverview = async (req, res, next) => {
           totalSeatsAllocated,
           totalSeatsUsed,
           hasUnlimitedSeats,
+        },
+        retailerRequests: {
+          pending: retailerRequestsPending,
+          total: retailerRequestsTotal,
+        },
+        retailerRequests: {
+          pending: retailerRequestsPending,
+          total: retailerRequestsTotal,
         },
         renewalsList: renewalsDueSoon,
       },
@@ -478,6 +493,78 @@ export const deleteAdminAccountBySupreme = async (req, res, next) => {
 };
 
 /**
+ * @desc    Permanently delete a Subscriber (Super Admin) and all their associated workspace data
+ * @route   DELETE /api/supreme-admin/subscribers/:id
+ * @access  Private (Supreme Admin)
+ */
+export const deleteSubscriber = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const subscriber = await User.findOne({ _id: id, role: "SUPER_ADMIN" });
+    if (!subscriber) {
+      return res.status(404).json({ success: false, message: "Subscriber not found." });
+    }
+
+    // 1. Find all staff Branch Admins under this subscriber
+    const branchAdmins = await User.find({ tenantId: subscriber._id, role: "ADMIN" }).select("_id");
+    const adminIds = branchAdmins.map((a) => a._id);
+    const allTenantUserIds = [subscriber._id, ...adminIds];
+
+    // 2. Find all branches belonging to this tenant
+    const branches = await Branch.find({ tenantId: subscriber._id }).select("_id");
+    const branchIds = branches.map((b) => b._id);
+
+    // 3. Delete all projects created by or assigned to this tenant's branches/admins
+    await Project.deleteMany({
+      $or: [
+        { branchId: { $in: branchIds } },
+        { adminId: { $in: allTenantUserIds } },
+        { approvedBy: subscriber._id },
+      ],
+    });
+
+    // 4. Delete customer enquiries and site visits belonging to this tenant
+    await Enquiry.deleteMany({
+      $or: [
+        { tenantId: subscriber._id },
+        { branchId: { $in: branchIds } },
+        { assignedAdminId: { $in: adminIds } },
+      ],
+    });
+    await SiteVisit.deleteMany({
+      $or: [
+        { tenantId: subscriber._id },
+        { branchId: { $in: branchIds } },
+        { assignedAdminId: { $in: adminIds } },
+      ],
+    });
+
+    // 5. Delete all branches belonging to this tenant
+    await Branch.deleteMany({ tenantId: subscriber._id });
+
+    // 6. Delete all staff Branch Admin users
+    await User.deleteMany({ tenantId: subscriber._id, role: "ADMIN" });
+
+    // 7. Delete subscriptions and seat requests
+    await Subscription.deleteMany({ subscriberId: subscriber._id });
+
+    // 8. Delete notifications for this subscriber and their admins
+    await Notification.deleteMany({ recipient: { $in: allTenantUserIds } });
+
+    // 9. Finally delete the Super Admin user
+    await User.findByIdAndDelete(subscriber._id);
+
+    res.status(200).json({
+      success: true,
+      message: `Subscriber "${subscriber.businessName || subscriber.name}" (${subscriber.email}) and all associated workspace data have been permanently deleted.`,
+      data: { id: String(subscriber._id) },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Assign or renew a subscription for a subscriber
  * @route   POST /api/supreme-admin/subscribers/:id/subscription
  * @access  Private (Supreme Admin)
@@ -498,15 +585,32 @@ export const assignSubscriberSubscription = async (req, res, next) => {
     }
 
     // Authoritative seat calculation:
-    // Follow plan.maxAdminSeats unless an explicit custom override is granted with a reason
-    let effectiveSeats = plan.maxAdminSeats;
+    // Follow plan.maxAdminSeats unless an explicit custom override or seat count is specified
+    let effectiveSeats = typeof plan.maxAdminSeats === "number" ? plan.maxAdminSeats : 0;
     let overrideFlag = false;
     let overrideReasonText = "";
 
-    if (isCustomOverride) {
+    if (assignedSeats !== undefined && assignedSeats !== null && assignedSeats !== "") {
+      const parsedSeats = Number(assignedSeats);
+      if (!Number.isInteger(parsedSeats) || parsedSeats < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Branch Admin seat limit must be a non-negative integer (0 or greater).",
+        });
+      }
+
+      if (isCustomOverride || parsedSeats !== plan.maxAdminSeats) {
+        overrideFlag = true;
+        overrideReasonText = customOverrideReason
+          ? String(customOverrideReason).trim()
+          : "Custom seat allocation approved by Platform Owner";
+        effectiveSeats = parsedSeats;
+      }
+    } else if (isCustomOverride) {
       overrideFlag = true;
-      overrideReasonText = customOverrideReason ? String(customOverrideReason).trim() : "Custom seat allocation approved by Platform Owner";
-      effectiveSeats = assignedSeats ? Math.max(1, Number(assignedSeats)) : plan.maxAdminSeats;
+      overrideReasonText = customOverrideReason
+        ? String(customOverrideReason).trim()
+        : "Custom seat allocation approved by Platform Owner";
     }
 
     const effectiveDays = durationDays ? Number(durationDays) : plan.durationDays;
@@ -521,7 +625,7 @@ export const assignSubscriberSubscription = async (req, res, next) => {
     if (effectiveSeats < currentActiveAdmins) {
       return res.status(400).json({
         success: false,
-        message: `Cannot reduce seat limit to ${effectiveSeats}. Subscriber currently has ${currentActiveAdmins} active Admin accounts. Please deactivate surplus admins first.`,
+        message: `Cannot reduce seat limit to ${effectiveSeats}. Subscriber currently has ${currentActiveAdmins} active Branch Admin account(s). Please deactivate or delete surplus branch admins first.`,
       });
     }
 
@@ -607,7 +711,7 @@ export const createPlan = async (req, res, next) => {
 
     const unlimited = Boolean(isUnlimitedSeats);
 
-    if (!name || price === undefined || !durationDays || (!unlimited && !maxAdminSeats)) {
+    if (!name || price === undefined || !durationDays || (!unlimited && (maxAdminSeats === undefined || maxAdminSeats === null || maxAdminSeats === ""))) {
       return res.status(400).json({
         success: false,
         message: "Name, price, durationDays, and seat allocation are required fields.",
@@ -691,10 +795,10 @@ export const updatePlan = async (req, res, next) => {
       plan.isUnlimitedSeats = Boolean(isUnlimitedSeats);
       if (plan.isUnlimitedSeats) {
         plan.maxAdminSeats = 999999;
-      } else if (maxAdminSeats) {
+      } else if (maxAdminSeats !== undefined && maxAdminSeats !== null && maxAdminSeats !== "") {
         plan.maxAdminSeats = Number(maxAdminSeats);
       }
-    } else if (maxAdminSeats) {
+    } else if (maxAdminSeats !== undefined && maxAdminSeats !== null && maxAdminSeats !== "") {
       plan.maxAdminSeats = Number(maxAdminSeats);
     }
     if (maxProjects) plan.maxProjects = Number(maxProjects);
@@ -792,8 +896,13 @@ export const getSubscriptions = async (req, res, next) => {
       .populate("planId", "name price durationDays maxAdminSeats")
       .sort({ createdAt: -1 });
 
+    // Filter out orphan subscriptions whose subscriber account does not exist in DB
+    const validSubscriptions = subscriptions.filter(
+      (sub) => sub.subscriberId && sub.subscriberId._id
+    );
+
     const now = new Date();
-    let evaluated = subscriptions.map((sub) => {
+    let evaluated = validSubscriptions.map((sub) => {
       const isExpired = Boolean(sub.expiryDate && new Date(sub.expiryDate) <= now);
       return {
         ...sub.toObject(),
@@ -824,30 +933,69 @@ export const getSubscriptions = async (req, res, next) => {
 export const updateSubscriptionStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, extendDays } = req.body;
+    const { status, planId, durationDays, extendDays } = req.body;
 
-    const subscription = await Subscription.findById(id).populate("subscriberId planId");
+    const subscription = await Subscription.findById(id).populate("subscriberId");
     if (!subscription) {
       return res.status(404).json({ success: false, message: "Subscription not found." });
+    }
+
+    if (planId) {
+      const plan = await Plan.findById(planId);
+      if (!plan) {
+        return res.status(404).json({ success: false, message: "Selected plan not found." });
+      }
+
+      // Check active admins limit if subscriber exists
+      if (subscription.subscriberId) {
+        const subId = subscription.subscriberId._id || subscription.subscriberId;
+        const currentActiveAdmins = await User.countDocuments({
+          role: "ADMIN",
+          status: "ACTIVE",
+          tenantId: subId,
+        });
+
+        const targetSeats = plan.maxAdminSeats ?? 0;
+        if (targetSeats < currentActiveAdmins) {
+          return res.status(400).json({
+            success: false,
+            message: `Cannot switch to ${plan.name} (${targetSeats} seats). Subscriber currently has ${currentActiveAdmins} active Branch Admin(s). Please deactivate or delete surplus branch admins first.`,
+          });
+        }
+      }
+
+      subscription.planId = plan._id;
+      subscription.assignedSeats = plan.maxAdminSeats ?? 0;
+      subscription.isCustomOverride = false;
     }
 
     if (status && ["ACTIVE", "EXPIRED", "SUSPENDED", "TRIAL"].includes(status)) {
       subscription.status = status;
     }
 
-    if (extendDays && Number(extendDays) > 0) {
-      const baseDate = new Date(subscription.expiryDate) > new Date() ? new Date(subscription.expiryDate) : new Date();
-      baseDate.setDate(baseDate.getDate() + Number(extendDays));
+    const daysToAdd = Number(durationDays || extendDays);
+    if (daysToAdd && daysToAdd > 0) {
+      const now = new Date();
+      const baseDate = subscription.expiryDate && new Date(subscription.expiryDate) > now
+        ? new Date(subscription.expiryDate)
+        : now;
+      baseDate.setDate(baseDate.getDate() + daysToAdd);
       subscription.expiryDate = baseDate;
-      subscription.status = "ACTIVE";
+      if (!status) {
+        subscription.status = "ACTIVE";
+      }
     }
 
     await subscription.save();
 
+    const populated = await Subscription.findById(id)
+      .populate("subscriberId", "name email phone businessName status")
+      .populate("planId", "name price durationDays maxAdminSeats");
+
     res.status(200).json({
       success: true,
       message: "Subscription updated successfully.",
-      data: subscription,
+      data: populated,
     });
   } catch (error) {
     next(error);
@@ -879,11 +1027,20 @@ export const getSeatUsage = async (req, res, next) => {
           tenantId: sub._id,
         });
 
-        const assignedSeats = subscription ? subscription.getEffectiveSeats() : 3;
+        const assignedSeats = subscription ? subscription.getEffectiveSeats() : 0;
         const usedSeats = subscription && subscription.usedSeats !== undefined ? subscription.usedSeats : activeAdmins;
 
         const isUnlimited =
           assignedSeats >= 999999 || (subscription?.planId && subscription.planId.isUnlimitedSeats);
+
+        const remainingSeats = isUnlimited ? Infinity : Math.max(0, assignedSeats - usedSeats);
+        const utilizationPercent = isUnlimited
+          ? 0
+          : assignedSeats > 0
+          ? Math.min(100, Math.round((usedSeats / assignedSeats) * 100))
+          : usedSeats > 0
+          ? 100
+          : 0;
 
         return {
           subscriberId: sub._id,
@@ -891,16 +1048,17 @@ export const getSeatUsage = async (req, res, next) => {
           email: sub.email,
           businessName: sub.businessName || "Registered Business",
           subscriberStatus: sub.status,
-          planName: subscription?.planId?.name || "Default",
+          planName: subscription?.planId?.name || "No Plan",
           subscriptionStatus: subscription?.status || "NONE",
           assignedSeats,
           usedSeats,
+          remainingSeats,
           activeAdmins,
           inactiveAdmins,
           isUnlimited,
           isCustomOverride: subscription?.isCustomOverride || false,
           customOverrideReason: subscription?.customOverrideReason || "",
-          utilizationPercent: isUnlimited ? 0 : Math.round((usedSeats / assignedSeats) * 100),
+          utilizationPercent,
           isNearCapacity: isUnlimited ? false : usedSeats >= assignedSeats,
         };
       })
@@ -1038,23 +1196,31 @@ export const createSubscriber = async (req, res, next) => {
     }
 
     // 4. Derive seat entitlement
-    let finalAssignedSeats = plan.maxAdminSeats || 3;
+    let finalAssignedSeats = typeof plan.maxAdminSeats === "number" ? plan.maxAdminSeats : 0;
     let overrideFlag = false;
     let overrideReasonText = "";
 
-    if (isCustomOverride) {
+    if (assignedSeats !== undefined && assignedSeats !== null && assignedSeats !== "") {
+      const parsedSeats = Number(assignedSeats);
+      if (!Number.isInteger(parsedSeats) || parsedSeats < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Branch Admin seat limit must be a non-negative integer (0 or greater).",
+        });
+      }
+
+      if (isCustomOverride || parsedSeats !== plan.maxAdminSeats) {
+        overrideFlag = true;
+        overrideReasonText = customOverrideReason
+          ? String(customOverrideReason).trim()
+          : "Custom seat allocation configured at creation";
+        finalAssignedSeats = parsedSeats;
+      }
+    } else if (isCustomOverride) {
       overrideFlag = true;
       overrideReasonText = customOverrideReason
         ? String(customOverrideReason).trim()
         : "Custom seat allocation approved during subscriber onboarding";
-      finalAssignedSeats = assignedSeats ? Math.max(1, Number(assignedSeats)) : (plan.maxAdminSeats || 3);
-    } else if (assignedSeats && Number(assignedSeats) !== plan.maxAdminSeats) {
-      // If frontend provided a custom assignedSeats different from plan default
-      overrideFlag = true;
-      overrideReasonText = customOverrideReason
-        ? String(customOverrideReason).trim()
-        : "Custom seat override configured at creation";
-      finalAssignedSeats = Math.max(1, Number(assignedSeats));
     }
 
     // 5. Subscription dates & status

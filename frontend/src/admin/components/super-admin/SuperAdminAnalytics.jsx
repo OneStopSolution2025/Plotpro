@@ -30,7 +30,7 @@ const SuperAdminAnalytics = ({ rows = [] }) => {
         <div className="sa-chart-card">
           <div className="sa-chart-header">
             <div>
-              <h3>Plot Inventory by Administrator</h3>
+              <h3>Plot Inventory by Branch Administrator</h3>
             </div>
 
             {/* Subtle Legend */}
@@ -61,10 +61,10 @@ const SuperAdminAnalytics = ({ rows = [] }) => {
                 <div
                   key={admin.id}
                   className="sa-bar-row"
-                  onClick={() => navigate(`/super-admin/admins/${admin.id}`)}
+                  onClick={() => navigate("/super-admin/branches")}
                   onMouseEnter={() => setActiveTooltip(admin.id)}
                   onMouseLeave={() => setActiveTooltip(null)}
-                  title={`View details for ${admin.name}`}
+                  title={`${admin.name} is managed via the Branches page`}
                 >
                   <div className="sa-bar-info">
                     <span className="sa-bar-label">{admin.name}</span>
@@ -126,7 +126,7 @@ const SuperAdminAnalytics = ({ rows = [] }) => {
         <div className="sa-chart-card">
           <div className="sa-chart-header">
             <div>
-              <h3>Projects Handled by Administrator</h3>
+              <h3>Projects Handled by Branch Administrator</h3>
             </div>
           </div>
 
@@ -138,8 +138,8 @@ const SuperAdminAnalytics = ({ rows = [] }) => {
                 <div
                   key={admin.id}
                   className="sa-bar-row"
-                  onClick={() => navigate(`/super-admin/admins/${admin.id}`)}
-                  title={`View details for ${admin.name}`}
+                  onClick={() => navigate("/super-admin/branches")}
+                  title={`${admin.name} is managed via the Branches page`}
                 >
                   <div className="sa-bar-info">
                     <span className="sa-bar-label">{admin.name}</span>

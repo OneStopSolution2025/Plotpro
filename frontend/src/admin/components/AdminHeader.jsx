@@ -36,9 +36,9 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
   const rawProfile = user || authUser || contextProfile;
 
   const profile = useMemo(() => {
-    if (!rawProfile) return { name: "Admin", role: "Administrator", avatar: "" };
+    if (!rawProfile) return { name: "Branch Admin", role: "Branch Administrator", avatar: "" };
 
-    let displayRole = "Administrator";
+    let displayRole = "Branch Administrator";
     if (
       rawProfile.role === "SUPREME_ADMIN" ||
       rawProfile.role === "Supreme Administrator" ||
@@ -56,7 +56,7 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
     return {
       ...rawProfile,
       id: rawProfile._id || rawProfile.id,
-      name: rawProfile.name || "Admin",
+      name: rawProfile.name || "Branch Admin",
       email: rawProfile.email || "",
       role: displayRole,
       avatar: rawProfile.avatar || "",
@@ -128,7 +128,7 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
         case "PROJECT_DELETED":
         case "PROJECT_ASSIGNED":
         case "PROJECT_UNASSIGNED":
-          navigate("/super-admin/assignments");
+          navigate("/super-admin/branches");
           break;
         case "PLOT_SOLD":
         case "PLOT_UPDATED":
@@ -141,7 +141,7 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
         case "ADMIN_STATUS_CHANGED":
         case "ADMIN_UPDATED":
         case "ADMIN_WELCOME":
-          navigate("/super-admin/admins");
+          navigate("/super-admin/branches");
           break;
         default:
           navigate("/super-admin/approvals");
@@ -368,8 +368,8 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
               {/* Context Bar */}
               <div className="admin-notif-context-bar">
                 <span>
-                  {isSuperAdmin ? "Role: " : "Admin: "}
-                  <strong>{profile?.name || (isSuperAdmin ? "Super Admin" : "Admin")}</strong>
+                  {isSuperAdmin ? "Role: " : "Branch Admin: "}
+                  <strong>{profile?.name || (isSuperAdmin ? "Super Admin" : "Branch Admin")}</strong>
                 </span>
                 <span style={{ fontSize: "11px", color: "#64748b" }}>
                   {effectiveUnreadCount > 0
@@ -386,7 +386,7 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
                     <h5>No notifications</h5>
                     <p>
                       {isSuperAdmin
-                        ? "Projects created or plot changes made by normal admins will appear here."
+                        ? "Projects created or plot changes made by branch admins will appear here."
                         : "Changes made by Super Admin to your account or projects will appear here."}
                     </p>
                   </li>
@@ -424,8 +424,8 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
                         >
                           <span className="admin-notif-tag">
                             {notif.recipient === "super_admin"
-                              ? `By: ${notif.actorName || notif.adminName || "Normal Admin"}`
-                              : `For: ${notif.adminName || "Admin"}`}
+                              ? `By: ${notif.actorName || notif.adminName || "Branch Admin"}`
+                              : `For: ${notif.adminName || "Branch Admin"}`}
                           </span>
                           {!notif.read && (
                             <span
@@ -483,7 +483,7 @@ const AdminHeader = ({ onMenuClick, user, profilePath = "/admin/profile" }) => {
             <UserAvatar
               src={profile.avatar}
               name={profile.name}
-              alt={profile.name || "Admin avatar"}
+              alt={profile.name || "Branch Admin avatar"}
               fallbackIcon={<FaUser />}
               className="admin-profile-avatar-img"
             />

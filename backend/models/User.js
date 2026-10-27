@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    // Branch assignment for staff admins ("Branch Admin" accounts).
+    // null = legacy Admin account (unassigned) — keeps existing ownership rules.
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+      index: true,
+    },
     businessName: {
       type: String,
       trim: true,
@@ -90,6 +98,33 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     resetOtpExpiry: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
+    // First-Device Bootstrap OTP (HMAC-SHA256 with DEVICE_OTP_SECRET)
+    deviceEnrollmentChallengeId: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    deviceEnrollmentOtpHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    deviceEnrollmentOtpExpiry: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    deviceEnrollmentAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    deviceEnrollmentCooldownUntil: {
       type: Date,
       default: null,
       select: false,

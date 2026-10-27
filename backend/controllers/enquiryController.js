@@ -1,10 +1,14 @@
 import Enquiry from "../models/Enquiry.js";
 import Project from "../models/Project.js";
+import Branch from "../models/Branch.js";
+import User from "../models/User.js";
+import Plot from "../models/Plot.js";
+import jwt from "jsonwebtoken";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
 
 /**
- * @desc    Submit public enquiry (resolves project adminId)
+ * @desc    Submit public enquiry (resolves project, branch, branchAdmin, tenantId)
  * @route   POST /api/public/enquiries
  * @access  Public
  */
@@ -21,6 +25,22 @@ export const submitPublicEnquiry = async (req, res, next) => {
 
     let assignedAdminId = null;
     let resolvedProjectId = null;
+    let branchId = null;
+    let tenantId = null;
+    let customerId = null;
+
+    // Optional customer token check for registered users
+    if (req.headers?.authorization?.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key");
+        if (decoded?.id) {
+          customerId = decoded.id;
+        }
+      } catch {
+        // Guest submission, customerId remains null
+      }
+    }
 
     if (projectId) {
       const project = await findProjectByIdentifier(projectId);
@@ -32,7 +52,42 @@ export const submitPublicEnquiry = async (req, res, next) => {
       }
       resolvedProjectId = project._id;
       assignedAdminId = project.adminId || null;
+      branchId = project.branchId || null;
+
+      // If branchId is present, resolve tenantId & fallback branchAdmin
+      if (branchId) {
+        const branch = await Branch.findById(branchId);
+        if (branch) {
+          tenantId = branch.tenantId;
+          if (!assignedAdminId && branch.branchAdmin) {
+            assignedAdminId = branch.branchAdmin;
+          }
+        }
+      }
+
+      // If branch was not directly on project, check if project.adminId has a branch
+      if (!branchId && assignedAdminId) {
+        const admin = await User.findById(assignedAdminId);
+        if (admin) {
+          if (admin.branchId) branchId = admin.branchId;
+          if (!tenantId && admin.tenantId) tenantId = admin.tenantId;
+        }
+      }
+
+      // Fallback tenant to project.approvedBy if still not resolved
+      if (!tenantId && project.approvedBy) {
+        tenantId = project.approvedBy;
+      }
     }
+
+    const initialActivity = {
+      action: "ENQUIRY_CREATED",
+      newStatus: "NEW",
+      notes: message ? message.trim() : "Enquiry submitted by customer.",
+      performedByName: fullName.trim(),
+      performedByRole: "CUSTOMER",
+      timestamp: new Date(),
+    };
 
     const enquiry = await Enquiry.create({
       fullName: fullName.trim(),
@@ -41,9 +96,20 @@ export const submitPublicEnquiry = async (req, res, next) => {
       contactMethod: contactMethod || "phone",
       message: message ? message.trim() : "",
       projectId: resolvedProjectId,
-      plot: plot || "",
+      plot: plot ? String(plot).trim() : "",
+      branchId,
       assignedAdminId,
+      tenantId,
+      customerId,
       status: "NEW",
+      activityLog: [initialActivity],
+      lastActivity: {
+        action: "ENQUIRY_CREATED",
+        performedByName: fullName.trim(),
+        timestamp: new Date(),
+        newStatus: "NEW",
+        notes: message ? message.trim() : "Enquiry submitted by customer.",
+      },
     });
 
     res.status(201).json({
@@ -57,28 +123,60 @@ export const submitPublicEnquiry = async (req, res, next) => {
 };
 
 /**
- * @desc    Get enquiries assigned to the authenticated admin
+ * @desc    Get enquiries assigned to the authenticated admin or their branch
  * @route   GET /api/admin/enquiries
  * @access  Private (Admin)
  */
 export const getAdminEnquiries = async (req, res, next) => {
   try {
-    const adminProjects = await Project.find({ adminId: req.user._id }).select("_id");
+    const projectQuery = {
+      $or: [
+        { adminId: req.user._id },
+        ...(req.user.branchId ? [{ branchId: req.user.branchId }] : []),
+      ],
+    };
+    const adminProjects = await Project.find(projectQuery).select("_id");
     const projectIds = adminProjects.map((p) => p._id);
 
     const enquiries = await Enquiry.find({
       $or: [
         { assignedAdminId: req.user._id },
-        { projectId: { $in: projectIds } }
-      ]
+        ...(req.user.branchId ? [{ branchId: req.user.branchId }] : []),
+        ...(projectIds.length > 0 ? [{ projectId: { $in: projectIds } }] : []),
+      ],
     })
-      .populate("projectId", "title customId location")
+      .populate("projectId", "title customId location branchId adminId")
+      .populate("branchId", "name city region")
+      .populate("assignedAdminId", "name email phone")
+      .populate("activityLog.performedBy", "name email role")
       .sort({ createdAt: -1 });
+
+    // Enrich with plot availability if enquiry.plot exists (read-only reference)
+    const enriched = await Promise.all(
+      enquiries.map(async (e) => {
+        const obj = e.toObject();
+        if (e.projectId && e.plot) {
+          const plotDoc = await Plot.findOne({
+            projectId: e.projectId._id,
+            plotNumber: e.plot,
+          }).select("status price size facing");
+          if (plotDoc) {
+            obj.plotDetails = {
+              status: plotDoc.status,
+              price: plotDoc.price,
+              size: plotDoc.size,
+              facing: plotDoc.facing,
+            };
+          }
+        }
+        return obj;
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: enquiries.length,
-      data: enquiries,
+      count: enriched.length,
+      data: enriched,
     });
   } catch (error) {
     next(error);
@@ -93,7 +191,7 @@ export const getAdminEnquiries = async (req, res, next) => {
 export const updateEnquiryStatusAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, notes } = req.body;
 
     const enquiry = await Enquiry.findById(id);
 
@@ -101,9 +199,18 @@ export const updateEnquiryStatusAdmin = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Enquiry not found." });
     }
 
-    let isAuthorized = enquiry.assignedAdminId && enquiry.assignedAdminId.toString() === req.user._id.toString();
+    let isAuthorized =
+      (enquiry.assignedAdminId && String(enquiry.assignedAdminId) === String(req.user._id)) ||
+      (req.user.branchId && enquiry.branchId && String(enquiry.branchId) === String(req.user.branchId));
+
     if (!isAuthorized && enquiry.projectId) {
-      const ownedProject = await Project.findOne({ _id: enquiry.projectId, adminId: req.user._id });
+      const ownedProject = await Project.findOne({
+        _id: enquiry.projectId,
+        $or: [
+          { adminId: req.user._id },
+          ...(req.user.branchId ? [{ branchId: req.user.branchId }] : []),
+        ],
+      });
       if (ownedProject) {
         isAuthorized = true;
       }
@@ -112,23 +219,124 @@ export const updateEnquiryStatusAdmin = async (req, res, next) => {
     if (!isAuthorized) {
       return res.status(403).json({
         success: false,
-        message: "Forbidden: You are not assigned to this enquiry.",
+        message: "Forbidden: You are not authorized to update this enquiry.",
       });
     }
 
-    if (!["NEW", "CONTACTED", "CLOSED"].includes(status)) {
+    if (!["NEW", "CONTACTED", "FOLLOW_UP", "CLOSED"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Allowed values: NEW, CONTACTED, CLOSED.",
+        message: "Invalid status. Allowed values: NEW, CONTACTED, FOLLOW_UP, CLOSED.",
       });
     }
 
+    const prevStatus = enquiry.status;
     enquiry.status = status;
+
+    const activityItem = {
+      action: "STATUS_CHANGE",
+      previousStatus: prevStatus,
+      newStatus: status,
+      notes: notes ? notes.trim() : "",
+      performedBy: req.user._id,
+      performedByName: req.user.name || "Branch Admin",
+      performedByRole: req.user.role || "ADMIN",
+      timestamp: new Date(),
+    };
+
+    enquiry.activityLog.push(activityItem);
+    enquiry.lastActivity = {
+      action: "STATUS_CHANGE",
+      performedByName: req.user.name || "Branch Admin",
+      timestamp: new Date(),
+      newStatus: status,
+      notes: notes ? notes.trim() : `Status changed to ${status}`,
+    };
+
+    await enquiry.save();
+
+    const populated = await Enquiry.findById(enquiry._id)
+      .populate("projectId", "title customId location branchId adminId")
+      .populate("branchId", "name city region")
+      .populate("assignedAdminId", "name email phone")
+      .populate("activityLog.performedBy", "name email role");
+
+    res.status(200).json({
+      success: true,
+      message: "Enquiry status updated successfully.",
+      data: populated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Log activity / touchpoint for an enquiry without changing status (Branch Admin)
+ * @route   POST /api/admin/enquiries/:id/activity
+ * @access  Private (Admin)
+ */
+export const logEnquiryActivityAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { action, notes } = req.body;
+
+    if (!action) {
+      return res.status(400).json({ success: false, message: "Action is required." });
+    }
+
+    const enquiry = await Enquiry.findById(id);
+    if (!enquiry) {
+      return res.status(404).json({ success: false, message: "Enquiry not found." });
+    }
+
+    let isAuthorized =
+      (enquiry.assignedAdminId && String(enquiry.assignedAdminId) === String(req.user._id)) ||
+      (req.user.branchId && enquiry.branchId && String(enquiry.branchId) === String(req.user.branchId));
+
+    if (!isAuthorized && enquiry.projectId) {
+      const ownedProject = await Project.findOne({
+        _id: enquiry.projectId,
+        $or: [
+          { adminId: req.user._id },
+          ...(req.user.branchId ? [{ branchId: req.user.branchId }] : []),
+        ],
+      });
+      if (ownedProject) isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You are not authorized to log activity for this enquiry.",
+      });
+    }
+
+    const activityItem = {
+      action: action.trim(),
+      previousStatus: enquiry.status,
+      newStatus: enquiry.status,
+      notes: notes ? notes.trim() : "",
+      performedBy: req.user._id,
+      performedByName: req.user.name || "Branch Admin",
+      performedByRole: req.user.role || "ADMIN",
+      timestamp: new Date(),
+    };
+
+    enquiry.activityLog.push(activityItem);
+    enquiry.lastActivity = {
+      action: action.trim(),
+      performedByName: req.user.name || "Branch Admin",
+      timestamp: new Date(),
+      newStatus: enquiry.status,
+      notes: notes ? notes.trim() : "",
+    };
+
     await enquiry.save();
 
     res.status(200).json({
       success: true,
-      message: "Enquiry status updated.",
+      message: "Activity logged successfully.",
       data: enquiry,
     });
   } catch (error) {
@@ -137,7 +345,7 @@ export const updateEnquiryStatusAdmin = async (req, res, next) => {
 };
 
 /**
- * @desc    Get all enquiries across all admins (Super Admin oversight)
+ * @desc    Get all enquiries across all branches (Super Admin oversight, tenant isolated)
  * @route   GET /api/super-admin/enquiries
  * @access  Private (Super Admin)
  */
@@ -145,29 +353,63 @@ export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
   try {
     const { tenantProjectIds, tenantAdminIds } = await getTenantContext(req.user._id);
 
-    // If tenant has no projects and no staff admins, they have 0 enquiries
-    if (tenantProjectIds.length === 0 && tenantAdminIds.length === 0) {
-      return res.status(200).json({
-        success: true,
-        count: 0,
-        data: [],
-      });
-    }
+    // Super admin tenant isolation:
+    // Matches tenantId directly OR projects/branches/admins belonging to this Super Admin tenant (legacy fallback)
+    const tenantBranches = await Branch.find({ tenantId: req.user._id }).select("_id");
+    const tenantBranchIds = tenantBranches.map((b) => b._id);
 
-    const enquiries = await Enquiry.find({
+    const filter = {
       $or: [
+        { tenantId: req.user._id },
+        ...(tenantBranchIds.length > 0 ? [{ branchId: { $in: tenantBranchIds } }] : []),
         ...(tenantProjectIds.length > 0 ? [{ projectId: { $in: tenantProjectIds } }] : []),
         ...(tenantAdminIds.length > 0 ? [{ assignedAdminId: { $in: tenantAdminIds } }] : []),
       ],
-    })
-      .populate("projectId", "title customId location")
-      .populate("assignedAdminId", "name email phone")
+    };
+
+    const enquiries = await Enquiry.find(filter)
+      .populate({
+        path: "projectId",
+        select: "title customId location branchId adminId",
+        populate: { path: "branchId", select: "name city region" },
+      })
+      .populate("branchId", "name city region branchAdmin")
+      .populate("assignedAdminId", "name email phone role branchId")
+      .populate("activityLog.performedBy", "name email role")
       .sort({ createdAt: -1 });
+
+    // Enrich with plot availability if enquiry has plot & project (read-only)
+    const enriched = await Promise.all(
+      enquiries.map(async (e) => {
+        const obj = e.toObject();
+
+        // Safe branch & admin fallback resolution for older records
+        if (!obj.branchId && obj.projectId?.branchId) {
+          obj.branchId = obj.projectId.branchId;
+        }
+
+        if (e.projectId && e.plot) {
+          const plotDoc = await Plot.findOne({
+            projectId: e.projectId._id,
+            plotNumber: e.plot,
+          }).select("status price size facing");
+          if (plotDoc) {
+            obj.plotDetails = {
+              status: plotDoc.status,
+              price: plotDoc.price,
+              size: plotDoc.size,
+              facing: plotDoc.facing,
+            };
+          }
+        }
+        return obj;
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: enquiries.length,
-      data: enquiries,
+      count: enriched.length,
+      data: enriched,
     });
   } catch (error) {
     next(error);
@@ -182,7 +424,7 @@ export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
 export const updateEnquiryStatusSuperAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, notes } = req.body;
 
     const enquiry = await Enquiry.findById(id);
 
@@ -192,33 +434,69 @@ export const updateEnquiryStatusSuperAdmin = async (req, res, next) => {
 
     // Verify enquiry belongs to tenant
     const { tenantProjectIds, tenantAdminIds } = await getTenantContext(req.user._id);
+    const tenantBranches = await Branch.find({ tenantId: req.user._id }).select("_id");
+    const tenantBranchIds = tenantBranches.map((b) => String(b._id));
+
+    const belongsToTenantDirect = enquiry.tenantId && String(enquiry.tenantId) === String(req.user._id);
+    const belongsToBranch = enquiry.branchId && tenantBranchIds.includes(String(enquiry.branchId));
     const belongsToProject = enquiry.projectId && tenantProjectIds.some((pId) => String(pId) === String(enquiry.projectId));
     const belongsToAdmin = enquiry.assignedAdminId && tenantAdminIds.some((aId) => String(aId) === String(enquiry.assignedAdminId));
 
-    if (!belongsToProject && !belongsToAdmin) {
+    if (!belongsToTenantDirect && !belongsToBranch && !belongsToProject && !belongsToAdmin) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized. Enquiry does not belong to your tenant workspace.",
       });
     }
 
-    if (!["NEW", "CONTACTED", "CLOSED"].includes(status)) {
+    if (!["NEW", "CONTACTED", "FOLLOW_UP", "CLOSED"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Allowed values: NEW, CONTACTED, CLOSED.",
+        message: "Invalid status. Allowed values: NEW, CONTACTED, FOLLOW_UP, CLOSED.",
       });
     }
 
+    const prevStatus = enquiry.status;
     enquiry.status = status;
+
+    const activityItem = {
+      action: "STATUS_CHANGE",
+      previousStatus: prevStatus,
+      newStatus: status,
+      notes: notes ? notes.trim() : "",
+      performedBy: req.user._id,
+      performedByName: req.user.name || "Super Admin",
+      performedByRole: "SUPER_ADMIN",
+      timestamp: new Date(),
+    };
+
+    enquiry.activityLog.push(activityItem);
+    enquiry.lastActivity = {
+      action: "STATUS_CHANGE",
+      performedByName: req.user.name || "Super Admin",
+      timestamp: new Date(),
+      newStatus: status,
+      notes: notes ? notes.trim() : `Status updated to ${status}`,
+    };
+
     await enquiry.save();
+
+    const populated = await Enquiry.findById(enquiry._id)
+      .populate({
+        path: "projectId",
+        select: "title customId location branchId adminId",
+        populate: { path: "branchId", select: "name city region" },
+      })
+      .populate("branchId", "name city region")
+      .populate("assignedAdminId", "name email phone role")
+      .populate("activityLog.performedBy", "name email role");
 
     res.status(200).json({
       success: true,
-      message: "Enquiry status updated.",
-      data: enquiry,
+      message: "Enquiry status updated successfully.",
+      data: populated,
     });
   } catch (error) {
     next(error);
   }
 };
-

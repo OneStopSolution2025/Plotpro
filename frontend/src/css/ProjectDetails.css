@@ -1,19 +1,24 @@
 .project-details-page {
     width: 100%;
-
+    min-height: 100vh;
     background: #ffffff;
-
     color: #171717;
-
-    padding: 50px 20px;
+    padding: 105px 0 60px;
+    margin: 0;
+    overflow-x: hidden;
 }
 
+/* =========================================================
+   HERO / GALLERY
+========================================================= */
 .project-gallery {
-    padding: 30px 50px 50px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 15px 40px 60px;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: 40px;
-    align-items: center;
+    grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
 }
 
 .image-container {
@@ -24,86 +29,172 @@
 .big-container {
     width: 100%;
     overflow: hidden;
-    border-radius: 25px;
+    border-radius: 24px;
+    background: #fafaf9;
+    border: 1px solid #e7e5e4;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+    outline: none;
+}
+
+.layout-clickable-hero {
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.layout-clickable-hero:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px -6px rgba(0, 0, 0, 0.12);
+    border-color: #e7e5e4;
+    outline: none;
+}
+
+.layout-clickable-hero:focus,
+.layout-clickable-hero:focus-visible {
+    outline: none;
 }
 
 .big-image {
     width: 100%;
-    height: 450px;
-    object-fit: cover;
+    height: 480px;
+    object-fit: contain;
+    background: #fafaf9;
+    padding: 16px;
     display: block;
-    border-radius: 25px;
+    border-radius: 24px;
+    transition: transform 0.4s ease;
+}
+
+.layout-clickable-hero:hover .big-image {
+    transform: scale(1.015);
+}
+
+.layout-overlay-pill {
+    position: absolute;
+    bottom: 18px;
+    left: 18px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+    transition: all 0.25s ease;
+}
+
+.layout-clickable-hero:hover .layout-overlay-pill {
+    background: #a63d2f;
+    border-color: #d9835f;
+    box-shadow: 0 6px 20px rgba(166, 61, 47, 0.45);
 }
 
 .small-container {
     display: flex;
     gap: 12px;
-    margin-top: 15px;
+    margin-top: 14px;
     overflow-x: auto;
+    padding-bottom: 4px;
 }
 
 .thumbnail {
     width: 90px;
     height: 65px;
     object-fit: cover;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: 0.3s;
+    border: 2px solid transparent;
+    transition: all 0.25s ease;
 }
 
 .thumbnail:hover {
-    opacity: 0.7;
+    transform: translateY(-2px);
+    opacity: 0.9;
 }
 
+.thumbnail.active-thumb {
+    border-color: #a63d2f;
+    box-shadow: 0 4px 12px rgba(166, 61, 47, 0.25);
+}
+
+/* =========================================================
+   RIGHT COLUMN: DETAILS
+========================================================= */
 .project-details {
     width: 100%;
     min-width: 0;
-    transform: translateY(-10%);
-    padding: 0 10px;
+    padding: 2px 0 0;
 }
 
 .share-detail {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
 }
 
 .bt {
-    background: #eaf5ff;
+    background: #fdf2f0;
     color: #a63d2f;
-    padding: 7px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
+    border: 1px solid #fecdd3;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
 }
 
 .share {
     display: flex;
-    gap: 15px;
-}
-
-.share button {
-    display: flex;
     align-items: center;
-    gap: 5px;
-    border: none;
-    background: transparent;
-    color: #555;
-    cursor: pointer;
+    gap: 10px;
 }
 
-.share button svg {
-    width: 18px;
+.hero-action-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 15px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.hero-action-pill:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.07);
 }
 
 .pro-de {
-    margin-top: 35px;
+    margin-top: 18px;
 }
 
 .pro-de h1 {
     margin: 0;
-    font-size: 45px;
-    color: #1c1c1c;
+    font-size: clamp(32px, 3.2vw, 42px);
+    font-weight: 750;
+    color: #111827;
+    line-height: 1.15;
+    letter-spacing: -0.8px;
 }
 
 .location2 {
@@ -111,108 +202,239 @@
     align-items: center;
     gap: 7px;
     margin-top: 10px;
-    color: #a63d2f;
+    color: #4b5563;
+    font-size: 15px;
+    font-weight: 500;
 }
 
 .location2 svg {
-    width: 20px;
+    color: #a63d2f;
+    flex-shrink: 0;
 }
 
 .location2 p {
     margin: 0;
-    font-size: 15px;
+    color: #4b5563;
 }
 
 .descrip {
     width: 100%;
-    max-width: 100%;
-    margin-top: 20px;
-    color: #666;
-    line-height: 1.8;
-    font-size: 14px;
+    margin-top: 14px;
+    margin-bottom: 0;
+    color: #6b7280;
+    line-height: 1.65;
+    font-size: 14.5px;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
 /* =========================================================
-   PRICE (MATCHING PLOT DETAILS STYLE)
+   UNIFIED PRICING & INVENTORY CARD
 ========================================================= */
-
-.plot-total-price {
-    margin-top: 28px;
-    padding: 20px 23px;
-    border-radius: 18px;
-    border: 1px solid #a63d2f;
-    background: #a63d2f;
-    color: white;
+.project-pricing-card {
+    margin-top: 24px;
+    padding: 20px 22px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid #e7e5e4;
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.3s ease;
+    outline: none;
 }
 
-.plot-total-price span {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 10px;
+.project-pricing-card:hover {
+    border-color: #d6d3d1;
+    box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.08);
+    outline: none;
+}
+
+.pricing-card-main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.pricing-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pricing-eyebrow {
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
+    color: #872e22;
+    text-transform: uppercase;
 }
 
-.plot-total-price strong {
-    display: block;
-    font-size: 44px;
-    line-height: 0.95;
-    letter-spacing: -1.5px;
+.pricing-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.pricing-currency {
+    font-size: 24px;
+    font-weight: 700;
+    color: #a63d2f;
+}
+
+.pricing-amount {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1c1917;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.pricing-suffix {
+    font-size: 15px;
+    font-weight: 500;
+    color: #78716c;
+    margin-left: 2px;
+}
+
+.pricing-right {
+    display: flex;
+    align-items: center;
+}
+
+.inventory-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #047857;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+}
+
+.status-dot-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10b981;
+    position: relative;
+}
+
+.status-dot-pulse::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background-color: rgba(16, 185, 129, 0.4);
+    animation: statusPulse 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes statusPulse {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    50% { transform: scale(1.6); opacity: 0; }
+    100% { transform: scale(0.8); opacity: 0; }
+}
+
+.explore-plots-trigger-btn {
+    width: 100%;
+    background: #a63d2f;
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    padding: 13px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(166, 61, 47, 0.22);
+}
+
+.explore-plots-trigger-btn:hover {
+    background: #872e22;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(166, 61, 47, 0.35);
+}
+
+.trigger-btn-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trigger-btn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    opacity: 0.92;
+    transition: transform 0.2s ease;
+}
+
+.explore-plots-trigger-btn:hover .trigger-btn-badge {
+    transform: translateX(4px);
+    opacity: 1;
 }
 
 /* =========================================================
-   HERO CTA (MATCHING PLOT DETAILS STYLE)
+   HERO CONVERSION ACTIONS
 ========================================================= */
-
 .plot-hero-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 25px;
+    margin-top: 18px;
 }
 
 .primary-plot-btn,
 .secondary-plot-btn {
-    min-height: 55px;
+    min-height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border-radius: 30px;
-    font-size: 15px;
+    border-radius: 999px;
+    font-size: 14.5px;
     font-weight: 600;
     cursor: pointer;
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease,
-        background 0.3s ease;
+    transition: all 0.25s ease;
 }
 
 .primary-plot-btn {
     border: none;
     background: #a63d2f;
     color: #ffffff;
+    box-shadow: 0 4px 14px rgba(166, 61, 47, 0.25);
 }
 
 .primary-plot-btn:hover {
-    box-shadow: 0 14px 30px rgba(166, 61, 47, 0.2);
+    background: #872e22;
+    box-shadow: 0 8px 22px rgba(166, 61, 47, 0.35);
+    transform: translateY(-1px);
 }
 
-.primary-plot-btn:hover .lucide-arrow-right {
-    transform: translateX(6px);
+.primary-plot-btn:hover svg {
+    transform: translateX(4px);
 }
 
 .secondary-plot-btn {
-    border: 1px solid #a63d2f;
+    border: 1.5px solid #a63d2f;
     background: #ffffff;
     color: #a63d2f;
 }
 
 .secondary-plot-btn:hover {
-    background: #a63d2f;
-    color: #ffffff;
+    background: #fdf2f0;
+    border-color: #872e22;
+    color: #872e22;
+    transform: translateY(-1px);
 }
 
 @media (max-width: 576px) {
@@ -1278,7 +1500,7 @@
         width: 100%;
         max-width: 100%;
         margin: 0;
-        padding: 30px 14px 0;
+        padding: 92px 14px 40px;
         box-sizing: border-box;
         overflow-x: hidden;
     }
@@ -1309,7 +1531,9 @@
         width: 100%;
         height: 300px;
         display: block;
-        object-fit: cover;
+        object-fit: contain;
+        background: #fafaf9;
+        padding: 10px;
         border-radius: 18px;
     }
 
@@ -1935,7 +2159,8 @@
 @media (max-width: 480px) {
 
     .project-details-page {
-        margin-top: 40px;
+        margin: 0;
+        padding-top: 86px;
         padding-left: 11px;
         padding-right: 11px;
     }
@@ -1947,6 +2172,9 @@
 
     .big-image {
         height: 245px;
+        object-fit: contain;
+        background: #fafaf9;
+        padding: 8px;
         border-radius: 15px;
     }
 
@@ -2087,25 +2315,26 @@
 }
 
 .project-breadcrumb {
-    width: calc(100% - 100px);
-    margin: 60px 0 0 50px;
-
+    max-width: 1340px;
+    width: 100%;
+    margin: 10px auto 14px;
+    padding: 0 40px;
     display: flex;
     align-items: center;
     gap: 9px;
-
-    color: #8a8f98;
+    color: #64748b;
     font-size: 13px;
+    box-sizing: border-box;
 }
 
 .project-breadcrumb a {
-    color: #8a8f98;
+    color: #64748b;
     text-decoration: none;
     transition: color 0.25s ease;
 }
 
 .project-breadcrumb a:hover {
-    color: #151515;
+    color: #a63d2f;
 }
 
 .project-breadcrumb svg {
@@ -2117,44 +2346,26 @@
     color: #151515;
 }
 
-
 /* =========================================================
    BREADCRUMB — MOBILE ALIGNMENT
-   =========================================================
-   These overrides MUST stay below the base .project-breadcrumb
-   rule above. A media query adds no specificity, so an override
-   placed earlier in the file would simply lose the cascade to
-   the later base rule and have no effect.
-
-   The desktop rule uses `width: calc(100% - 100px)` with
-   `margin: 60px 0 0 50px`, which on a phone indents the trail
-   50px while the rest of the page content sits at 11-14px.
-   Re-align it to the page gutter and tighten the offset.
-
-   Desktop and tablet (>= 769px) are intentionally untouched.
    ========================================================= */
 
 @media (max-width: 768px) {
-
     .project-breadcrumb {
-        width: 100%;
-        margin: 22px 0 0;
-
+        padding: 0 20px;
+        margin: 20px auto 5px;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-
         gap: 7px;
-
         font-size: 12px;
     }
-
 }
 
 @media (max-width: 480px) {
-
     .project-breadcrumb {
-        margin-top: 18px;
+        padding: 0 16px;
+        margin-top: 16px;
         gap: 6px;
         font-size: 11px;
     }
@@ -2163,7 +2374,6 @@
         width: 10px;
         height: 10px;
     }
-
 }
 
 

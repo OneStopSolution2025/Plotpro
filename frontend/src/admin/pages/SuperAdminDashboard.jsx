@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import "../styles/super-admin.css";
 
-import AdminPerformanceTable from "../components/super-admin/AdminPerformanceTable";
 import SuperAdminStats from "../components/super-admin/SuperAdminStats";
 import SuperAdminAnalytics from "../components/super-admin/SuperAdminAnalytics";
 import SuperAdminReports from "../components/super-admin/SuperAdminReports";
@@ -29,7 +28,7 @@ const SuperAdminDashboard = () => {
 
   const totalAdmins = admins.length;
   const activeAdmins = admins.filter((a) => a.status === "Active").length;
-  const unassignedProjects = projects.filter((p) => !p.adminId || p.adminId === null).length;
+  const totalProjects = projects.length;
   const pendingProjects = projects.filter((p) => p.approvalStatus === "PENDING" || p.hasPendingUpdates);
 
   const stats = [
@@ -59,13 +58,13 @@ const SuperAdminDashboard = () => {
       onClick: () => navigate("/super-admin/approvals"),
     },
     {
-      id: "unassigned-projects",
-      title: "Unassigned Projects",
-      value: String(unassignedProjects),
-      subtitle: unassignedProjects === 0 ? "All assigned" : "Click to assign",
-      tone: unassignedProjects === 0 ? "blue" : "orange",
+      id: "total-projects",
+      title: "Total Projects",
+      value: String(totalProjects),
+      subtitle: `${pendingProjects.length} pending review`,
+      tone: "blue",
       icon: "building",
-      onClick: () => navigate("/super-admin/assignments"),
+      onClick: () => navigate("/super-admin/branches"),
     },
   ];
 
@@ -142,7 +141,7 @@ const SuperAdminDashboard = () => {
                       })
                     : "recently"}
                 </strong>
-                . Creating new projects, activating administrator accounts, and operational modifications are temporarily paused until renewal.
+                . Creating new projects, activating branch administrator accounts, and operational modifications are temporarily paused until renewal.
               </div>
             </div>
           </div>
@@ -157,6 +156,7 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
       )}
+
 
       {/* =====================================================
           NEW WORKSPACE ONBOARDING BANNER (Zero State)
@@ -199,7 +199,7 @@ const SuperAdminDashboard = () => {
                 Welcome to your PlotPro Workspace!
               </h3>
               <p style={{ margin: 0, fontSize: "14px", color: "#64748b", lineHeight: "1.5" }}>
-                Your business tenant workspace is configured and ready. You can now launch your first real estate project or invite staff administrators to start managing your plot portfolio.
+                Your business tenant workspace is configured and ready. You can now launch your first real estate project or invite branch administrators to start managing your plot portfolio.
               </p>
             </div>
           </div>
@@ -215,10 +215,10 @@ const SuperAdminDashboard = () => {
             <button
               type="button"
               className="sa-btn-outline"
-              onClick={() => navigate("/super-admin/admins")}
+              onClick={() => navigate("/super-admin/branches")}
               style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 18px", fontSize: "13px" }}
             >
-              <FaUserPlus /> Invite Staff Admin
+              <FaUserPlus /> Create Branch & Admin
             </button>
           </div>
         </div>
@@ -232,7 +232,6 @@ const SuperAdminDashboard = () => {
       {/* =====================================================
           ADMIN PERFORMANCE & RESPONSIBILITY REPORT
       ===================================================== */}
-      <AdminPerformanceTable rows={adminPerformance} />
 
       {/* =====================================================
           ADMIN-WISE ANALYTICS

@@ -228,8 +228,8 @@ const AdminProjectManage = () => {
           recipient: "super_admin",
           type: "PROJECT_UPDATED",
           title: "Project Details Updated",
-          message: `${profile?.name || "Normal Admin"} updated details for "${project.title}".`,
-          actorName: profile?.name || "Normal Admin",
+          message: `${profile?.name || "Branch Admin"} updated details for "${project.title}".`,
+          actorName: profile?.name || "Branch Admin",
           projectId: project.id,
         });
       }

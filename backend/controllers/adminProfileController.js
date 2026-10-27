@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import Subscription from "../models/Subscription.js";
+import Branch from "../models/Branch.js";
 
 /**
  * @desc    Get current admin profile
@@ -17,11 +18,29 @@ export const getAdminProfile = async (req, res) => {
     }
   }
 
+  // Branch context for Branch Admin accounts (legacy admins → null)
+  let branch = null;
+  if (req.user.branchId) {
+    const branchDoc = await Branch.findById(req.user.branchId).select(
+      "name city region status tenantId"
+    );
+    if (branchDoc && String(branchDoc.tenantId) === String(req.user.tenantId || "")) {
+      branch = {
+        _id: branchDoc._id,
+        name: branchDoc.name,
+        city: branchDoc.city,
+        region: branchDoc.region,
+        status: branchDoc.status,
+      };
+    }
+  }
+
   res.status(200).json({
     success: true,
     data: {
       ...req.user.toObject ? req.user.toObject() : req.user,
       isSubscriptionExpired,
+      branch,
     },
   });
 };

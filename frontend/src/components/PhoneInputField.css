@@ -1,0 +1,88 @@
+.phone-input-group {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.phone-country-select-wrapper {
+  flex-shrink: 0;
+  width: 110px;
+}
+
+.phone-country-select {
+  width: 100%;
+  height: 100%;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #1e293b;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.phone-country-select:focus {
+  border-color: #a63d2f;
+  box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.12);
+  background-color: #ffffff;
+}
+
+.phone-country-select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.phone-number-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.phone-input-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.phone-number-input {
+  width: 100%;
+  height: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.phone-number-input.has-icon {
+  padding-left: 36px !important;
+}
+
+.phone-number-input:focus {
+  border-color: #a63d2f;
+  box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.12);
+}
+
+.phone-number-input.error {
+  border-color: #ef4444 !important;
+}
+
+.phone-number-input:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

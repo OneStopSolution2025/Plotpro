@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import "../css/ProjectDetails.css";
 import PlotCard from "../components/PlotCard";
-import InteractiveLayoutMap from "../components/InteractiveLayoutMap";
+import ProjectPlotPanel from "../components/ProjectPlotPanel";
 import Footer from '../components/Footer'
 
 import {
@@ -29,12 +29,13 @@ import {
     Sun,
     ExternalLink,
     Check,
-    Phone
+    Phone,
+    Layers
 } from "lucide-react";
 
 import entrance from "../assets/Projects/Greenvalley/Entrance.png";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
@@ -122,13 +123,25 @@ function ProjectDetails() {
     }, [projectIdKey, fetchPlotsForProject]);
 
     const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
-    const rawProjectImages = project?.images && project.images.length > 0
-        ? project.images
-        : (project?.image ? [project.image] : []);
+    const layoutImage =
+        project?.layout?.referenceImageUrl ||
+        project?.layout?.imageUrl ||
+        project?.image ||
+        (Array.isArray(project?.images) && project.images[0]) ||
+        DEFAULT_PROJECT_IMAGE;
+
+    const rawProjectImages = [
+        ...(project?.layout?.referenceImageUrl ? [project.layout.referenceImageUrl] : []),
+        ...(project?.layout?.imageUrl && project.layout.imageUrl !== project?.layout?.referenceImageUrl ? [project.layout.imageUrl] : []),
+        ...(Array.isArray(project?.images) ? project.images : []),
+        ...(project?.image ? [project.image] : [])
+    ].filter((img, idx, arr) => img && arr.indexOf(img) === idx);
+
     const projectImages = rawProjectImages.length > 0 ? rawProjectImages : [DEFAULT_PROJECT_IMAGE];
 
     const [selectedImage, setSelectedImage] = useState(null);
-    const activeImage = selectedImage || projectImages[0] || DEFAULT_PROJECT_IMAGE;
+    const [isPlotPanelOpen, setIsPlotPanelOpen] = useState(false);
+    const activeImage = selectedImage || layoutImage || projectImages[0] || DEFAULT_PROJECT_IMAGE;
 
     const { isAuthenticated } = useAuth();
     const location = useLocation();
@@ -346,13 +359,36 @@ function ProjectDetails() {
         );
     }
 
-    const projectPlots = plots.filter((plot) =>
-        String(plot.projectId) === String(project.id) ||
-        String(plot.projectCustomId) === String(project.customId) ||
-        String(plot.projectMongoId) === String(project._id) ||
-        String(plot.projectId) === String(project._id) ||
-        String(plot.projectId) === String(project.customId)
-    );
+    const projectPlots = useMemo(() => {
+        if (!project) return [];
+        const seenIds = new Set();
+        const seenNumbers = new Set();
+        return plots.filter((plot) => {
+            const matchesProject =
+                String(plot.projectId) === String(project.id) ||
+                String(plot.projectCustomId) === String(project.customId) ||
+                String(plot.projectMongoId) === String(project._id) ||
+                String(plot.projectId) === String(project._id) ||
+                String(plot.projectId) === String(project.customId);
+
+            if (!matchesProject) return false;
+
+            const plotKey = String(plot._id || plot.id || "");
+            const plotNum = String(plot.plotNumber || "").trim().toLowerCase();
+
+            if (plotKey && seenIds.has(plotKey)) return false;
+            if (plotNum && seenNumbers.has(plotNum)) return false;
+
+            if (plotKey) seenIds.add(plotKey);
+            if (plotNum) seenNumbers.add(plotNum);
+
+            return true;
+        }).sort((a, b) => {
+            const numA = String(a.plotNumber || "").trim();
+            const numB = String(b.plotNumber || "").trim();
+            return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
+        });
+    }, [plots, project]);
 
     // Project-specific benefits: no silent fallback to generic defaults
     const projectBenefits = Array.isArray(project.benefits) ? project.benefits : [];
@@ -363,12 +399,9 @@ function ProjectDetails() {
     // Project-specific amenities: no silent fallback to generic defaults
     const projectAmenities = Array.isArray(project.amenities) ? project.amenities : [];
 
-    const hasValidLayout = Boolean(
-        project?.layout &&
-        Array.isArray(project.layout.regions) &&
-        project.layout.regions.length > 0
-    );
-
+    const availablePlots = projectPlots.filter((p) => (p.status || "").toLowerCase() === "available");
+    const reservedPlots = projectPlots.filter((p) => (p.status || "").toLowerCase() === "reserved");
+    const soldPlots = projectPlots.filter((p) => (p.status || "").toLowerCase() === "sold");
 
     return (
         <>
@@ -392,38 +425,50 @@ function ProjectDetails() {
 
                 <section className="project-gallery">
 
-                    {/* Left Hero: Interactive Project Layout Diagram (if configured) or Project Image Carousel fallback */}
-                    {hasValidLayout ? (
-                        <div className="layout-hero-container" style={{ width: "100%", minWidth: 0 }}>
-                            <InteractiveLayoutMap
-                                project={project}
-                                plots={projectPlots}
-                                allProjects={projects}
+                    {/* Left Hero: Clickable Layout Display Image (Opens Right Plot Selection Panel) */}
+                    <div className="image-container">
+                        <div
+                            className="big-container layout-clickable-hero"
+                            onClick={() => setIsPlotPanelOpen(true)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setIsPlotPanelOpen(true);
+                                }
+                            }}
+                            title="Click to explore interactive plot inventory"
+                        >
+                            <img
+                                className="big-image"
+                                src={activeImage}
+                                alt={project.title}
+                                onError={(e) => {
+                                    if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
+                                        e.target.onerror = null;
+                                        e.target.src = DEFAULT_PROJECT_IMAGE;
+                                    }
+                                }}
                             />
-                        </div>
-                    ) : (
-                        <div className="image-container">
-                            <div className="big-container">
-                                <img
-                                    className="big-image"
-                                    src={activeImage}
-                                    alt={project.title}
-                                    onError={(e) => {
-                                        if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
-                                            e.target.onerror = null;
-                                            e.target.src = DEFAULT_PROJECT_IMAGE;
-                                        }
-                                    }}
-                                />
+                            <div className="layout-overlay-pill">
+                                <LandPlot size={16} />
+                                <span>Master Layout • Click to View Plots</span>
                             </div>
+                        </div>
+
+                        {projectImages.length > 1 && (
                             <div className="small-container">
                                 {projectImages.map((image, index) => (
                                     <img
                                         key={index}
                                         src={image}
-                                        alt={project.title}
-                                        className="thumbnail"
-                                        onClick={() => setSelectedImage(image)}
+                                        alt={`${project.title} thumbnail ${index + 1}`}
+                                        className={`thumbnail ${activeImage === image ? "active-thumb" : ""}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedImage(image);
+                                        }}
                                         onError={(e) => {
                                             if (e.target.src !== DEFAULT_PROJECT_IMAGE) {
                                                 e.target.onerror = null;
@@ -433,30 +478,31 @@ function ProjectDetails() {
                                     />
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     <div className="project-details">
 
                         <div className="share-detail">
 
                             <div className="bt">
-                                {project.plotType}
+                                {project.plotType || "Residential"}
                             </div>
 
                             <div className="share">
 
                                 <button
                                     type="button"
+                                    className="hero-action-pill"
                                     onClick={handleToggleSave}
                                     disabled={isSaving}
                                     title={isSaved ? "Remove from Wishlist" : "Save to Wishlist"}
                                     aria-label={isSaved ? "Remove from Wishlist" : "Save to Wishlist"}
-                                    style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5" } : {}}
+                                    style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5", background: "#fef2f2" } : {}}
                                 >
                                     <span className="heart-button-wrapper">
                                         <span className={`heart-icon-animated ${isHeartPopping ? "popping" : ""}`}>
-                                            <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
+                                            <Heart size={16} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
                                         </span>
                                         {heartParticles.map((p) => (
                                             <span
@@ -473,14 +519,15 @@ function ProjectDetails() {
 
                                 <button
                                     type="button"
+                                    className="hero-action-pill"
                                     onClick={handleShare}
                                     disabled={isSharing}
                                     title={isShared ? "Link Copied" : "Share Project"}
                                     aria-label="Share this project"
-                                    style={isShared ? { color: "#16a34a", borderColor: "#86efac" } : {}}
+                                    style={isShared ? { color: "#16a34a", borderColor: "#86efac", background: "#f0fdf4" } : {}}
                                 >
-                                    {isShared ? <Check size={18} color="#16a34a" /> : <Share2 size={18} />}
-                                    {isShared ? "Copied!" : "Share"}
+                                    {isShared ? <Check size={16} color="#16a34a" /> : <Share2 size={16} />}
+                                    <span>{isShared ? "Copied!" : "Share"}</span>
                                 </button>
 
                             </div>
@@ -497,24 +544,60 @@ function ProjectDetails() {
 
                             <div className="location2">
 
-                                <MapPinCheckInside />
+                                <MapPinCheckInside size={18} />
 
                                 <p>
-                                    {project.location}
+                                    {project.location || "Location on request"}
                                 </p>
 
                             </div>
 
 
                             <p className="descrip">
-                                {project.details || "No description provided."}
+                                {project.details ? project.details : `Exclusive gated-community development in ${project.location || "a prime strategic location"} featuring thoughtfully planned plots.`}
                             </p>
 
-                            <div className="plot-total-price">
-                                <span>PRICE STARTING FROM</span>
-                                <strong>₹ {project.plotPrice ? String(project.plotPrice).replace(/^[₹\s]+/, "") : ""} <small style={{ fontSize: "16px", fontWeight: "500", opacity: 0.9, letterSpacing: "0.5px" }}>/ Plot</small></strong>
+                            {/* Unified Pricing & Inventory Action Card */}
+                            <div className="project-pricing-card">
+                                <div className="pricing-card-main">
+                                    <div className="pricing-left">
+                                        <span className="pricing-eyebrow">PRICE STARTING FROM</span>
+                                        <div className="pricing-value-row">
+                                            <span className="pricing-currency">₹</span>
+                                            <span className="pricing-amount">
+                                                {project.plotPrice ? String(project.plotPrice).replace(/^[₹\s]+/, "") : "On Request"}
+                                            </span>
+                                            {project.plotPrice && <span className="pricing-suffix">/ Plot</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="pricing-right">
+                                        <div className="inventory-pill">
+                                            <span className="status-dot-pulse"></span>
+                                            <span className="inventory-pill-text">
+                                                <strong>{availablePlots.length}</strong> Plots Available
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="explore-plots-trigger-btn"
+                                    onClick={() => setIsPlotPanelOpen(true)}
+                                >
+                                    <span className="trigger-btn-content">
+                                        <Layers size={17} />
+                                        <span>Explore Plot Inventory</span>
+                                    </span>
+                                    <span className="trigger-btn-badge">
+                                        <span>View</span>
+                                        <ArrowRight size={15} />
+                                    </span>
+                                </button>
                             </div>
 
+                            {/* Conversion Actions */}
                             <div className="plot-hero-actions">
                                 <button
                                     type="button"
@@ -526,7 +609,7 @@ function ProjectDetails() {
                                     })}
                                 >
                                     <span>Book a Site Visit</span>
-                                    <ArrowRight />
+                                    <ArrowRight size={18} />
                                 </button>
 
                                 <button
@@ -538,7 +621,7 @@ function ProjectDetails() {
                                         }
                                     })}
                                 >
-                                    <Phone />
+                                    <Phone size={18} />
                                     <span>Enquiry</span>
                                 </button>
                             </div>
@@ -820,6 +903,21 @@ function ProjectDetails() {
                     </div>
 
                 </section>
+                {/* Responsive Slide-Over Plot Selection Drawer */}
+                <ProjectPlotPanel
+                    isOpen={isPlotPanelOpen}
+                    onClose={() => setIsPlotPanelOpen(false)}
+                    project={project}
+                    allProjects={projects}
+                    plots={projectPlots}
+                    isLoading={isLoading}
+                    onRefresh={() => {
+                        if (projectIdKey) {
+                            fetchPlotsForProject(projectIdKey);
+                        }
+                    }}
+                />
+
                 <Footer />
 
             </main>

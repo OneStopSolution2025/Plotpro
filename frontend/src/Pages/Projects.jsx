@@ -59,13 +59,21 @@ function Projects() {
     ];
 
     const priceRange = useMemo(() => {
-        const prices = projects.map(p => p.priceLakhs).filter(Boolean);
-        if (prices.length === 0) return { min: 1, max: 50 };
+        const prices = projects.map(p => {
+            const raw = p.priceLakhs !== undefined && p.priceLakhs !== null && !isNaN(p.priceLakhs)
+                ? Number(p.priceLakhs)
+                : parsePriceLakhs(p.plotPrice);
+            return (!isNaN(raw) && raw > 0) ? raw : null;
+        }).filter(Boolean);
+
+        if (prices.length === 0) return { min: 1, max: 100 };
+        const minFound = Math.min(...prices);
+        const maxFound = Math.max(...prices);
         return {
-            min: Math.max(1, Math.min(...prices)),
-            max: Math.max(1, Math.max(...prices))
+            min: Math.max(1, Math.floor(minFound)),
+            max: Math.max(100, Math.ceil(maxFound))
         };
-    }, [projects]);
+    }, [projects, parsePriceLakhs]);
 
     const [appliedFilters, setAppliedFilters] = useState({
         category: "All Projects",
@@ -212,7 +220,8 @@ function Projects() {
         const numVal = typeof value === "number" ? value : (parseFloat(value) || priceRange.min);
         const range = priceRange.max - priceRange.min;
         if (range <= 0) return 0;
-        return ((numVal - priceRange.min) / range) * 100;
+        const pct = ((numVal - priceRange.min) / range) * 100;
+        return Math.max(0, Math.min(100, pct));
     };
 
     const minPercent = getPercent(draftFilters.priceRange.min);

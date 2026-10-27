@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PhoneInputField from "../components/PhoneInputField";
+import { parsePhoneString, formatFullPhone } from "../utils/phoneUtils";
 import ConfirmationModal from "../admin/components/ConfirmationModal";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
@@ -37,11 +39,13 @@ export default function UserProfile() {
   // Active Wishlist Subtab: "projects" | "plots"
   const [wishlistSubtab, setWishlistSubtab] = useState("projects");
 
+  const initialPhoneParsed = parsePhoneString(authUser?.phone || "");
+  const [countryCode, setCountryCode] = useState(initialPhoneParsed.countryCode);
   // Profile Form State
   const [profileData, setProfileData] = useState({
     name: authUser?.name || "",
     email: authUser?.email || "",
-    phone: authUser?.phone || "",
+    phone: initialPhoneParsed.digits,
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState("");
@@ -83,10 +87,12 @@ export default function UserProfile() {
 
         if (profileRes?.success && profileRes.data) {
           const u = profileRes.data;
+          const parsed = parsePhoneString(u.phone || "");
+          setCountryCode(parsed.countryCode);
           setProfileData({
             name: u.name || "",
             email: u.email || "",
-            phone: u.phone || "",
+            phone: parsed.digits,
           });
         }
 
@@ -124,12 +130,19 @@ export default function UserProfile() {
       return;
     }
 
+    const trimmedPhone = profileData.phone.trim();
+    if (trimmedPhone && (trimmedPhone.length < 7 || trimmedPhone.length > 12)) {
+      setProfileError("Please enter a valid phone number (e.g. 10 digits).");
+      return;
+    }
+
     setProfileLoading(true);
     try {
+      const fullPhone = trimmedPhone ? formatFullPhone(countryCode, trimmedPhone) : "";
       const res = await userApi.updateProfile({
         name: profileData.name,
         email: profileData.email,
-        phone: profileData.phone,
+        phone: fullPhone,
       });
 
       if (res?.success) {
@@ -391,19 +404,19 @@ export default function UserProfile() {
 
                 <div className="user-form-group">
                   <label htmlFor="user-phone">Phone Number</label>
-                  <div className="user-input-wrapper">
-                    <Phone size={16} className="user-input-icon" />
-                    <input
-                      id="user-phone"
-                      type="tel"
-                      className="user-form-input"
-                      placeholder="Enter 10-digit phone number"
-                      value={profileData.phone}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({ ...prev, phone: e.target.value }))
-                      }
-                    />
-                  </div>
+                  <PhoneInputField
+                    id="user-phone"
+                    name="phone"
+                    countryCode={countryCode}
+                    onCountryCodeChange={(code) => setCountryCode(code)}
+                    value={profileData.phone}
+                    onChange={(digits) =>
+                      setProfileData((prev) => ({ ...prev, phone: digits }))
+                    }
+                    placeholder="10-digit number"
+                    maxLength={10}
+                    icon={Phone}
+                  />
                 </div>
 
                 <button

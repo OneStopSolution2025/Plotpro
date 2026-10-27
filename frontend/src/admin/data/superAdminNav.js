@@ -6,9 +6,8 @@ export const superAdminNavGroups = [
     items: [
       { label: "Dashboard", icon: "home", path: "/super-admin", end: true },
       { label: "General Enquiries", icon: "clipboard", path: "/super-admin/general-enquiries" },
-      { label: "Admins", icon: "shield", path: "/super-admin/admins" },
+      { label: "Branches", icon: "branch", path: "/super-admin/branches" },
       { label: "Approvals", icon: "approvals", path: "/super-admin/approvals" },
-      { label: "Assignments", icon: "assignments", path: "/super-admin/assignments" },
       { label: "New Project", icon: "grid", path: "/super-admin/projects/new" },
       { label: "Subscription", icon: "creditCard", path: "/super-admin/subscription" },
     ],

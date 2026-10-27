@@ -32,6 +32,7 @@ async function request(endpoint, options = {}) {
 
   const config = {
     ...options,
+    credentials: "include",
     headers,
   };
 
@@ -96,11 +97,24 @@ export const authApi = {
   login: (credentials) => api.post("/auth/login", credentials),
   register: (userData) => api.post("/auth/register", userData),
   googleLogin: (credential) => api.post("/auth/google", { credential }),
+  logout: () => api.post("/auth/logout"),
   getMe: () => api.get("/auth/me"),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   verifyOtp: (email, otp) => api.post("/auth/verify-otp", { email, otp }),
   resetPassword: (email, otp, newPassword) =>
     api.post("/auth/reset-password", { email, otp, newPassword }),
+  // Super Admin (retailer) signup request flow — public
+  getRetailerPlans: () => api.get("/auth/retailer/plans"),
+  submitRetailerRequest: (payload) => api.post("/auth/retailer/request", payload),
+
+  // ─── Single Active Device Authentication Endpoints ──────────────────────────
+  verifyDeviceOtp: (data) => api.post("/auth/device/verify-otp", data),
+  enrollFirstDevice: (data) => api.post("/auth/device/enroll-first-device", data),
+  resendEnrollmentOtp: (data) => api.post("/auth/device/resend-enrollment-otp", data),
+  getDeviceRequestStatus: (pollingToken) =>
+    api.get("/auth/device/request-status", { headers: { Authorization: `Bearer ${pollingToken}` } }),
+  claimApprovedSession: (pollingToken) =>
+    api.post("/auth/device/claim-approved-session", {}, { headers: { Authorization: `Bearer ${pollingToken}` } }),
 };
 
 
@@ -129,12 +143,27 @@ export const adminApi = {
   updatePlot: (plotId, data) => api.put(`/admin/plots/${plotId}`, data),
   deletePlot: (plotId) => api.delete(`/admin/plots/${plotId}`),
   getEnquiries: () => api.get("/admin/enquiries"),
-  updateEnquiryStatus: (id, status) => api.patch(`/admin/enquiries/${id}/status`, { status }),
+  updateEnquiryStatus: (id, status, notes) => api.patch(`/admin/enquiries/${id}/status`, { status, notes }),
+  logEnquiryActivity: (id, data) => api.post(`/admin/enquiries/${id}/activity`, data),
   getSiteVisits: () => api.get("/admin/site-visits"),
   updateSiteVisitStatus: (id, status) => api.patch(`/admin/site-visits/${id}/status`, { status }),
   getProfile: () => api.get("/admin/profile"),
   updateProfile: (data) => api.put("/admin/profile", data),
   changePassword: (data) => api.put("/admin/profile/password", data),
+  uploadProjectImage: (data, projectId) => {
+    const url = projectId && projectId !== "new"
+      ? `/admin/projects/${projectId}/upload-image`
+      : `/admin/projects/upload-image`;
+    return api.post(url, data);
+  },
+  uploadLayoutImage: (projectId, data) => {
+    const url = projectId && projectId !== "new"
+      ? `/admin/projects/${projectId}/layout-image`
+      : `/admin/projects/layout-image`;
+    return api.post(url, data);
+  },
+  getProjectLayout: (projectId) => api.get(`/admin/projects/${projectId}/layout`),
+  saveProjectLayout: (projectId, layoutData) => api.put(`/admin/projects/${projectId}/layout`, { layout: layoutData }),
 };
 
 // ==================== SUPER ADMIN APIs ====================
@@ -152,9 +181,16 @@ export const superAdminApi = {
   rejectProject: (id, reason) => api.patch(`/super-admin/projects/${id}/reject`, { reason }),
   assignProject: (id, adminId) => api.patch(`/super-admin/projects/${id}/assign`, { adminId }),
   archiveProject: (id) => api.delete(`/super-admin/projects/${id}`),
-  getAllEnquiries: () => api.get("/super-admin/enquiries"),
-  updateEnquiryStatus: (id, status) => api.patch(`/super-admin/enquiries/${id}/status`, { status }),
+  getBranches: () => api.get("/super-admin/branches"),
+  createBranch: (data) => api.post("/super-admin/branches", data),
+  getBranchDetail: (id) => api.get(`/super-admin/branches/${id}`),
+  updateBranch: (id, data) => api.put(`/super-admin/branches/${id}`, data),
+  toggleBranchStatus: (id, status) => api.patch(`/super-admin/branches/${id}/status`, status ? { status } : {}),
+  deleteBranch: (id) => api.delete(`/super-admin/branches/${id}`),
+  getAllEnquiries: (params) => api.get("/super-admin/enquiries", { params }),
+  updateEnquiryStatus: (id, status, notes) => api.patch(`/super-admin/enquiries/${id}/status`, { status, notes }),
   getAllSiteVisits: () => api.get("/super-admin/site-visits"),
+  updateSiteVisitStatus: (id, status, notes) => api.patch(`/super-admin/site-visits/${id}/status`, { status, notes }),
   getAllPlots: () => api.get("/super-admin/plots"),
   getProjectPlots: (id) => api.get(`/super-admin/projects/${id}/plots`),
   getSubscriptionInfo: () => api.get("/super-admin/subscription-info"),
@@ -164,7 +200,6 @@ export const superAdminApi = {
   uploadLayoutImage: (projectId, data) => api.post(`/super-admin/projects/${projectId}/layout-image`, data),
   getProjectLayout: (projectId) => api.get(`/super-admin/projects/${projectId}/layout`),
   saveProjectLayout: (projectId, layoutData) => api.put(`/super-admin/projects/${projectId}/layout`, { layout: layoutData }),
-  detectLayoutCandidates: (projectId, data = {}) => api.post(`/super-admin/projects/${projectId || "new"}/layout/detect`, data),
 };
 
 // ==================== SUPREME ADMIN APIs ====================
@@ -177,6 +212,7 @@ export const supremeAdminApi = {
   createSubscriber: (data) => api.post("/supreme-admin/subscribers", data),
   getSubscriberById: (id) => api.get(`/supreme-admin/subscribers/${id}`),
   toggleSubscriberStatus: (id) => api.patch(`/supreme-admin/subscribers/${id}/status`),
+  deleteSubscriber: (id) => api.delete(`/supreme-admin/subscribers/${id}`),
   assignSubscription: (subscriberId, data) =>
     api.post(`/supreme-admin/subscribers/${subscriberId}/subscription`, data),
   toggleAdminStatus: (subscriberId, adminId) =>
@@ -195,8 +231,33 @@ export const supremeAdminApi = {
   updateSubscriptionStatus: (id, data) =>
     api.patch(`/supreme-admin/subscriptions/${id}/status`, data),
   getSeatUsage: () => api.get("/supreme-admin/seat-usage"),
+
   getSettings: () => api.get("/supreme-admin/settings"),
   updateSettings: (data) => api.put("/supreme-admin/settings", data),
+  // Retailer (Super Admin) account creation requests
+  getRetailerRequests: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return api.get(`/supreme-admin/retailer-requests${qs ? `?${qs}` : ""}`);
+  },
+  getRetailerRequestById: (id) => api.get(`/supreme-admin/retailer-requests/${id}`),
+  setPaymentVerification: (id, data) =>
+    api.patch(`/supreme-admin/retailer-requests/${id}/payment-verification`, data),
+  approveRetailerRequest: (id, data = {}) =>
+    api.patch(`/supreme-admin/retailer-requests/${id}/approve`, data),
+  rejectRetailerRequest: (id, data) =>
+    api.patch(`/supreme-admin/retailer-requests/${id}/reject`, data),
+
+  // ─── Trusted Device Oversight & Management ──────────────────────────────────
+  getPendingDevices: () => api.get("/supreme-admin/devices/pending"),
+  getActiveDevices: () => api.get("/supreme-admin/devices/active"),
+  approveDeviceRequest: (requestId, data = {}) =>
+    api.post(`/supreme-admin/devices/requests/${requestId}/approve`, data),
+  rejectDeviceRequest: (requestId, data = {}) =>
+    api.post(`/supreme-admin/devices/requests/${requestId}/reject`, data),
+  revokeDevice: (deviceId, data = {}) =>
+    api.post(`/supreme-admin/devices/${deviceId}/revoke`, data),
+  emergencyResetDevice: (data) =>
+    api.post("/supreme-admin/devices/emergency-reset", data),
 };
 
 // ==================== USER APIs ====================

@@ -80,7 +80,7 @@ const PendingApprovalsSection = ({
         <div>
           <h2>Project Approvals &amp; Review Workflow</h2>
           <p>
-            Review newly submitted projects and pending material modifications submitted by Administrators before public publishing.
+            Review newly submitted projects and pending material modifications submitted by Branch Administrators before public publishing.
           </p>
         </div>
         {pendingList.length > 0 && (

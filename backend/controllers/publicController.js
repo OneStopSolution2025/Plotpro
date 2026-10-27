@@ -147,7 +147,9 @@ export const getPublicProjectPlots = async (req, res, next) => {
       });
     }
 
-    const plots = await Plot.find({ projectId: project._id }).sort({ plotNumber: 1 });
+    const plots = await Plot.find({ projectId: project._id })
+      .collation({ locale: "en", numericOrdering: true })
+      .sort({ plotNumber: 1 });
 
     const formattedPlots = plots.map((plot) => ({
       ...plot.toObject(),

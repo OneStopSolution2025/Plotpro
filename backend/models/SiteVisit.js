@@ -39,7 +39,19 @@ const siteVisitSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+      index: true,
+    },
     assignedAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    tenantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -163,25 +163,47 @@ const ProjectPlots = () => {
     setPlotsError(null);
   }, [targetProjectId]);
 
-  // Get only plots belonging to this project.
-  const projectPlots = project
-    ? plots.filter((plot) => {
-      const pId = String(plot.projectId);
-      const pCustId = String(plot.projectCustomId || "");
-      const pMongoId = String(plot.projectMongoId || "");
-      const targetId = String(project.id);
-      const targetCustomId = String(project.customId || "");
-      const targetMongoId = String(project._id || "");
+  // Get only plots belonging to this project with natural alphanumeric sorting.
+  const projectPlots = useMemo(() => {
+    if (!project) return [];
+    const seenIds = new Set();
+    const seenNumbers = new Set();
 
-      return (
-        pId === targetId ||
-        pId === targetCustomId ||
-        pId === targetMongoId ||
-        (pCustId && (pCustId === targetId || pCustId === targetCustomId)) ||
-        (pMongoId && (pMongoId === targetId || pMongoId === targetMongoId))
-      );
-    })
-    : [];
+    return plots
+      .filter((plot) => {
+        const pId = String(plot.projectId);
+        const pCustId = String(plot.projectCustomId || "");
+        const pMongoId = String(plot.projectMongoId || "");
+        const targetId = String(project.id);
+        const targetCustomId = String(project.customId || "");
+        const targetMongoId = String(project._id || "");
+
+        const matches =
+          pId === targetId ||
+          pId === targetCustomId ||
+          pId === targetMongoId ||
+          (pCustId && (pCustId === targetId || pCustId === targetCustomId)) ||
+          (pMongoId && (pMongoId === targetId || pMongoId === targetMongoId));
+
+        if (!matches) return false;
+
+        const plotKey = String(plot._id || plot.id || "");
+        const plotNum = String(plot.plotNumber || "").trim().toLowerCase();
+
+        if (plotKey && seenIds.has(plotKey)) return false;
+        if (plotNum && seenNumbers.has(plotNum)) return false;
+
+        if (plotKey) seenIds.add(plotKey);
+        if (plotNum) seenNumbers.add(plotNum);
+
+        return true;
+      })
+      .sort((a, b) => {
+        const numA = String(a.plotNumber || "").trim();
+        const numB = String(b.plotNumber || "").trim();
+        return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
+      });
+  }, [project, plots]);
 
   // Derived values.
   const totalPlots = projectPlots.length;
@@ -286,8 +308,8 @@ const ProjectPlots = () => {
         recipient: "super_admin",
         type: "PLOT_UPDATED",
         title: "Plot Status Updated",
-        message: `${profile?.name || "Normal Admin"} updated Plot #${editingPlot.plotNumber} in "${project.title}" — Status: ${editForm.status}, Price: ${editForm.price}, Size: ${editForm.size}.`,
-        actorName: profile?.name || "Normal Admin",
+        message: `${profile?.name || "Branch Admin"} updated Plot #${editingPlot.plotNumber} in "${project.title}" — Status: ${editForm.status}, Price: ${editForm.price}, Size: ${editForm.size}.`,
+        actorName: profile?.name || "Branch Admin",
         projectId: project.id,
         plotNumber: editingPlot.plotNumber,
       });
@@ -439,8 +461,8 @@ const ProjectPlots = () => {
           recipient: "super_admin",
           type: "PROJECT_UPDATED",
           title: "Project Resubmitted for Approval",
-          message: `${profile?.name || "Admin"} updated plots and resubmitted "${project.title}" for approval.`,
-          actorName: profile?.name || "Admin",
+          message: `${profile?.name || "Branch Admin"} updated plots and resubmitted "${project.title}" for approval.`,
+          actorName: profile?.name || "Branch Admin",
           projectId: project.id || project._id,
         });
       }
@@ -588,7 +610,7 @@ const ProjectPlots = () => {
               onClick={() => setShowLayoutEditor(true)}
               style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
             >
-              <FaMapMarkedAlt /> Interactive Layout Map
+              <FaMapMarkedAlt /> Layout Image
             </button>
 
             <button

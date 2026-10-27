@@ -503,15 +503,16 @@ function PlotDetails() {
 
                             <button
                                 type="button"
+                                className="hero-action-pill"
                                 onClick={handleToggleWishlist}
                                 disabled={isSaving}
-                                title={isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
-                                aria-label={isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
-                                style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5" } : {}}
+                                title={isSaved ? "Remove from Wishlist" : "Save to Wishlist"}
+                                aria-label={isSaved ? "Remove from Wishlist" : "Save to Wishlist"}
+                                style={isSaved ? { color: "#ef4444", borderColor: "#fca5a5", background: "#fef2f2" } : {}}
                             >
                                 <span className="heart-button-wrapper">
                                     <span className={`heart-icon-animated ${isHeartPopping ? "popping" : ""}`}>
-                                        <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
+                                        <Heart size={16} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
                                     </span>
                                     {heartParticles.map((p) => (
                                         <span
@@ -523,18 +524,19 @@ function PlotDetails() {
                                         </span>
                                     ))}
                                 </span>
-                                <span>{isSaved ? "In Wishlist" : "Add to Wishlist"}</span>
+                                <span>{isSaved ? "Saved" : "Save"}</span>
                             </button>
 
                             <button
                                 type="button"
+                                className="hero-action-pill"
                                 onClick={handleShare}
                                 disabled={isSharing}
                                 title={isShared ? "Link Copied" : "Share Plot"}
                                 aria-label="Share this plot"
-                                style={isShared ? { color: "#16a34a", borderColor: "#86efac" } : {}}
+                                style={isShared ? { color: "#16a34a", borderColor: "#86efac", background: "#f0fdf4" } : {}}
                             >
-                                {isShared ? <Check size={18} color="#16a34a" /> : <Share2 size={18} />}
+                                {isShared ? <Check size={16} color="#16a34a" /> : <Share2 size={16} />}
                                 <span>{isShared ? "Copied!" : "Share"}</span>
                             </button>
 

@@ -19,6 +19,8 @@ import { adminApi, superAdminApi, publicApi } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminProfile } from "../context/AdminProfileContext";
 import CustomDropdown from "../components/CustomDropdown";
+import PhoneInputField from "../../components/PhoneInputField";
+import { parsePhoneString, formatFullPhone } from "../../utils/phoneUtils";
 
 import "../styles/site-visits.css";
 
@@ -208,6 +210,7 @@ const SiteVisits = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [editingVisitId, setEditingVisitId] = useState(null);
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+91");
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
@@ -318,10 +321,12 @@ const SiteVisits = () => {
 
     const project = projects.find((p) => p.title === visit.project);
     const projectId = project ? project.id : "";
+    const parsedPhone = parsePhoneString(visit.phone || "");
+    setPhoneCountryCode(parsedPhone.countryCode);
 
     setFormData({
       name: visit.name,
-      phone: visit.phone,
+      phone: parsedPhone.digits,
       projectId: projectId,
       project: visit.project,
       plot: visit.plot === "—" ? "" : visit.plot,
@@ -339,6 +344,7 @@ const SiteVisits = () => {
       alert("Workspace subscription has expired. Scheduling new site visits is restricted. Please contact your Super Administrator.");
       return;
     }
+    setPhoneCountryCode("+91");
     setFormData(initialFormState);
     setEditingVisitId(null);
     setErrors({});
@@ -348,6 +354,7 @@ const SiteVisits = () => {
   const closeForm = () => {
     setIsVisitFormOpen(false);
     setEditingVisitId(null);
+    setPhoneCountryCode("+91");
     setFormData(initialFormState);
     setErrors({});
   };
@@ -355,7 +362,11 @@ const SiteVisits = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Full name is required.";
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required.";
+    } else if (formData.phone.trim().length < 7 || formData.phone.trim().length > 12) {
+      newErrors.phone = "Enter a valid phone number (e.g. 10 digits).";
+    }
     if (!formData.projectId) newErrors.project = "Project is required.";
     if (!formData.date) newErrors.date = "Preferred date is required.";
     if (!formData.time) newErrors.time = "Preferred time is required.";
@@ -373,12 +384,13 @@ const SiteVisits = () => {
 
     const formattedDate = formatDateForDisplay(formData.date);
     const formattedTime = formatTimeForDisplay(formData.time);
+    const fullPhone = formatFullPhone(phoneCountryCode, formData.phone.trim());
 
     if (!editingVisitId) {
       try {
         const payload = {
           fullName: formData.name.trim(),
-          mobile: formData.phone.trim(),
+          mobile: fullPhone,
           projectId: projectIdentifier,
           plot: formData.plot.trim() || "",
           preferredDate: formattedDate,
@@ -411,7 +423,7 @@ const SiteVisits = () => {
     const newVisit = {
       id: editingVisitId ? editingVisitId : Date.now(),
       name: formData.name.trim(),
-      phone: formData.phone.trim(),
+      phone: fullPhone,
       project: projectTitle,
       plot: formData.plot.trim() || "—",
       date: formattedDate,
@@ -695,12 +707,16 @@ const SiteVisits = () => {
                     <label className="site-visit-form-label">
                       Mobile Number <span className="required">*</span>
                     </label>
-                    <input
-                      type="tel"
-                      className="site-visit-form-input"
+                    <PhoneInputField
+                      id="site-visit-phone"
+                      name="phone"
+                      countryCode={phoneCountryCode}
+                      onCountryCodeChange={(code) => setPhoneCountryCode(code)}
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="+91 98765 43210"
+                      onChange={(digits) => handleInputChange("phone", digits)}
+                      placeholder="10-digit number"
+                      maxLength={10}
+                      error={Boolean(errors.phone)}
                     />
                     {errors.phone && <span className="site-visit-form-error">{errors.phone}</span>}
                   </div>

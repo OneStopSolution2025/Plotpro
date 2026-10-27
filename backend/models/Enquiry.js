@@ -36,7 +36,25 @@ const enquirySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+      index: true,
+    },
     assignedAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
@@ -44,8 +62,69 @@ const enquirySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["NEW", "CONTACTED", "CLOSED"],
+      enum: ["NEW", "CONTACTED", "FOLLOW_UP", "CLOSED"],
       default: "NEW",
+      index: true,
+    },
+    activityLog: [
+      {
+        action: {
+          type: String,
+          required: true,
+        },
+        previousStatus: {
+          type: String,
+          default: null,
+        },
+        newStatus: {
+          type: String,
+          default: null,
+        },
+        notes: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+        performedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+        performedByName: {
+          type: String,
+          default: "",
+        },
+        performedByRole: {
+          type: String,
+          default: "",
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    lastActivity: {
+      action: {
+        type: String,
+        default: "ENQUIRY_CREATED",
+      },
+      performedByName: {
+        type: String,
+        default: "Customer",
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+      newStatus: {
+        type: String,
+        default: "NEW",
+      },
+      notes: {
+        type: String,
+        default: "",
+      },
     },
   },
   {

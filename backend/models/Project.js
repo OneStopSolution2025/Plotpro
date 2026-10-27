@@ -103,6 +103,14 @@ const projectSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    // Branch scope — set when the project is created by (or assigned to) a
+    // tenant Branch Admin / branch. null = unbranched (legacy / super admin).
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+      index: true,
+    },
     approvalStatus: {
       type: String,
       enum: ["PENDING", "APPROVED", "REJECTED"],
@@ -156,7 +164,7 @@ const projectSchema = new mongoose.Schema(
     layout: {
       referenceImageUrl: { type: String, default: "" },
       imageUrl: { type: String, default: "" }, // Kept for reference compatibility
-      provider: { type: String, enum: ["cloudinary", "url", "volume"], default: "cloudinary" },
+      provider: { type: String, enum: ["cloudinary", "url", "volume", "local"], default: "volume" },
       publicId: { type: String, default: "" },
       version: { type: Number, default: 0 },
       width: { type: Number, default: 1200 },

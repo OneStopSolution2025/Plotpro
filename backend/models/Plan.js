@@ -46,7 +46,8 @@ const planSchema = new mongoose.Schema(
     },
     maxAdminSeats: {
       type: Number,
-      default: 3,
+      min: [0, "Seat limit cannot be negative"],
+      default: 0,
     },
     isUnlimitedSeats: {
       type: Boolean,

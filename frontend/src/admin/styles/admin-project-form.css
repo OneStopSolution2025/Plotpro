@@ -620,3 +620,236 @@
 .checkbox-card.selected .checkbox-desc {
   color: #78350f;
 }
+
+/* ==========================================================================
+   Project Image Upload & Preview Component
+   ========================================================================== */
+
+.project-image-upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.project-image-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.project-image-field-hint {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Dropzone */
+.project-image-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.25rem 1.5rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+.project-image-dropzone:hover {
+  border-color: #a63d2f;
+  background-color: #fdf2f0;
+}
+
+.project-image-dropzone.drag-over {
+  border-color: #a63d2f;
+  background-color: #fdf2f0;
+  transform: scale(1.005);
+  box-shadow: 0 4px 14px rgba(166, 61, 47, 0.12);
+}
+
+.project-image-dropzone.uploading {
+  cursor: wait;
+  opacity: 0.85;
+  border-color: #a63d2f;
+  background-color: #fdf2f0;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dropzone-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fdf2f0;
+  color: #a63d2f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.project-image-dropzone:hover .dropzone-icon-wrap {
+  transform: translateY(-2px);
+  background: #faeae7;
+}
+
+.dropzone-icon {
+  font-size: 1.65rem;
+}
+
+.dropzone-primary-text {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dropzone-browse-link {
+  color: #a63d2f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+}
+
+.dropzone-secondary-text {
+  font-size: 0.775rem;
+  color: #64748b;
+}
+
+/* Image Preview Card */
+.project-image-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease;
+}
+
+.project-image-preview-card:hover {
+  border-color: #cbd5e1;
+}
+
+.project-image-preview-media {
+  flex-shrink: 0;
+  width: 200px;
+  height: 125px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.project-image-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.project-image-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.project-image-preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.25rem 0.65rem;
+  background: #fdf2f0;
+  color: #a63d2f;
+  border: 1px solid rgba(166, 61, 47, 0.2);
+  border-radius: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.project-image-preview-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.project-image-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.project-image-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 7px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.project-image-replace-btn {
+  background: #a63d2f;
+  color: #ffffff;
+}
+
+.project-image-replace-btn:hover:not(:disabled) {
+  background: #872e22;
+}
+
+.project-image-replace-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.project-image-remove-btn {
+  background: #f8fafc;
+  color: #dc2626;
+  border-color: #fee2e2;
+}
+
+.project-image-remove-btn:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.project-image-remove-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .project-image-preview-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .project-image-preview-media {
+    width: 100%;
+    height: 160px;
+  }
+}

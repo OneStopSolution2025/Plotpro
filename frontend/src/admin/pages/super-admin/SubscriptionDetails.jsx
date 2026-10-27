@@ -13,7 +13,9 @@ import {
   FaEnvelope,
   FaPhoneAlt,
   FaUserCheck,
+  FaPaperPlane,
 } from "react-icons/fa";
+import { superAdminApi } from "../../../services/api";
 import { useAdmins } from "../../context/AdminContext";
 import { useSuperAdminProfile } from "../../context/SuperAdminProfileContext";
 import "../../styles/admingeneral.css";
@@ -316,7 +318,7 @@ const SubscriptionDetails = () => {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <span style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "#64748b" }}>
-                Admin Seats Quota
+                Branch Admin Seats Quota
               </span>
               <FaUsers style={{ color: "#2563eb", fontSize: "16px" }} />
             </div>
@@ -324,9 +326,6 @@ const SubscriptionDetails = () => {
             <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "12px" }}>
               <span style={{ fontSize: "32px", fontWeight: 800, color: "#0f172a" }}>
                 {usedSeats}
-              </span>
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "#64748b" }}>
-                / {isUnlimited(assignedSeats) ? "∞ Unlimited" : assignedSeats} Seats Used
               </span>
             </div>
 
@@ -353,12 +352,10 @@ const SubscriptionDetails = () => {
             </div>
 
             <div style={{ fontSize: "12px", color: "#64748b" }}>
-              {isUnlimited(assignedSeats) ? (
-                <span style={{ color: "#16a34a", fontWeight: 600 }}>Unlimited administrator accounts permitted.</span>
-              ) : remainingSeats > 0 ? (
+              {isUnlimited(assignedSeats) ?(
                 <span style={{ color: "#2563eb", fontWeight: 600 }}>{remainingSeats} seats available to create.</span>
               ) : (
-                <span style={{ color: "#dc2626", fontWeight: 600 }}>Seat limit reached. Contact platform owner to expand.</span>
+                <span style={{ color: "#dc2626", fontWeight: 600 }}>Seat limit reached.</span>
               )}
             </div>
           </div>
@@ -439,7 +436,19 @@ const SubscriptionDetails = () => {
             </div>
 
             <p style={{ fontSize: "13px", color: "#475569", lineHeight: 1.6, margin: "0 0 16px 0" }}>
-              To extend your subscription, upgrade your admin seats, or convert your trial account into a permanent active workspace, please contact the <strong>Supreme Administrator (Platform Owner)</strong>.
+              {isTrial ? (
+                <>
+                  Your workspace is currently operating on a <strong>Trial Period</strong>. To convert your trial account into a permanent active subscription or increase branch seats, please contact the <strong>Supreme Administrator (Platform Owner)</strong>.
+                </>
+              ) : isExpired ? (
+                <>
+                  Your subscription package has <strong>Expired</strong>. To reactivate access and restore branch operations, please contact the <strong>Supreme Administrator (Platform Owner)</strong> to renew your plan.
+                </>
+              ) : (
+                <>
+                  Your workspace is currently <strong>Active</strong> under the <strong>{planName}</strong>. To renew your plan before term expiry or change your subscription package, please contact the <strong>Supreme Administrator (Platform Owner)</strong>.
+                </>
+              )}
             </p>
 
           </div>

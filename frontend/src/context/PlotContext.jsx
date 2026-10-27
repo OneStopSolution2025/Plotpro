@@ -267,8 +267,10 @@ export const PlotProvider = ({ children }) => {
       if (res?.success && Array.isArray(res.data)) {
         const normalized = res.data.map(normalizePlot);
         setPlots((prev) => {
+          const newPlotIds = new Set(normalized.map((p) => String(p._id || p.id)));
           const target = String(projectId);
           const otherPlots = prev.filter((p) => {
+            if (newPlotIds.has(String(p._id || p.id))) return false;
             const pId = String(p.projectId);
             const pCustId = String(p.projectCustomId || "");
             const pMongoId = String(p.projectMongoId || "");
