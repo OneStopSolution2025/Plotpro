@@ -1,0 +1,12 @@
+{
+  "id": "0699f0a6",
+  "operation": "accept",
+  "variantId": "1",
+  "result": {
+    "handled": true,
+    "file": "src\\admin\\pages\\GeneralEnquiries.jsx",
+    "carbonize": true,
+    "todo": "REQUIRED before next poll: carbonize cleanup in src\\admin\\pages\\GeneralEnquiries.jsx. See reference/live.md \"Required after accept\"."
+  },
+  "completedAt": "2026-10-26T06:26:25.340Z"
+}

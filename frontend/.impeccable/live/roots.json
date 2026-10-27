@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "appRoot": "C:\\Users\\Gokul\\Music\\Plotpro\\frontend",
+  "repoRoot": "C:\\Users\\Gokul\\Music\\Plotpro",
+  "contextRoot": "C:\\Users\\Gokul\\Music\\Plotpro",
+  "sessionRoot": "C:\\Users\\Gokul\\Music\\Plotpro\\frontend\\.impeccable\\live",
+  "productPath": "C:\\Users\\Gokul\\Music\\Plotpro\\PRODUCT.md",
+  "designPath": "C:\\Users\\Gokul\\Music\\Plotpro\\DESIGN.md",
+  "resolvedFrom": "target:frontend"
+}
