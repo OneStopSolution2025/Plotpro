@@ -359,11 +359,15 @@ export const handleAdministrativeDeviceLogin = async (req, res, user) => {
     expiryMinutes: 10,
   });
   if (!emailResult.success) {
-    console.error("[Login] SMTP enrollment email dispatch failed:", emailResult.error);
+    console.error("[Login] Enrollment email dispatch failed:", emailResult.error);
+    // Roll back cooldown so user is not penalized with 429 when server email delivery fails
+    await User.findByIdAndUpdate(user._id, {
+      $set: { deviceEnrollmentCooldownUntil: null },
+    });
     return res.status(502).json({
       success: false,
       message:
-        "Unable to dispatch workstation verification email via SMTP. Please check server email configuration or try again.",
+        "Unable to dispatch workstation verification email. Please check server email configuration or try again.",
     });
   }
 
