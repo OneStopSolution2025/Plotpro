@@ -13,6 +13,32 @@ import {
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB limit aligned with express body limit
 
 /**
+ * Returns the public-facing base URL for serving uploaded files.
+ * 1. Honors explicit BACKEND_URL (e.g. https://api.plotpro.com or https://backend.up.railway.app).
+ * 2. Honors native Railway public domain (process.env.RAILWAY_PUBLIC_DOMAIN).
+ * 3. In non-production, falls back to http://localhost:${PORT || 5000}.
+ * 4. In production without explicit domains, returns empty string so that clean root-relative
+ *    paths (/uploads/...) are generated and resolved client-side against the API origin.
+ */
+export function getPublicBaseUrl() {
+  const customBackendUrl = process.env.BACKEND_URL?.trim();
+  if (customBackendUrl) {
+    return customBackendUrl.replace(/\/+$/, "");
+  }
+
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  if (railwayDomain) {
+    return `https://${railwayDomain.replace(/\/+$/, "")}`;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return `http://localhost:${process.env.PORT || 5000}`;
+  }
+
+  return "";
+}
+
+/**
  * Validates base64 data and extracts pure base64 payload.
  */
 function parseAndValidateBase64(fileData, maxBytes = MAX_FILE_SIZE_BYTES) {
@@ -173,8 +199,8 @@ class StorageService {
     const targetPath = resolveStoragePath(path.join("layouts", filename));
     fs.writeFileSync(targetPath, buffer);
 
-    const serverUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
-    const imageUrl = `${serverUrl}/uploads/layouts/${filename}`;
+    const baseUrl = getPublicBaseUrl();
+    const imageUrl = baseUrl ? `${baseUrl}/uploads/layouts/${filename}` : `/uploads/layouts/${filename}`;
     const provider = this.getActiveProvider();
 
     return {
@@ -294,8 +320,8 @@ class StorageService {
     const targetPath = resolveStoragePath(path.join("proofs", filename));
     fs.writeFileSync(targetPath, buffer);
 
-    const serverUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
-    const imageUrl = `${serverUrl}/uploads/proofs/${filename}`;
+    const baseUrl = getPublicBaseUrl();
+    const imageUrl = baseUrl ? `${baseUrl}/uploads/proofs/${filename}` : `/uploads/proofs/${filename}`;
     const provider = this.getActiveProvider();
 
     return {

@@ -5,6 +5,7 @@ import { useAdminProfile } from "../context/AdminProfileContext";
 import { useNotifications } from "../context/NotificationContext";
 import { useNavigate } from "react-router-dom";
 import CustomDropdown from "../components/CustomDropdown";
+import { resolveImageUrl } from "../../utils/imageUrl";
 
 
 /**
@@ -799,8 +800,8 @@ const Projects = () => {
 
                     <img
                       src={
-                        project.image ||
-                        (project.images && project.images.length > 0 && project.images[0]) ||
+                        resolveImageUrl(project.image) ||
+                        (project.images && project.images.length > 0 && resolveImageUrl(project.images[0])) ||
                         projectFallbackImg
                       }
                       alt={project.title}

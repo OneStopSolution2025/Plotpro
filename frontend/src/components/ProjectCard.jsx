@@ -8,6 +8,7 @@ import {
   FaArrowRight,
 } from "react-icons/fa6";
 import { useProjects, getProjectRouteSlug, slugifyProject } from "../context/ProjectContext";
+import { resolveImageUrl } from "../utils/imageUrl";
 
 export const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
 
@@ -29,7 +30,7 @@ function Plotcard({
   const { projects } = useProjects();
 
   const projectSlug = slug || getProjectRouteSlug({ id, title, customId, _id }, projects) || slugifyProject({ title, id, customId }) || id;
-  const resolvedImage = image || DEFAULT_PROJECT_IMAGE;
+  const resolvedImage = resolveImageUrl(image) || DEFAULT_PROJECT_IMAGE;
 
   return (
     <article className="project-card">

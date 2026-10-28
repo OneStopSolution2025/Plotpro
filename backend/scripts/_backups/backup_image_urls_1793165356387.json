@@ -1,0 +1,995 @@
+{
+  "timestamp": "2026-10-28T05:29:16.387Z",
+  "projects": [
+    {
+      "_id": "6ae06df6fb15ca6e3cb4a0dd",
+      "customId": 3,
+      "title": "demoo",
+      "location": "Dindigul",
+      "city": "Dindigul",
+      "category": "Residential",
+      "plotType": "Residential",
+      "budget": "below10",
+      "plotPrice": "25 Lakh",
+      "priceLakhs": 25,
+      "plotSizes": "",
+      "distance": "",
+      "projectSize": "",
+      "status": "Active",
+      "launchDate": "Not announced",
+      "details": "",
+      "image": "",
+      "defaultPlotImage": "",
+      "images": [],
+      "about": {
+        "description": "",
+        "additionalDescription": ""
+      },
+      "benefits": [
+        {
+          "title": "Prime Location",
+          "description": "Excellent connectivity to major roads and important locations.",
+          "_id": "6ae06df6fb15ca6e3cb4a0de"
+        },
+        {
+          "title": "Gated Community",
+          "description": "Safe and secure community with 24/7 security.",
+          "_id": "6ae06df6fb15ca6e3cb4a0df"
+        },
+        {
+          "title": "Wide Roads",
+          "description": "Well-developed and spacious roads for easy access.",
+          "_id": "6ae06df6fb15ca6e3cb4a0e0"
+        },
+        {
+          "title": "Green Environment",
+          "description": "Peaceful surroundings with green and natural environment.",
+          "_id": "6ae06df6fb15ca6e3cb4a0e1"
+        }
+      ],
+      "highlights": [
+        "Strategic and well-connected location",
+        "Gated community with 24/7 security",
+        "Wide blacktop roads",
+        "Underground drainage & water supply",
+        "Avenue trees and landscaped parks",
+        "Ready-to-build plots",
+        "High appreciation potential"
+      ],
+      "amenities": [
+        "24/7 Security",
+        "Blacktop Roads",
+        "Street Lighting",
+        "Underground Drainage",
+        "Water Supply",
+        "Avenue Trees",
+        "Children's Play Area",
+        "Landscaped Parks"
+      ],
+      "locationConnectivity": [
+        {
+          "name": "",
+          "distance": "",
+          "_id": "6ae06df6fb15ca6e3cb4a0e2"
+        }
+      ],
+      "adminId": "6ae06cddfb15ca6e3cb49fbb",
+      "branchId": "6ae06cddfb15ca6e3cb49fba",
+      "approvalStatus": "APPROVED",
+      "rejectionReason": "",
+      "approvedAt": "2026-10-27T09:25:10.162Z",
+      "approvedBy": "6adf27f276b47f99aca5d136",
+      "pendingUpdates": null,
+      "hasPendingUpdates": false,
+      "isArchived": false,
+      "pendingDeletion": false,
+      "deletionReason": "",
+      "layout": {
+        "imageUrl": "http://localhost:5000/uploads/layouts/layout_new_project_1793093102339_7jm39g.jpg",
+        "provider": "cloudinary",
+        "publicId": "layout_new_project_1793093102339_7jm39g.jpg",
+        "version": 1,
+        "width": 961,
+        "height": 1280,
+        "blocks": [],
+        "regions": []
+      },
+      "createdAt": "2026-10-27T09:25:10.165Z",
+      "updatedAt": "2026-10-27T09:25:10.860Z",
+      "__v": 0
+    },
+    {
+      "_id": "6ae06e40fb15ca6e3cb4a214",
+      "customId": 4,
+      "title": "ewhdiquhwnd",
+      "location": "Dindigul",
+      "city": "Dindigul",
+      "category": "Residential",
+      "plotType": "Residential",
+      "budget": "below10",
+      "plotPrice": "30 Lakh",
+      "priceLakhs": 30,
+      "plotSizes": "",
+      "distance": "",
+      "projectSize": "",
+      "status": "Active",
+      "launchDate": "Not announced",
+      "details": "",
+      "image": "",
+      "defaultPlotImage": "",
+      "images": [],
+      "about": {
+        "description": "",
+        "additionalDescription": ""
+      },
+      "benefits": [
+        {
+          "title": "Prime Location",
+          "description": "Excellent connectivity to major roads and important locations.",
+          "_id": "6ae06e40fb15ca6e3cb4a215"
+        },
+        {
+          "title": "Gated Community",
+          "description": "Safe and secure community with 24/7 security.",
+          "_id": "6ae06e40fb15ca6e3cb4a216"
+        },
+        {
+          "title": "Wide Roads",
+          "description": "Well-developed and spacious roads for easy access.",
+          "_id": "6ae06e40fb15ca6e3cb4a217"
+        },
+        {
+          "title": "Green Environment",
+          "description": "Peaceful surroundings with green and natural environment.",
+          "_id": "6ae06e40fb15ca6e3cb4a218"
+        }
+      ],
+      "highlights": [
+        "Strategic and well-connected location",
+        "Gated community with 24/7 security",
+        "Wide blacktop roads",
+        "Underground drainage & water supply",
+        "Avenue trees and landscaped parks",
+        "Ready-to-build plots",
+        "High appreciation potential"
+      ],
+      "amenities": [
+        "24/7 Security",
+        "Blacktop Roads",
+        "Street Lighting",
+        "Underground Drainage",
+        "Water Supply",
+        "Avenue Trees",
+        "Children's Play Area",
+        "Landscaped Parks"
+      ],
+      "locationConnectivity": [
+        {
+          "name": "",
+          "distance": "",
+          "_id": "6ae06e40fb15ca6e3cb4a219"
+        }
+      ],
+      "adminId": "6ae06cddfb15ca6e3cb49fbb",
+      "branchId": "6ae06cddfb15ca6e3cb49fba",
+      "approvalStatus": "APPROVED",
+      "rejectionReason": "",
+      "approvedAt": "2026-10-27T09:26:24.287Z",
+      "approvedBy": "6adf27f276b47f99aca5d136",
+      "pendingUpdates": null,
+      "hasPendingUpdates": false,
+      "isArchived": false,
+      "pendingDeletion": false,
+      "deletionReason": "",
+      "layout": {
+        "imageUrl": "http://localhost:5000/uploads/layouts/layout_new_project_1793093177430_m48tty.jpg",
+        "provider": "cloudinary",
+        "publicId": "layout_new_project_1793093177430_m48tty.jpg",
+        "version": 1,
+        "width": 680,
+        "height": 617,
+        "blocks": [],
+        "regions": []
+      },
+      "createdAt": "2026-10-27T09:26:24.290Z",
+      "updatedAt": "2026-10-27T09:26:24.983Z",
+      "__v": 0
+    },
+    {
+      "_id": "6ae06e6dfb15ca6e3cb4a2ba",
+      "customId": 5,
+      "title": "kmqowjdm",
+      "location": "Dindigul",
+      "city": "Dindigul",
+      "category": "Residential",
+      "plotType": "Residential",
+      "budget": "below10",
+      "plotPrice": "10 Lakh",
+      "priceLakhs": 10,
+      "plotSizes": "",
+      "distance": "",
+      "projectSize": "",
+      "status": "Active",
+      "launchDate": "Not announced",
+      "details": "",
+      "image": "",
+      "defaultPlotImage": "",
+      "images": [],
+      "about": {
+        "description": "",
+        "additionalDescription": ""
+      },
+      "benefits": [
+        {
+          "title": "Prime Location",
+          "description": "Excellent connectivity to major roads and important locations.",
+          "_id": "6ae06e6dfb15ca6e3cb4a2bb"
+        },
+        {
+          "title": "Gated Community",
+          "description": "Safe and secure community with 24/7 security.",
+          "_id": "6ae06e6dfb15ca6e3cb4a2bc"
+        },
+        {
+          "title": "Wide Roads",
+          "description": "Well-developed and spacious roads for easy access.",
+          "_id": "6ae06e6dfb15ca6e3cb4a2bd"
+        },
+        {
+          "title": "Green Environment",
+          "description": "Peaceful surroundings with green and natural environment.",
+          "_id": "6ae06e6dfb15ca6e3cb4a2be"
+        }
+      ],
+      "highlights": [
+        "Strategic and well-connected location",
+        "Gated community with 24/7 security",
+        "Wide blacktop roads",
+        "Underground drainage & water supply",
+        "Avenue trees and landscaped parks",
+        "Ready-to-build plots",
+        "High appreciation potential"
+      ],
+      "amenities": [
+        "24/7 Security",
+        "Blacktop Roads",
+        "Street Lighting",
+        "Underground Drainage",
+        "Water Supply",
+        "Avenue Trees",
+        "Children's Play Area",
+        "Landscaped Parks"
+      ],
+      "locationConnectivity": [
+        {
+          "name": "",
+          "distance": "",
+          "_id": "6ae06e6dfb15ca6e3cb4a2bf"
+        }
+      ],
+      "adminId": "6ae06cddfb15ca6e3cb49fbb",
+      "branchId": "6ae06cddfb15ca6e3cb49fba",
+      "approvalStatus": "APPROVED",
+      "rejectionReason": "",
+      "approvedAt": "2026-10-27T09:27:09.436Z",
+      "approvedBy": "6adf27f276b47f99aca5d136",
+      "pendingUpdates": null,
+      "hasPendingUpdates": false,
+      "isArchived": false,
+      "pendingDeletion": false,
+      "deletionReason": "",
+      "layout": {
+        "imageUrl": "http://localhost:5000/uploads/layouts/layout_new_project_1793093223581_mwsh67.jpg",
+        "provider": "cloudinary",
+        "publicId": "layout_new_project_1793093223581_mwsh67.jpg",
+        "version": 1,
+        "width": 680,
+        "height": 617,
+        "blocks": [],
+        "regions": []
+      },
+      "createdAt": "2026-10-27T09:27:09.438Z",
+      "updatedAt": "2026-10-27T09:27:10.121Z",
+      "__v": 0
+    },
+    {
+      "_id": "6ae06e91fb15ca6e3cb4a375",
+      "customId": 6,
+      "title": "opwqkd",
+      "location": "Dindigul",
+      "city": "Dindigul",
+      "category": "Residential",
+      "plotType": "Residential",
+      "budget": "below10",
+      "plotPrice": "15 Lakh",
+      "priceLakhs": 15,
+      "plotSizes": "",
+      "distance": "",
+      "projectSize": "",
+      "status": "Active",
+      "launchDate": "Not announced",
+      "details": "",
+      "image": "",
+      "defaultPlotImage": "",
+      "images": [],
+      "about": {
+        "description": "",
+        "additionalDescription": ""
+      },
+      "benefits": [
+        {
+          "title": "Prime Location",
+          "description": "Excellent connectivity to major roads and important locations.",
+          "_id": "6ae06e91fb15ca6e3cb4a376"
+        },
+        {
+          "title": "Gated Community",
+          "description": "Safe and secure community with 24/7 security.",
+          "_id": "6ae06e91fb15ca6e3cb4a377"
+        },
+        {
+          "title": "Wide Roads",
+          "description": "Well-developed and spacious roads for easy access.",
+          "_id": "6ae06e91fb15ca6e3cb4a378"
+        },
+        {
+          "title": "Green Environment",
+          "description": "Peaceful surroundings with green and natural environment.",
+          "_id": "6ae06e91fb15ca6e3cb4a379"
+        }
+      ],
+      "highlights": [
+        "Strategic and well-connected location",
+        "Gated community with 24/7 security",
+        "Wide blacktop roads",
+        "Underground drainage & water supply",
+        "Avenue trees and landscaped parks",
+        "Ready-to-build plots",
+        "High appreciation potential"
+      ],
+      "amenities": [
+        "24/7 Security",
+        "Blacktop Roads",
+        "Street Lighting",
+        "Underground Drainage",
+        "Water Supply",
+        "Avenue Trees",
+        "Children's Play Area",
+        "Landscaped Parks"
+      ],
+      "locationConnectivity": [
+        {
+          "name": "",
+          "distance": "",
+          "_id": "6ae06e91fb15ca6e3cb4a37a"
+        }
+      ],
+      "adminId": "6ae06cddfb15ca6e3cb49fbb",
+      "branchId": "6ae06cddfb15ca6e3cb49fba",
+      "approvalStatus": "APPROVED",
+      "rejectionReason": "",
+      "approvedAt": "2026-10-27T09:27:45.895Z",
+      "approvedBy": "6adf27f276b47f99aca5d136",
+      "pendingUpdates": null,
+      "hasPendingUpdates": false,
+      "isArchived": false,
+      "pendingDeletion": false,
+      "deletionReason": "",
+      "layout": {
+        "imageUrl": "http://localhost:5000/uploads/layouts/layout_new_project_1793093259965_3uqcf5.jpg",
+        "provider": "cloudinary",
+        "publicId": "layout_new_project_1793093259965_3uqcf5.jpg",
+        "version": 1,
+        "width": 680,
+        "height": 617,
+        "blocks": [],
+        "regions": []
+      },
+      "createdAt": "2026-10-27T09:27:45.896Z",
+      "updatedAt": "2026-10-27T09:27:46.580Z",
+      "__v": 0
+    },
+    {
+      "_id": "6ae074c2fb15ca6e3cb4c0ad",
+      "customId": 7,
+      "title": "ohnwqd",
+      "location": "Dindigul",
+      "city": "Dindigul",
+      "category": "Residential",
+      "plotType": "Residential",
+      "budget": "below10",
+      "plotPrice": "15 Lakh",
+      "priceLakhs": 15,
+      "plotSizes": "",
+      "distance": "",
+      "projectSize": "",
+      "status": "Active",
+      "launchDate": "Not announced",
+      "details": "",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "defaultPlotImage": "",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "about": {
+        "description": "",
+        "additionalDescription": ""
+      },
+      "benefits": [
+        {
+          "title": "Prime Location",
+          "description": "Excellent connectivity to major roads and important locations.",
+          "_id": "6ae074c2fb15ca6e3cb4c0ae"
+        },
+        {
+          "title": "Gated Community",
+          "description": "Safe and secure community with 24/7 security.",
+          "_id": "6ae074c2fb15ca6e3cb4c0af"
+        },
+        {
+          "title": "Wide Roads",
+          "description": "Well-developed and spacious roads for easy access.",
+          "_id": "6ae074c2fb15ca6e3cb4c0b0"
+        },
+        {
+          "title": "Green Environment",
+          "description": "Peaceful surroundings with green and natural environment.",
+          "_id": "6ae074c2fb15ca6e3cb4c0b1"
+        }
+      ],
+      "highlights": [
+        "Strategic and well-connected location",
+        "Gated community with 24/7 security",
+        "Wide blacktop roads",
+        "Underground drainage & water supply",
+        "Avenue trees and landscaped parks",
+        "Ready-to-build plots",
+        "High appreciation potential"
+      ],
+      "amenities": [
+        "24/7 Security",
+        "Blacktop Roads",
+        "Street Lighting",
+        "Underground Drainage",
+        "Water Supply",
+        "Avenue Trees",
+        "Children's Play Area",
+        "Landscaped Parks"
+      ],
+      "locationConnectivity": [
+        {
+          "name": "",
+          "distance": "",
+          "_id": "6ae074c2fb15ca6e3cb4c0b2"
+        }
+      ],
+      "adminId": "6ae06cddfb15ca6e3cb49fbb",
+      "branchId": "6ae06cddfb15ca6e3cb49fba",
+      "approvalStatus": "APPROVED",
+      "rejectionReason": "",
+      "approvedAt": "2026-10-27T09:54:28.349Z",
+      "approvedBy": "6adf27f276b47f99aca5d136",
+      "pendingUpdates": null,
+      "hasPendingUpdates": false,
+      "isArchived": false,
+      "pendingDeletion": false,
+      "deletionReason": "",
+      "layout": {
+        "referenceImageUrl": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+        "imageUrl": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+        "provider": "volume",
+        "publicId": "",
+        "version": 0,
+        "width": 1200,
+        "height": 800,
+        "compassOrientation": 0,
+        "blocks": [],
+        "roads": [],
+        "commonAreas": [],
+        "regions": []
+      },
+      "createdAt": "2026-10-27T09:54:10.945Z",
+      "updatedAt": "2026-10-27T09:54:28.350Z",
+      "__v": 0
+    },
+    {
+      "_id": "6ae185c0ae63f20d56923726",
+      "customId": 8,
+      "title": "Green world",
+      "location": "Dindigul, Palani",
+      "city": "Dindigul",
+      "category": "Residential",
+      "plotType": "Residential",
+      "budget": "below10",
+      "plotPrice": "28 Lakh",
+      "priceLakhs": 28,
+      "plotSizes": "700-1000 Sq.ft",
+      "distance": "5km to NH",
+      "projectSize": "20 Acres",
+      "status": "Active",
+      "launchDate": "2026-10-14",
+      "details": "hiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwbpdbqwdhiqpwudbhjwb",
+      "image": "http://localhost:8080/uploads/layouts/layout_new_project_1793164575033_q0n4p3.jpg",
+      "defaultPlotImage": "https://res.cloudinary.com/dexbuzgwo/image/upload/v1790746173/plot.png",
+      "images": [
+        "http://localhost:8080/uploads/layouts/layout_new_project_1793164575033_q0n4p3.jpg"
+      ],
+      "about": {
+        "description": "oiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoiiuopijhijoii",
+        "additionalDescription": ""
+      },
+      "benefits": [
+        {
+          "title": "Prime Location",
+          "description": "Excellent connectivity to major roads and important locations.",
+          "_id": "6ae185c0ae63f20d56923727"
+        },
+        {
+          "title": "Gated Community",
+          "description": "Safe and secure community with 24/7 security.",
+          "_id": "6ae185c0ae63f20d56923728"
+        },
+        {
+          "title": "Wide Roads",
+          "description": "Well-developed and spacious roads for easy access.",
+          "_id": "6ae185c0ae63f20d56923729"
+        },
+        {
+          "title": "Green Environment",
+          "description": "Peaceful surroundings with green and natural environment.",
+          "_id": "6ae185c0ae63f20d5692372a"
+        }
+      ],
+      "highlights": [
+        "Strategic and well-connected location",
+        "Gated community with 24/7 security",
+        "Wide blacktop roads",
+        "Underground drainage & water supply",
+        "Avenue trees and landscaped parks",
+        "Ready-to-build plots",
+        "High appreciation potential"
+      ],
+      "amenities": [
+        "24/7 Security",
+        "Blacktop Roads",
+        "Street Lighting",
+        "Underground Drainage",
+        "Water Supply",
+        "Avenue Trees",
+        "Children's Play Area",
+        "Landscaped Parks"
+      ],
+      "locationConnectivity": [
+        {
+          "name": "Bus stand",
+          "distance": "5KM",
+          "_id": "6ae185c0ae63f20d5692372b"
+        },
+        {
+          "name": "Hospital",
+          "distance": "10KM",
+          "_id": "6ae185c0ae63f20d5692372c"
+        },
+        {
+          "name": "Train Station",
+          "distance": "15KM",
+          "_id": "6ae185c0ae63f20d5692372d"
+        },
+        {
+          "name": "Shopping Mall",
+          "distance": "8KM",
+          "_id": "6ae185c0ae63f20d5692372e"
+        },
+        {
+          "name": "Super Market",
+          "distance": "5KM",
+          "_id": "6ae185c0ae63f20d5692372f"
+        }
+      ],
+      "adminId": "6ae17fb94689f99b3241f029",
+      "branchId": "6ae17fb84689f99b3241f028",
+      "approvalStatus": "APPROVED",
+      "rejectionReason": "",
+      "approvedAt": "2026-10-28T05:18:56.556Z",
+      "approvedBy": "6ae17ee14689f99b3241ecf9",
+      "pendingUpdates": null,
+      "hasPendingUpdates": false,
+      "isArchived": false,
+      "pendingDeletion": false,
+      "deletionReason": "",
+      "layout": {
+        "imageUrl": "http://localhost:8080/uploads/layouts/layout_new_project_1793164575033_q0n4p3.jpg",
+        "provider": "cloudinary",
+        "publicId": "",
+        "version": 1,
+        "width": 0,
+        "height": 0,
+        "blocks": [],
+        "regions": []
+      },
+      "createdAt": "2026-10-28T05:18:56.560Z",
+      "updatedAt": "2026-10-28T05:18:56.575Z",
+      "__v": 0
+    }
+  ],
+  "plots": [
+    {
+      "_id": "6adf121b60ac499b1ecdef04",
+      "customId": "2-1",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "1",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef05",
+      "customId": "2-2",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "2",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef06",
+      "customId": "2-3",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "3",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef07",
+      "customId": "2-4",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "4",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef08",
+      "customId": "2-5",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "5",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef09",
+      "customId": "2-6",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "6",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef0a",
+      "customId": "2-7",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "7",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Reserved",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef0b",
+      "customId": "2-8",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "8",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Sold",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef0c",
+      "customId": "2-9",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "9",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Sold",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6adf121b60ac499b1ecdef0d",
+      "customId": "2-10",
+      "projectId": "6adf121b60ac499b1ecdeefe",
+      "projectCustomId": 2,
+      "plotNumber": "10",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "20 Lakh",
+      "status": "Sold",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793004041614.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-26T08:40:59.660Z",
+      "updatedAt": "2026-10-26T08:40:59.660Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b3",
+      "customId": "7-1",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "1",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b4",
+      "customId": "7-2",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "2",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b5",
+      "customId": "7-3",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "3",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b6",
+      "customId": "7-4",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "4",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b7",
+      "customId": "7-5",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "5",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b8",
+      "customId": "7-6",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "6",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0b9",
+      "customId": "7-7",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "7",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0ba",
+      "customId": "7-8",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "8",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0bb",
+      "customId": "7-9",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "9",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0bc",
+      "customId": "7-10",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "10",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    },
+    {
+      "_id": "6ae074c3fb15ca6e3cb4c0bd",
+      "customId": "7-11",
+      "projectId": "6ae074c2fb15ca6e3cb4c0ad",
+      "projectCustomId": 7,
+      "plotNumber": "11",
+      "size": "600 sq.ft",
+      "facing": "East",
+      "price": "15 Lakh",
+      "status": "Available",
+      "image": "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg",
+      "images": [
+        "http://localhost:5000/uploads/layouts/layout_new_project_1793094845323_weu1aw.jpg"
+      ],
+      "__v": 0,
+      "createdAt": "2026-10-27T09:54:11.171Z",
+      "updatedAt": "2026-10-27T09:54:11.171Z"
+    }
+  ]
+}

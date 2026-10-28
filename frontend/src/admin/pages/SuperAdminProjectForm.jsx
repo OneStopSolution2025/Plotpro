@@ -16,6 +16,7 @@ import {
   FaLock,
 } from "react-icons/fa";
 import { superAdminApi } from "../../services/api";
+import { resolveImageUrl } from "../../utils/imageUrl";
 import {
   AVAILABLE_BENEFITS,
   DEFAULT_NEW_PROJECT_BENEFITS,
@@ -855,7 +856,7 @@ const SuperAdminProjectForm = () => {
               <div className="project-image-preview-card">
                 <div className="project-image-preview-media">
                   <img
-                    src={form.image}
+                    src={resolveImageUrl(form.image)}
                     alt="Project layout preview"
                     className="project-image-preview-img"
                     onError={(e) => { e.target.style.display = "none"; }}

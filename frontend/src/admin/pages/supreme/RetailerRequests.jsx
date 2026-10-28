@@ -23,6 +23,7 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import "../../styles/super-admin.css";
+import { resolveImageUrl } from "../../../utils/imageUrl";
 
 /* ────────────────────────────────────────────────────────────────
    Shared small helpers
@@ -948,9 +949,9 @@ const RetailerRequests = () => {
                       <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
                         <FaImage /> Payment proof screenshot ({detail.payment.proofUrl ? "Cloudinary" : ""})
                       </div>
-                      <a href={detail.payment.proofUrl} target="_blank" rel="noreferrer">
+                      <a href={resolveImageUrl(detail.payment.proofUrl)} target="_blank" rel="noreferrer">
                         <img
-                          src={detail.payment.proofUrl}
+                          src={resolveImageUrl(detail.payment.proofUrl)}
                           alt="Payment proof"
                           style={{ maxWidth: "100%", maxHeight: 260, borderRadius: 8, border: "1px solid #e2e8f0" }}
                         />

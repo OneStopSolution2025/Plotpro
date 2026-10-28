@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { shareContent } from "../utils/shareUtils";
 import { userApi, publicApi } from "../services/api";
+import { resolveImageUrl } from "../utils/imageUrl";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -190,7 +191,7 @@ function PlotDetails() {
                         ? [project.image]
                         : [];
 
-    const plotImages = rawPlotImages.length > 0 ? rawPlotImages : [DEFAULT_PLOT_IMAGE];
+    const plotImages = rawPlotImages.length > 0 ? rawPlotImages.map(img => resolveImageUrl(img)) : [DEFAULT_PLOT_IMAGE];
 
     const [selectedImage, setSelectedImage] = useState(null);
     const activeImage = selectedImage || plotImages[0] || DEFAULT_PLOT_IMAGE;

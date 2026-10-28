@@ -38,6 +38,7 @@ import entrance from "../assets/Projects/Greenvalley/Entrance.png";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { resolveImageUrl } from "../utils/imageUrl";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { useProjects, findProjectByIdentifier, getProjectRouteSlug, normalizeProject } from "../context/ProjectContext";
 
@@ -123,19 +124,20 @@ function ProjectDetails() {
     }, [projectIdKey, fetchPlotsForProject]);
 
     const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
-    const layoutImage =
+    const rawLayoutImage =
         project?.layout?.referenceImageUrl ||
         project?.layout?.imageUrl ||
         project?.image ||
         (Array.isArray(project?.images) && project.images[0]) ||
         DEFAULT_PROJECT_IMAGE;
+    const layoutImage = resolveImageUrl(rawLayoutImage) || DEFAULT_PROJECT_IMAGE;
 
     const rawProjectImages = [
         ...(project?.layout?.referenceImageUrl ? [project.layout.referenceImageUrl] : []),
         ...(project?.layout?.imageUrl && project.layout.imageUrl !== project?.layout?.referenceImageUrl ? [project.layout.imageUrl] : []),
         ...(Array.isArray(project?.images) ? project.images : []),
         ...(project?.image ? [project.image] : [])
-    ].filter((img, idx, arr) => img && arr.indexOf(img) === idx);
+    ].map(img => resolveImageUrl(img)).filter((img, idx, arr) => img && arr.indexOf(img) === idx);
 
     const projectImages = rawProjectImages.length > 0 ? rawProjectImages : [DEFAULT_PROJECT_IMAGE];
 

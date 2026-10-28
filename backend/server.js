@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
-import { initStorage, getUploadDir } from "./config/storageConfig.js";
+import { initStorage, getUploadDir, getLayoutsDir, getProofsDir } from "./config/storageConfig.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
@@ -99,9 +99,25 @@ app.use(cookieParser());
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ limit: "15mb", extended: true }));
 
-// Initialize persistent storage and serve uploads statically
+// Initialize persistent storage and serve public uploads statically
 initStorage();
-app.use("/uploads", express.static(getUploadDir()));
+
+const staticUploadOptions = {
+  maxAge: process.env.NODE_ENV === "production" ? "1d" : 0,
+  index: false,
+};
+
+// Public upload directories (Layouts map/cover and Payment proofs)
+app.use("/uploads/layouts", express.static(getLayoutsDir(), staticUploadOptions));
+app.use("/uploads/proofs", express.static(getProofsDir(), staticUploadOptions));
+
+// Explicit 404 handler for missing uploads or unauthorized access to private folders (e.g. business_docs)
+app.use("/uploads", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Uploaded file not found or access denied.",
+  });
+});
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {

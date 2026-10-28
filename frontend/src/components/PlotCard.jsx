@@ -1,6 +1,7 @@
 import { Ruler, Compass, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProjects, getProjectRouteSlug } from "../context/ProjectContext";
+import { resolveImageUrl } from "../utils/imageUrl";
 import "../css/PlotCard.css";
 
 export const DEFAULT_PLOT_IMAGE = "/assets/plot.png";
@@ -30,12 +31,13 @@ function PlotCard({
     const plotSlug = plotNumber ? encodeURIComponent(plotNumber) : plotId;
     const plotUrl = projectSlug ? `/plot-details/${projectSlug}/${plotSlug}` : `/plot-details/${plotId}`;
 
-    const resolvedImage =
+    const rawImage =
         image ||
         plot?.image ||
         resolvedProject?.defaultPlotImage ||
         resolvedProject?.image ||
         DEFAULT_PLOT_IMAGE;
+    const resolvedImage = resolveImageUrl(rawImage) || DEFAULT_PLOT_IMAGE;
 
     const status = (plot?.status || "Available").trim();
     const statusLower = status.toLowerCase();

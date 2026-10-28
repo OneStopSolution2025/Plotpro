@@ -12,6 +12,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { superAdminApi, adminApi } from "../../services/api";
+import { resolveImageUrl } from "../../utils/imageUrl";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import "../../css/LayoutEditorModal.css";
@@ -37,7 +38,7 @@ export default function LayoutEditorModal({ project, plots = [], onClose, onSave
 
   // Reference & Display Image
   const [imageUrl, setImageUrl] = useState(
-    project?.layout?.referenceImageUrl || project?.layout?.imageUrl || ""
+    resolveImageUrl(project?.layout?.referenceImageUrl || project?.layout?.imageUrl || "")
   );
   const [publicId, setPublicId] = useState(project?.layout?.publicId || "");
   const [imgDimensions, setImgDimensions] = useState({

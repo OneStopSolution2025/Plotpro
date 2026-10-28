@@ -14,6 +14,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { adminApi } from "../../services/api";
+import { resolveImageUrl } from "../../utils/imageUrl";
 import {
   commonBenefits,
   AVAILABLE_BENEFITS,
@@ -1012,7 +1013,7 @@ const AdminProjectForm = () => {
               <div className="project-image-preview-card">
                 <div className="project-image-preview-media">
                   <img
-                    src={form.image}
+                    src={resolveImageUrl(form.image)}
                     alt="Project layout preview"
                     className="project-image-preview-img"
                     onError={(e) => { e.target.style.display = "none"; }}
