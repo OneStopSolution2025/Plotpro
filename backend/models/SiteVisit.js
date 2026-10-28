@@ -57,6 +57,12 @@ const siteVisitSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
     status: {
       type: String,
       enum: ["Scheduled", "Confirmed", "Completed", "Cancelled"],

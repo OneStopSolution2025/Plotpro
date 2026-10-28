@@ -2,8 +2,10 @@ import SiteVisit from "../models/SiteVisit.js";
 import Project from "../models/Project.js";
 import Branch from "../models/Branch.js";
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
+import { recordUnknownUserData } from "../utils/guestDataService.js";
 
 /**
  * @desc    Submit public site visit (requires approved project)
@@ -43,6 +45,20 @@ export const submitPublicSiteVisit = async (req, res, next) => {
     let branchId = project.branchId || null;
     let assignedAdminId = project.adminId || null;
     let tenantId = null;
+    let customerId = null;
+
+    // Optional customer token check for registered users
+    if (req.headers?.authorization?.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key");
+        if (decoded?.id) {
+          customerId = decoded.id;
+        }
+      } catch {
+        // Guest submission, customerId remains null
+      }
+    }
 
     if (branchId) {
       const branch = await Branch.findById(branchId);
@@ -78,8 +94,23 @@ export const submitPublicSiteVisit = async (req, res, next) => {
       branchId,
       assignedAdminId,
       tenantId,
+      customerId,
       status: "Scheduled",
     });
+
+    // If submitted as a guest without authenticated customerId, record in UnknownUserData
+    if (!customerId && email) {
+      await recordUnknownUserData({
+        email: email.trim(),
+        fullName: fullName.trim(),
+        mobile: mobile.trim(),
+        formType: "SITE_VISIT",
+        referenceId: siteVisit._id,
+        projectId: project._id,
+        plot: plot || "",
+        formData: { preferredDate, preferredTime, message: message ? message.trim() : "" },
+      });
+    }
 
     res.status(201).json({
       success: true,

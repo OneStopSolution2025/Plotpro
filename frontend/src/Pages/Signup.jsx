@@ -10,10 +10,17 @@ import {
     Building2,
     Phone,
     Briefcase,
-    IdCard,
     CheckCircle2,
     Clock,
     Users,
+    FileText,
+    Upload,
+    Check,
+    X,
+    ShieldCheck,
+    Building,
+    FileCheck,
+    ChevronDown,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -25,13 +32,20 @@ import { authApi } from "../services/api";
 import "../css/Signup.css";
 import signupImage from "../assets/bg-image.jpg";
 
-const ID_TYPE_OPTIONS = [
-    { value: "AADHAAR", label: "Aadhaar Card" },
-    { value: "PAN", label: "PAN Card" },
-    { value: "PASSPORT", label: "Passport" },
-    { value: "DRIVING_LICENSE", label: "Driving License" },
-    { value: "VOTER_ID", label: "Voter ID" },
+const BUSINESS_TYPE_OPTIONS = [
+    { value: "SOLE_PROPRIETOR", label: "Individual / Sole Proprietor" },
+    { value: "PARTNERSHIP", label: "Partnership" },
+    { value: "LLP", label: "Limited Liability Partnership (LLP)" },
+    { value: "PVT_LTD", label: "Private Limited Company" },
+    { value: "PUBLIC_LTD", label: "Public Limited Company" },
     { value: "OTHER", label: "Other" },
+];
+
+const APPLICANT_ROLE_OPTIONS = [
+    { value: "OWNER_PROPRIETOR", label: "Owner / Proprietor" },
+    { value: "PARTNER", label: "Partner" },
+    { value: "DIRECTOR", label: "Director" },
+    { value: "AUTHORIZED_REPRESENTATIVE", label: "Authorized Representative" },
 ];
 
 const formatDuration = (days) => {
@@ -100,10 +114,67 @@ const Signup = ({ initialType = null }) => {
         email: "",
         password: "",
         planId: "",
-        idType: "",
-        idNumber: "",
+
+        // Business Verification Details
+        businessType: "SOLE_PROPRIETOR",
+        applicantRole: "OWNER_PROPRIETOR",
+        applicantLegalName: "",
+        panNumber: "",
+
+        hasGst: false,
+        gstin: "",
+
+        registrationNumber: "",
+        registrationDocData: "",
+        registrationDocName: "",
+        registrationDocMime: "",
+
+        authLetterDocData: "",
+        authLetterDocName: "",
+        authLetterDocMime: "",
+
         retailerTerms: false,
     });
+
+    const handleDocUpload = (fieldPrefix, file) => {
+        if (!file) return;
+        const MAX_SIZE_MB = 10;
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            setError(`File "${file.name}" exceeds the ${MAX_SIZE_MB}MB size limit.`);
+            return;
+        }
+
+        const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+        const validExts = [".pdf", ".jpg", ".jpeg", ".png"];
+        if (!validExts.includes(ext) && !["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
+            setError("Only PDF, JPG, and PNG documents are supported.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setRetailerData((prev) => ({
+                ...prev,
+                [`${fieldPrefix}Data`]: reader.result,
+                [`${fieldPrefix}Name`]: file.name,
+                [`${fieldPrefix}Mime`]: file.type || (ext === ".pdf" ? "application/pdf" : "image/jpeg"),
+            }));
+            setError("");
+        };
+        reader.onerror = () => {
+            setError("Failed to read the selected file.");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveDoc = (fieldPrefix) => {
+        setRetailerData((prev) => ({
+            ...prev,
+            [`${fieldPrefix}Data`]: "",
+            [`${fieldPrefix}Name`]: "",
+            [`${fieldPrefix}Mime`]: "",
+        }));
+    };
 
     // ── Packages (live from Supreme Admin Plan collection) ─────────
     const [plans, setPlans] = useState([]);
@@ -111,13 +182,9 @@ const Signup = ({ initialType = null }) => {
     const [plansError, setPlansError] = useState("");
     const [billingCycle, setBillingCycle] = useState("MONTHLY");
 
-    // Filter plans based on Monthly / Annually toggle
-    const filteredPlans = plans.filter((plan) => {
-        if (billingCycle === "ANNUAL") {
-            return plan.billingInterval === "ANNUAL" || plan.durationDays >= 365;
-        }
-        return plan.billingInterval !== "ANNUAL" && plan.durationDays < 365;
-    });
+    // All available plans are shown under both cycles.
+    // In ANNUAL mode, prices are calculated as 12 months with a 20% discount.
+    const filteredPlans = plans;
 
     // ── Submission outcome ─────────────────────────────────────────
     const [submitted, setSubmitted] = useState(false);
@@ -186,12 +253,52 @@ const Signup = ({ initialType = null }) => {
     const validateRetailer = () => {
         const d = retailerData;
         if (!d.businessName.trim()) return "Business name is required.";
-        if (!d.name.trim()) return "Owner name is required.";
+        if (!d.name.trim()) return "Owner/Applicant name is required.";
         if (!d.email.trim()) return "Email is required.";
         if (d.password.length < 6) return "Password must be at least 6 characters long.";
         if (!d.planId) return "Please select a package.";
-        if (!d.idType) return "Please choose your ID type.";
-        if (!d.idNumber.trim()) return "ID number is required.";
+
+        // Business Verification Details
+        if (!d.businessType) return "Please select your business type.";
+        if (!d.applicantRole) return "Please select your applicant role in the business.";
+
+        const legalName = (d.applicantLegalName || d.name).trim();
+        if (!legalName) return "Applicant's full legal name is required.";
+
+        // PAN validation
+        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+        const cleanPan = d.panNumber.trim().toUpperCase();
+        if (!cleanPan || !panRegex.test(cleanPan)) {
+            return "Please provide a valid 10-character PAN number (e.g. ABCDE1234F).";
+        }
+
+        // Conditional Company / LLP verification
+        const isCompanyOrLlp = ["LLP", "PVT_LTD", "PUBLIC_LTD"].includes(d.businessType);
+        if (isCompanyOrLlp) {
+            if (!d.registrationNumber.trim()) {
+                return d.businessType === "LLP"
+                    ? "LLPIN (LLP Identification Number) is required."
+                    : "CIN (Corporate Identification Number) is required.";
+            }
+            if (!d.registrationDocData) {
+                return "Certificate of Incorporation document upload is required.";
+            }
+        }
+
+        // Conditional GST verification
+        if (d.hasGst) {
+            const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            const cleanGst = d.gstin.trim().toUpperCase();
+            if (!cleanGst || !gstRegex.test(cleanGst)) {
+                return "Please enter a valid 15-character GSTIN (e.g. 22AAAAA0000A1Z5) or uncheck GST.";
+            }
+        }
+
+        // Conditional Authorization Letter
+        if (d.applicantRole === "AUTHORIZED_REPRESENTATIVE" && !d.authLetterDocData) {
+            return "Authorization Letter upload is required when applicant is an Authorized Representative.";
+        }
+
         if (!d.retailerTerms) return "Please accept the Terms of Service to continue.";
         return "";
     };
@@ -210,6 +317,8 @@ const Signup = ({ initialType = null }) => {
         try {
             const d = retailerData;
             const formattedPhone = d.phone.trim() ? formatFullPhone(retailerPhoneCountryCode, d.phone.trim()) : "";
+            const isCompanyOrLlp = ["LLP", "PVT_LTD", "PUBLIC_LTD"].includes(d.businessType);
+
             await authApi.submitRetailerRequest({
                 name: d.name.trim(),
                 email: d.email.trim(),
@@ -217,8 +326,25 @@ const Signup = ({ initialType = null }) => {
                 phone: formattedPhone,
                 businessName: d.businessName.trim(),
                 planId: d.planId,
-                idType: d.idType,
-                idNumber: d.idNumber.trim(),
+                billingCycle: billingCycle,
+
+                // Business Verification Details
+                businessType: d.businessType,
+                applicantRole: d.applicantRole,
+                applicantLegalName: (d.applicantLegalName || d.name).trim(),
+                panNumber: d.panNumber.trim().toUpperCase(),
+
+                hasGst: d.hasGst,
+                gstin: d.hasGst ? d.gstin.trim().toUpperCase() : "",
+
+                registrationNumber: isCompanyOrLlp ? d.registrationNumber.trim().toUpperCase() : "",
+                registrationDocData: isCompanyOrLlp ? d.registrationDocData : "",
+                registrationDocMime: isCompanyOrLlp ? d.registrationDocMime : "",
+                registrationDocName: isCompanyOrLlp ? d.registrationDocName : "",
+
+                authLetterDocData: d.applicantRole === "AUTHORIZED_REPRESENTATIVE" ? d.authLetterDocData : "",
+                authLetterDocMime: d.applicantRole === "AUTHORIZED_REPRESENTATIVE" ? d.authLetterDocMime : "",
+                authLetterDocName: d.applicantRole === "AUTHORIZED_REPRESENTATIVE" ? d.authLetterDocName : "",
             });
             setSubmitted(true);
         } catch (err) {
@@ -674,19 +800,42 @@ const Signup = ({ initialType = null }) => {
                                     <label htmlFor="rPhone">
                                         Phone
                                     </label>
-                                    <PhoneInputField
-                                        id="rPhone"
-                                        name="phone"
-                                        countryCode={retailerPhoneCountryCode}
-                                        onCountryCodeChange={(code) => setRetailerPhoneCountryCode(code)}
-                                        value={retailerData.phone}
-                                        onChange={(digits) =>
-                                            setRetailerData((prev) => ({ ...prev, phone: digits }))
-                                        }
-                                        placeholder="10-digit number"
-                                        maxLength={10}
-                                        icon={Phone}
-                                    />
+                                    <div className="phone-input-group-unified">
+                                        <div className="phone-country-wrapper-unified">
+                                            <select
+                                                id="rPhoneCountry"
+                                                className="phone-country-select-unified"
+                                                value={retailerPhoneCountryCode}
+                                                onChange={(e) => setRetailerPhoneCountryCode(e.target.value)}
+                                                aria-label="Country phone code"
+                                            >
+                                                <option value="+91">🇮🇳 +91</option>
+                                                <option value="+1">🇺🇸 +1</option>
+                                                <option value="+44">🇬🇧 +44</option>
+                                                <option value="+60">🇲🇾 +60</option>
+                                                <option value="+65">🇸🇬 +65</option>
+                                                <option value="+971">🇦🇪 +971</option>
+                                                <option value="+966">🇸🇦 +966</option>
+                                                <option value="+61">🇦🇺 +61</option>
+                                                <option value="+49">🇩🇪 +49</option>
+                                                <option value="+33">🇫🇷 +33</option>
+                                            </select>
+                                            <ChevronDown size={14} className="phone-country-chevron-unified" />
+                                        </div>
+                                        <Phone size={18} style={{ color: "#788598", marginRight: 8, flexShrink: 0 }} />
+                                        <input
+                                            id="rPhone"
+                                            type="tel"
+                                            className="phone-number-input-unified"
+                                            placeholder="10-digit number"
+                                            maxLength={10}
+                                            value={retailerData.phone}
+                                            onChange={(e) => {
+                                                const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                                setRetailerData((prev) => ({ ...prev, phone: cleaned }));
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -723,6 +872,7 @@ const Signup = ({ initialType = null }) => {
                                 <div className="sub-plan-header">
                                     <span className="sub-plan-label">Subscription Plan</span>
                                     <div className="sub-plan-toggle">
+                                        <div className={`sub-plan-pill ${billingCycle === "ANNUAL" ? "annual" : ""}`} />
                                         <button
                                             type="button"
                                             className={`sub-plan-tab ${billingCycle === "MONTHLY" ? "active" : ""}`}
@@ -767,10 +917,15 @@ const Signup = ({ initialType = null }) => {
                                         {filteredPlans.map((plan) => {
                                             const isUnlimited = plan.isUnlimitedSeats || plan.maxAdminSeats >= 999999;
                                             const active = String(plan._id) === retailerData.planId;
-                                            const durationLabel = formatDuration(plan.durationDays);
+                                            const isAnnual = billingCycle === "ANNUAL";
+                                            const durationLabel = isAnnual ? "1 year" : formatDuration(plan.durationDays);
                                             const seatsLabel = isUnlimited
                                                 ? "Unlimited branch admin seats"
                                                 : `${plan.maxAdminSeats} branch admin seat${plan.maxAdminSeats === 1 ? "" : "s"}`;
+
+                                            const originalAnnualPrice = Number(plan.price) * 12;
+                                            const discountedAnnualPrice = Math.round(originalAnnualPrice * 0.8);
+                                            const displayPrice = isAnnual ? discountedAnnualPrice : Number(plan.price);
 
                                             return (
                                                 <button
@@ -779,6 +934,7 @@ const Signup = ({ initialType = null }) => {
                                                     className={`sub-plan-card ${active ? "selected" : ""}`}
                                                     onClick={() => selectPlan(plan)}
                                                 >
+                                                    {active && <span className="sub-plan-card-tag">Selected</span>}
                                                     <div className="sub-plan-left">
                                                         <div className="sub-plan-title-row">
                                                             <span className="sub-plan-name">{plan.name}</span>
@@ -787,21 +943,26 @@ const Signup = ({ initialType = null }) => {
                                                             </span>
                                                         </div>
                                                         <div className="sub-plan-subtext">
-                                                            {plan.billingInterval === "CUSTOM"
+                                                            {isAnnual
+                                                                ? "Annual plan"
+                                                                : plan.billingInterval === "CUSTOM"
                                                                 ? `Billed every ${durationLabel}`
-                                                                : plan.billingInterval === "ANNUAL"
-                                                                ? "/year"
-                                                                : plan.billingInterval === "QUARTERLY"
-                                                                ? "/quarter"
-                                                                : "/month"}
+                                                                : "Monthly billing"}
                                                         </div>
                                                     </div>
 
                                                     <div className="sub-plan-right">
-                                                        <span className="sub-plan-currency">{plan.currency || "INR"}</span>
-                                                        <span className="sub-plan-price">
-                                                            {Number(plan.price).toLocaleString("en-IN")}
-                                                        </span>
+                                                        {isAnnual && (
+                                                            <span className="sub-plan-original-price">
+                                                                {plan.currency || "INR"} {originalAnnualPrice.toLocaleString("en-IN")}
+                                                            </span>
+                                                        )}
+                                                        <div className="sub-plan-price-row">
+                                                            <span className="sub-plan-currency">{plan.currency || "INR"}</span>
+                                                            <span className="sub-plan-price">
+                                                                {displayPrice.toLocaleString("en-IN")}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </button>
                                             );
@@ -810,50 +971,258 @@ const Signup = ({ initialType = null }) => {
                                 )}
                             </div>
 
-                            {/* ── ID (KYC) details ── */}
+                            {/* ── Business Verification Details ── */}
                             <h4 className="retailer-sec-title">
-                                <IdCard size={16} /> Identity (KYC) Details
+                                <ShieldCheck size={16} /> Business Verification Details
                             </h4>
+                            <p className="retailer-sec-hint">
+                                Provide your business entity classification, applicant legal authority, and verification documents.
+                            </p>
 
+                            {/* Row A: Business Type & Applicant Role */}
                             <div className="retailer-form-row">
                                 <div className="form-group">
-                                    <label htmlFor="idType">
-                                        ID Type<span>*</span>
+                                    <label htmlFor="businessType">
+                                        Business Type<span>*</span>
                                     </label>
                                     <div className="input-wrapper">
-                                        <IdCard size={18} />
+                                        <Building size={18} />
                                         <select
-                                            id="idType"
-                                            name="idType"
-                                            value={retailerData.idType}
+                                            id="businessType"
+                                            name="businessType"
+                                            value={retailerData.businessType}
                                             onChange={handleRetailerChange}
                                             required
                                         >
-                                            <option value="">Select ID type…</option>
-                                            {ID_TYPE_OPTIONS.map((o) => (
-                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                            {BUSINESS_TYPE_OPTIONS.map((o) => (
+                                                <option key={o.value} value={o.value}>
+                                                    {o.label}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="idNumber">
-                                        ID Number<span>*</span>
+                                    <label htmlFor="applicantRole">
+                                        Applicant Role in Business<span>*</span>
                                     </label>
                                     <div className="input-wrapper">
-                                        <IdCard size={18} />
-                                        <input
-                                            id="idNumber"
-                                            type="text"
-                                            name="idNumber"
-                                            placeholder="Government ID number"
-                                            value={retailerData.idNumber}
+                                        <Briefcase size={18} />
+                                        <select
+                                            id="applicantRole"
+                                            name="applicantRole"
+                                            value={retailerData.applicantRole}
                                             onChange={handleRetailerChange}
                                             required
-                                        />
+                                        >
+                                            {APPLICANT_ROLE_OPTIONS.map((o) => (
+                                                <option key={o.value} value={o.value}>
+                                                    {o.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Applicant Legal Name */}
+                            <div className="form-group">
+                                <label htmlFor="applicantLegalName">
+                                    Applicant Legal Full Name<span>*</span>
+                                    <span className="label-hint">(as per PAN / government records)</span>
+                                </label>
+                                <div className="input-wrapper">
+                                    <User size={18} />
+                                    <input
+                                        id="applicantLegalName"
+                                        type="text"
+                                        name="applicantLegalName"
+                                        placeholder="Full legal name"
+                                        value={retailerData.applicantLegalName || retailerData.name}
+                                        onChange={handleRetailerChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* PAN Number */}
+                            <div className="form-group">
+                                <label htmlFor="panNumber">
+                                    PAN (Permanent Account Number)<span>*</span>
+                                </label>
+                                <div className="input-wrapper">
+                                    <FileText size={18} />
+                                    <input
+                                        id="panNumber"
+                                        type="text"
+                                        name="panNumber"
+                                        placeholder="10-character PAN (e.g. ABCDE1234F)"
+                                        maxLength={10}
+                                        value={retailerData.panNumber}
+                                        onChange={(e) =>
+                                            setRetailerData((prev) => ({
+                                                ...prev,
+                                                panNumber: e.target.value.toUpperCase(),
+                                            }))
+                                        }
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Row C: Conditional Company / LLP Registration */}
+                            {["LLP", "PVT_LTD", "PUBLIC_LTD"].includes(retailerData.businessType) && (
+                                <div className="retailer-form-row">
+                                    <div className="form-group">
+                                        <label htmlFor="registrationNumber">
+                                            {retailerData.businessType === "LLP" ? "LLPIN (LLP Identification Number)" : "CIN (Corporate Identification Number)"}
+                                            <span>*</span>
+                                        </label>
+                                        <div className="input-wrapper">
+                                            <Building2 size={18} />
+                                            <input
+                                                id="registrationNumber"
+                                                type="text"
+                                                name="registrationNumber"
+                                                placeholder={retailerData.businessType === "LLP" ? "e.g. AAA-1234" : "e.g. U72200MH2020PTC123456"}
+                                                value={retailerData.registrationNumber}
+                                                onChange={(e) =>
+                                                    setRetailerData((prev) => ({
+                                                        ...prev,
+                                                        registrationNumber: e.target.value.toUpperCase(),
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>
+                                            Certificate of Incorporation<span>*</span>
+                                        </label>
+                                        <div className={`bdoc-upload-box ${retailerData.registrationDocData ? "has-file" : ""}`}>
+                                            {retailerData.registrationDocData ? (
+                                                <div className="bdoc-file-info">
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                        <Check size={16} />
+                                                        <span style={{ wordBreak: "break-all" }}>{retailerData.registrationDocName}</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="bdoc-remove-btn"
+                                                        onClick={() => handleRemoveDoc("registrationDoc")}
+                                                        title="Remove file"
+                                                    >
+                                                        <X size={15} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <label className="bdoc-custom-btn">
+                                                        <Upload size={14} />
+                                                        <span>Upload Certificate (PDF, JPG, PNG)</span>
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf,image/png,image/jpeg,image/jpg"
+                                                            style={{ display: "none" }}
+                                                            onChange={(e) => handleDocUpload("registrationDoc", e.target.files[0])}
+                                                        />
+                                                    </label>
+                                                    <span className="bdoc-hint">MCA incorporation certificate (max 10MB)</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Conditional GST Registration */}
+                            <div style={{ margin: "4px 0 12px" }}>
+                                <label className="bdoc-gst-toggle">
+                                    <input
+                                        type="checkbox"
+                                        name="hasGst"
+                                        checked={retailerData.hasGst}
+                                        onChange={(e) =>
+                                            setRetailerData((prev) => ({
+                                                ...prev,
+                                                hasGst: e.target.checked,
+                                            }))
+                                        }
+                                    />
+                                    <span>Business is registered for GST</span>
+                                    <span className="bdoc-badge-optional">Optional</span>
+                                </label>
+
+                                {retailerData.hasGst && (
+                                    <div className="form-group" style={{ marginTop: 8 }}>
+                                        <label htmlFor="gstin">
+                                            GSTIN (GST Identification Number)<span>*</span>
+                                        </label>
+                                        <div className="input-wrapper">
+                                            <FileText size={18} />
+                                            <input
+                                                id="gstin"
+                                                type="text"
+                                                name="gstin"
+                                                placeholder="15-character GSTIN (e.g. 22AAAAA0000A1Z5)"
+                                                maxLength={15}
+                                                value={retailerData.gstin}
+                                                onChange={(e) =>
+                                                    setRetailerData((prev) => ({
+                                                        ...prev,
+                                                        gstin: e.target.value.toUpperCase(),
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Row E: Conditional Authorized Representative Document */}
+                            {retailerData.applicantRole === "AUTHORIZED_REPRESENTATIVE" && (
+                                <div className="form-group" style={{ marginBottom: 14 }}>
+                                    <label>
+                                        Authorization Letter / Board Resolution<span>*</span>
+                                    </label>
+                                    <div className={`bdoc-upload-box ${retailerData.authLetterDocData ? "has-file" : ""}`}>
+                                        {retailerData.authLetterDocData ? (
+                                            <div className="bdoc-file-info">
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                    <Check size={16} />
+                                                    <span style={{ wordBreak: "break-all" }}>{retailerData.authLetterDocName}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="bdoc-remove-btn"
+                                                    onClick={() => handleRemoveDoc("authLetterDoc")}
+                                                    title="Remove file"
+                                                >
+                                                    <X size={15} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <label className="bdoc-custom-btn">
+                                                    <Upload size={14} />
+                                                    <span>Upload Authorization Letter (PDF, JPG, PNG)</span>
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf,image/png,image/jpeg,image/jpg"
+                                                        style={{ display: "none" }}
+                                                        onChange={(e) => handleDocUpload("authLetterDoc", e.target.files[0])}
+                                                    />
+                                                </label>
+                                                <span className="bdoc-hint">
+                                                    Signed letter on business letterhead authorizing the applicant (max 10MB)
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* ── Terms ── */}
                             <label className="terms-row">

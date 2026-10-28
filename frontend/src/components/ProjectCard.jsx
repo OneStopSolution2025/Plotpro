@@ -57,31 +57,24 @@ function Plotcard({
 
       {/* Main Content */}
       <div className="project-content">
-
-        {/* Project heading */}
         <div className="project-heading">
           <h3 className="project-title">
             {title}
           </h3>
-
           <p className="project-description">
             {details}
           </p>
         </div>
 
-        {/* Project information */}
         <div className="project-info">
-
           <div className="info-item">
             <div className="info-icon">
               <FaRulerCombined />
             </div>
-
             <div className="info-text">
               <span className="info-label">
                 Total Acres
               </span>
-
               <strong>
                 {projectSize}
               </strong>
@@ -94,12 +87,10 @@ function Plotcard({
             <div className="info-icon">
               <FaHouse />
             </div>
-
             <div className="info-text">
               <span className="info-label">
                 Plot Sizes
               </span>
-
               <strong>
                 {plotSizes}
               </strong>
@@ -112,26 +103,20 @@ function Plotcard({
             <div className="info-icon">
               <FaRoad />
             </div>
-
             <div className="info-text">
               <span className="info-label">
                 Distance
               </span>
-
               <strong>
                 {distance}
               </strong>
             </div>
           </div>
-
         </div>
 
-        {/* Bottom Action */}
         <div className="project-actions">
-
           <div className="project-price">
             <span>Plots From</span>
-
             <strong>
               {plotPrice ? `₹${String(plotPrice).replace(/^[₹\s]+/, "")}` : ""}
             </strong>
@@ -142,12 +127,9 @@ function Plotcard({
             onClick={() => navigate(`/project-details/${projectSlug}`)} type="button"
           >
             <span>Explore Project</span>
-
             <FaArrowRight />
           </button>
-
         </div>
-
       </div>
     </article>
   );

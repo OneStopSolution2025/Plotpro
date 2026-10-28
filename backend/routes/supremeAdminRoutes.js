@@ -19,15 +19,16 @@ import {
   getSubscriptions,
   updateSubscriptionStatus,
   getSeatUsage,
-  getPlatformSettings,
-  updatePlatformSettings,
 } from "../controllers/supremeAdminController.js";
 import {
   getRetailerRequests,
   getRetailerRequestById,
   approveRetailerRequest,
   rejectRetailerRequest,
+  deleteRetailerRequest,
   setPaymentVerification,
+  requestAdditionalInfo,
+  downloadBusinessDoc,
 } from "../controllers/retailerRequestController.js";
 import {
   getPendingDeviceRequests,
@@ -53,6 +54,9 @@ router.get("/retailer-requests/:id", getRetailerRequestById);
 router.patch("/retailer-requests/:id/payment-verification", setPaymentVerification);
 router.patch("/retailer-requests/:id/approve", approveRetailerRequest);
 router.patch("/retailer-requests/:id/reject", rejectRetailerRequest);
+router.delete("/retailer-requests/:id", deleteRetailerRequest);
+router.patch("/retailer-requests/:id/request-info", requestAdditionalInfo);
+router.get("/retailer-requests/:id/documents/:docType", downloadBusinessDoc);
 
 // Subscriber / Business Management
 router.get("/subscribers", getSubscribers);
@@ -77,10 +81,6 @@ router.patch("/subscriptions/:id/status", updateSubscriptionStatus);
 
 // Admin Seat Usage
 router.get("/seat-usage", getSeatUsage);
-
-// Platform Settings
-router.get("/settings", getPlatformSettings);
-router.put("/settings", updatePlatformSettings);
 
 // ─── Trusted Device Oversight & Management ────────────────────────────────────
 router.get("/devices/pending", getPendingDeviceRequests);

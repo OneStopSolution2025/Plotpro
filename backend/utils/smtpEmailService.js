@@ -464,3 +464,14 @@ export const sendPasswordResetOtpEmail = async ({ to, otp, expiryMinutes = 10 })
     html: renderPasswordResetEmailHtml({ otp, expiryMinutes }),
   });
 };
+
+/**
+ * Sends a generic or notification email via active SMTP configuration.
+ */
+export const sendCustomEmail = async ({ to, subject, html, text }) => {
+  if (!to || !subject || !html) {
+    throw new Error("Recipient email, subject, and html body are required for dispatch.");
+  }
+
+  return await dispatchEmail({ to, subject, html, text });
+};

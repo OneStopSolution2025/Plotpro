@@ -57,7 +57,6 @@ import SubscriberManagement from "./admin/pages/supreme/SubscriberManagement.jsx
 import PlanManagement from "./admin/pages/supreme/PlanManagement.jsx";
 import SubscriptionManagement from "./admin/pages/supreme/SubscriptionManagement.jsx";
 import SeatUsageOverview from "./admin/pages/supreme/SeatUsageOverview.jsx";
-import PlatformSettings from "./admin/pages/supreme/PlatformSettings.jsx";
 import SupremeAdminProfile from "./admin/pages/supreme/SupremeAdminProfile.jsx";
 import RetailerRequests from "./admin/pages/supreme/RetailerRequests.jsx";
 import TrustedDevices from "./admin/pages/supreme/TrustedDevices.jsx";
@@ -164,7 +163,6 @@ function App() {
                     <Route path="subscriptions" element={<SubscriptionManagement />} />
                     <Route path="seat-usage" element={<SeatUsageOverview />} />
                     <Route path="trusted-devices" element={<TrustedDevices />} />
-                    <Route path="settings" element={<PlatformSettings />} />
                     <Route path="profile" element={<SupremeAdminProfile />} />
                   </Route>
                 </Routes>

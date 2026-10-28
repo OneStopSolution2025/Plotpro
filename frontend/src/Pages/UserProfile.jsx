@@ -17,6 +17,10 @@ import {
   ChevronRight,
   Shield,
   Layers,
+  MessageSquare,
+  Calendar,
+  Clock,
+  Building,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -73,20 +77,28 @@ export default function UserProfile() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [isRemoving, setIsRemoving] = useState(false);
 
+  // Enquiries & Site Visits State
+  const [myEnquiries, setMyEnquiries] = useState([]);
+  const [enquiriesLoading, setEnquiriesLoading] = useState(false);
+  const [mySiteVisits, setMySiteVisits] = useState([]);
+  const [siteVisitsLoading, setSiteVisitsLoading] = useState(false);
+
   // Load latest profile & wishlist
   useEffect(() => {
     let isMounted = true;
     const fetchUserData = async () => {
       try {
-        const [profileRes, wishlistRes] = await Promise.all([
+        const [profileRes, wishlistRes, enquiriesRes, siteVisitsRes] = await Promise.allSettled([
           userApi.getProfile(),
           userApi.getWishlist(),
+          userApi.getMyEnquiries(),
+          userApi.getMySiteVisits(),
         ]);
 
         if (!isMounted) return;
 
-        if (profileRes?.success && profileRes.data) {
-          const u = profileRes.data;
+        if (profileRes.status === "fulfilled" && profileRes.value?.success && profileRes.value.data) {
+          const u = profileRes.value.data;
           const parsed = parsePhoneString(u.phone || "");
           setCountryCode(parsed.countryCode);
           setProfileData({
@@ -96,14 +108,26 @@ export default function UserProfile() {
           });
         }
 
-        if (wishlistRes?.success && wishlistRes.data) {
-          setSavedProjects(wishlistRes.data.projects || []);
-          setSavedPlots(wishlistRes.data.plots || []);
+        if (wishlistRes.status === "fulfilled" && wishlistRes.value?.success && wishlistRes.value.data) {
+          setSavedProjects(wishlistRes.value.data.projects || []);
+          setSavedPlots(wishlistRes.value.data.plots || []);
+        }
+
+        if (enquiriesRes.status === "fulfilled" && enquiriesRes.value?.success && enquiriesRes.value.data) {
+          setMyEnquiries(enquiriesRes.value.data || []);
+        }
+
+        if (siteVisitsRes.status === "fulfilled" && siteVisitsRes.value?.success && siteVisitsRes.value.data) {
+          setMySiteVisits(siteVisitsRes.value.data || []);
         }
       } catch (err) {
-        console.error("Failed to load user profile or wishlist:", err);
+        console.error("Failed to load user portal data:", err);
       } finally {
-        if (isMounted) setWishlistLoading(false);
+        if (isMounted) {
+          setWishlistLoading(false);
+          setEnquiriesLoading(false);
+          setSiteVisitsLoading(false);
+        }
       }
     };
 
@@ -337,6 +361,30 @@ export default function UserProfile() {
             <span>My Wishlist</span>
             {totalWishlistCount > 0 && (
               <span className="user-tab-count">{totalWishlistCount}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={`user-tab-btn ${activeTab === "enquiries" ? "active" : ""}`}
+            onClick={() => setActiveTab("enquiries")}
+          >
+            <MessageSquare size={18} />
+            <span>My Enquiries</span>
+            {myEnquiries.length > 0 && (
+              <span className="user-tab-count">{myEnquiries.length}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={`user-tab-btn ${activeTab === "site-visits" ? "active" : ""}`}
+            onClick={() => setActiveTab("site-visits")}
+          >
+            <Calendar size={18} />
+            <span>Site Visits</span>
+            {mySiteVisits.length > 0 && (
+              <span className="user-tab-count">{mySiteVisits.length}</span>
             )}
           </button>
         </div>
@@ -765,6 +813,228 @@ export default function UserProfile() {
                     })}
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: My Enquiries */}
+        {activeTab === "enquiries" && (
+          <div className="user-portal-section">
+
+            {enquiriesLoading ? (
+              <div className="user-portal-loading">
+                <div className="user-portal-spinner"></div>
+                <p>Loading your enquiries...</p>
+              </div>
+            ) : myEnquiries.length === 0 ? (
+              <div className="wishlist-empty">
+                <div className="wishlist-empty-icon">
+                  <MessageSquare size={28} />
+                </div>
+                <h3>No Enquiries Found</h3>
+                <p>You haven't submitted any property enquiries yet.</p>
+                <Link to="/projects" className="wishlist-empty-btn">
+                  Explore Projects
+                </Link>
+              </div>
+            ) : (
+              <div className="user-portal-list">
+                {myEnquiries.map((enq) => {
+                  const proj = enq.projectId;
+                  const projectTitle = proj?.title || "General Enquiry";
+                  const projectLocation = proj?.location ? `${proj.location}${proj?.city ? `, ${proj.city}` : ""}` : (enq.branchId?.city || "Tamil Nadu");
+                  const projectImage = proj?.image || (proj?.images && proj.images[0]) || "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&auto=format&fit=crop";
+                  
+                  const statusClass = 
+                    enq.status === "NEW" ? "status-new" :
+                    enq.status === "CONTACTED" ? "status-contacted" :
+                    enq.status === "FOLLOW_UP" ? "status-followup" : "status-closed";
+
+                  const formattedDate = enq.createdAt ? new Date(enq.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  }) : "Recent";
+
+                  return (
+                    <div key={enq._id} className="user-portal-card">
+                      <div className="user-portal-card-img-wrap">
+                        <img
+                          src={projectImage}
+                          alt={projectTitle}
+                          onError={(e) => {
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&auto=format&fit=crop";
+                          }}
+                        />
+                        {enq.plot && (
+                          <span className="user-portal-plot-tag">Plot #{enq.plot}</span>
+                        )}
+                      </div>
+
+                      <div className="user-portal-card-content">
+                        <div className="user-portal-card-top">
+                          <div>
+                            <span className={`user-portal-badge ${statusClass}`}>
+                              {enq.status.replace("_", " ")}
+                            </span>
+                            <span className="user-portal-date">
+                              <Clock size={13} />
+                              {formattedDate}
+                            </span>
+                          </div>
+                          {proj && (
+                            <Link
+                              to={`/projects/${proj.customId || proj._id}`}
+                              className="user-portal-link"
+                            >
+                              <span>View Project</span>
+                              <ExternalLink size={13} />
+                            </Link>
+                          )}
+                        </div>
+
+                        <h3 className="user-portal-title">{projectTitle}</h3>
+                        
+                        <div className="user-portal-meta-row">
+                          <span className="user-portal-meta-item">
+                            <MapPin size={14} />
+                            {projectLocation}
+                          </span>
+                          {enq.contactMethod && (
+                            <span className="user-portal-meta-item">
+                              <Phone size={14} />
+                              Pref: {enq.contactMethod}
+                            </span>
+                          )}
+                          {enq.branchId?.name && (
+                            <span className="user-portal-meta-item">
+                              <Building size={14} />
+                              {enq.branchId.name}
+                            </span>
+                          )}
+                        </div>
+
+                        {enq.message && (
+                          <div className="user-portal-message-box">
+                            <strong>Your Message:</strong>
+                            <p>"{enq.message}"</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 4: Site Visits */}
+        {activeTab === "site-visits" && (
+          <div className="user-portal-section">
+
+            {siteVisitsLoading ? (
+              <div className="user-portal-loading">
+                <div className="user-portal-spinner"></div>
+                <p>Loading your site visits...</p>
+              </div>
+            ) : mySiteVisits.length === 0 ? (
+              <div className="wishlist-empty">
+                <div className="wishlist-empty-icon">
+                  <Calendar size={28} />
+                </div>
+                <h3>No Site Visits Scheduled</h3>
+                <p>You haven't scheduled any on-site visits yet.</p>
+                <Link to="/projects" className="wishlist-empty-btn">
+                  Book a Site Visit
+                </Link>
+              </div>
+            ) : (
+              <div className="user-portal-list">
+                {mySiteVisits.map((visit) => {
+                  const proj = visit.projectId;
+                  const projectTitle = proj?.title || "Property Visit";
+                  const projectLocation = proj?.location ? `${proj.location}${proj?.city ? `, ${proj.city}` : ""}` : (visit.branchId?.city || "Tamil Nadu");
+                  const projectImage = proj?.image || (proj?.images && proj.images[0]) || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+
+                  const statusClass = 
+                    visit.status === "Scheduled" ? "status-scheduled" :
+                    visit.status === "Confirmed" ? "status-confirmed" :
+                    visit.status === "Completed" ? "status-completed" : "status-cancelled";
+
+                  return (
+                    <div key={visit._id} className="user-portal-card">
+                      <div className="user-portal-card-img-wrap">
+                        <img
+                          src={projectImage}
+                          alt={projectTitle}
+                          onError={(e) => {
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+                          }}
+                        />
+                        {visit.plot && (
+                          <span className="user-portal-plot-tag">Plot #{visit.plot}</span>
+                        )}
+                      </div>
+
+                      <div className="user-portal-card-content">
+                        <div className="user-portal-card-top">
+                          <div>
+                            <span className={`user-portal-badge ${statusClass}`}>
+                              {visit.status}
+                            </span>
+                            <span className="user-portal-date highlight">
+                              <Calendar size={13} />
+                              {visit.preferredDate}
+                            </span>
+                            <span className="user-portal-date">
+                              <Clock size={13} />
+                              {visit.preferredTime}
+                            </span>
+                          </div>
+                          {proj && (
+                            <Link
+                              to={`/projects/${proj.customId || proj._id}`}
+                              className="user-portal-link"
+                            >
+                              <span>View Project</span>
+                              <ExternalLink size={13} />
+                            </Link>
+                          )}
+                        </div>
+
+                        <h3 className="user-portal-title">{projectTitle}</h3>
+
+                        <div className="user-portal-meta-row">
+                          <span className="user-portal-meta-item">
+                            <MapPin size={14} />
+                            {projectLocation}
+                          </span>
+                          {visit.branchId?.name && (
+                            <span className="user-portal-meta-item">
+                              <Building size={14} />
+                              Branch: {visit.branchId.name}
+                            </span>
+                          )}
+                          {visit.branchId?.phone && (
+                            <span className="user-portal-meta-item">
+                              <Phone size={14} />
+                              Support: {visit.branchId.phone}
+                            </span>
+                          )}
+                        </div>
+
+                        {visit.message && (
+                          <div className="user-portal-message-box">
+                            <strong>Special Request:</strong>
+                            <p>"{visit.message}"</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

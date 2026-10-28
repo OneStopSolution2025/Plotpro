@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProjects } from "../../context/ProjectContext";
 import {
   FaArrowLeft,
   FaSave,
@@ -7,11 +8,15 @@ import {
   FaTrash,
   FaExclamationCircle,
   FaCheckCircle,
+  FaCloudUploadAlt,
+  FaImage,
+  FaSpinner,
+  FaTimes,
   FaBuilding,
-  FaMapMarkedAlt,
+  FaLock,
 } from "react-icons/fa";
+import { superAdminApi } from "../../services/api";
 import {
-  commonBenefits,
   AVAILABLE_BENEFITS,
   DEFAULT_NEW_PROJECT_BENEFITS,
   AVAILABLE_HIGHLIGHTS,
@@ -19,14 +24,29 @@ import {
   DEFAULT_NEW_PROJECT_HIGHLIGHTS,
   DEFAULT_NEW_PROJECT_AMENITIES,
 } from "../../data/projects";
-
-import { superAdminApi } from "../../services/api";
-import { useProjects } from "../../context/ProjectContext";
 import CustomDropdown from "../components/CustomDropdown";
-import LayoutEditorModal from "../components/LayoutEditorModal";
 import "../styles/admin-project-form.css";
 import "../styles/super-admin.css";
 
+const extractValue = (storedValue, suffix) => {
+  if (!storedValue || !suffix) return storedValue || "";
+  const suffixWithSpace = ` ${suffix}`;
+  if (storedValue.endsWith(suffixWithSpace)) {
+    return storedValue.slice(0, -suffixWithSpace.length);
+  }
+  if (storedValue.endsWith(suffix)) {
+    return storedValue.slice(0, -suffix.length);
+  }
+  return storedValue;
+};
+
+/**
+ * Combine a raw input value with its fixed suffix.
+ * Examples:
+ *   "8.5" + "Lakh" -> "8.5 Lakh"
+ *   "12" + "Acres" -> "12 Acres"
+ *   "600 – 2400" + "Sq.ft" -> "600 – 2400 Sq.ft"
+ */
 const combineWithSuffix = (value, suffix) => {
   if (!value || !suffix) return value || "";
   const trimmed = value.trim();
@@ -34,76 +54,73 @@ const combineWithSuffix = (value, suffix) => {
   return `${trimmed} ${suffix}`;
 };
 
-const sanitizeTextNoDigits = (value) => value.replace(/\d/g, "");
+/**
+ * Sanitize plot price input - allow only digits and single decimal point
+ */
 const sanitizePlotPrice = (value) => {
   const cleaned = value.replace(/[₹,\s]/g, "").replace(/[^0-9.]/g, "");
   const parts = cleaned.split(".");
   return parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : cleaned;
 };
+
+/**
+ * Sanitize project size input - allow only digits and single decimal point
+ */
 const sanitizeProjectSize = (value) => {
   const cleaned = value.replace(/[^0-9.]/g, "");
   const parts = cleaned.split(".");
   return parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : cleaned;
 };
+
+/**
+ * Sanitize plot sizes input - allow digits, spaces, hyphens, en-dash
+ */
 const sanitizePlotSizes = (value) => value.replace(/[^0-9\s\-–]/g, "");
 
-const parsePriceLakhs = (plotPrice) => {
-  if (!plotPrice || typeof plotPrice !== "string") return 0;
-  const cleaned = plotPrice.replace(/[₹,]/g, "").trim();
-  const crMatch = cleaned.match(/([\d.]+)\s*(?:cr|crore|crores)\b/i);
-  if (crMatch) {
-    const val = parseFloat(crMatch[1]);
-    return isNaN(val) ? 0 : val * 100;
-  }
-  const lakhMatch = cleaned.match(/([\d.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
-  if (lakhMatch) {
-    const val = parseFloat(lakhMatch[1]);
-    return isNaN(val) ? 0 : val;
-  }
-  const numMatch = cleaned.match(/^([\d.]+)$/);
-  if (numMatch) {
-    const num = parseFloat(numMatch[1]);
-    if (isNaN(num)) return 0;
-    if (num >= 100000) {
-      return num / 100000;
-    }
-    return num;
-  }
-  return 0;
+/**
+ * Wrapper component for input with fixed unit suffix.
+ */
+const InputWithUnit = ({ value, onChange, placeholder, suffix, sanitize, ...rest }) => {
+  return (
+    <div className="input-with-unit">
+      <input
+        value={value}
+        onChange={(e) => onChange(sanitize ? sanitize(e.target.value) : e.target.value)}
+        placeholder={placeholder}
+        {...rest}
+      />
+      <span className="input-unit">{suffix}</span>
+    </div>
+  );
 };
 
-const InputWithUnit = ({ value, onChange, placeholder, suffix, sanitize, ...rest }) => (
-  <div className="input-with-unit">
-    <input
-      value={value}
-      onChange={(e) => onChange(sanitize ? sanitize(e.target.value) : e.target.value)}
-      placeholder={placeholder}
-      {...rest}
-    />
-    <span className="input-unit">{suffix}</span>
-  </div>
-);
-
 /* ========================================================
-   SUPER ADMIN PROJECT FORM
+   SUPER ADMIN PROJECT FORM (REPLICA OF BRANCH ADMIN FORM)
    ======================================================== */
 const SuperAdminProjectForm = () => {
   const navigate = useNavigate();
-  const { setProjects, projects } = useProjects();
+  const locationHook = useLocation();
+  const {
+    projects,
+    setProjects,
+    parsePriceLakhs,
+    isValidPlotPrice,
+  } = useProjects();
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
+
+  // ── Branch scoping state ──────────────────────────────────────
   const [branches, setBranches] = useState([]);
+  const [branchesLoading, setBranchesLoading] = useState(true);
   const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [showLayoutEditor, setShowLayoutEditor] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
     location: "",
     city: "",
     category: "Residential",
-    budget: "below10",
     status: "Active",
     plotPrice: "",
     plotType: "Residential",
@@ -119,19 +136,157 @@ const SuperAdminProjectForm = () => {
     image: "",
     defaultPlotImage: "",
     images: [],
-    layout: { imageUrl: "", version: 1, blocks: [], regions: [] },
-    about: { description: "", additionalDescription: "" },
+    about: { description: "" },
     locationConnectivity: [{ name: "", distance: "" }],
     benefits: DEFAULT_NEW_PROJECT_BENEFITS,
     highlights: DEFAULT_NEW_PROJECT_HIGHLIGHTS,
     amenities: DEFAULT_NEW_PROJECT_AMENITIES,
   });
 
-  // Plot counts
+  // Load tenant branches
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setBranchesLoading(true);
+        const res = await superAdminApi.getBranches();
+        if (!cancelled && res?.success) {
+          const loadedBranches = res.data || [];
+          setBranches(loadedBranches);
+
+          // Check if URL has ?branchId=...
+          const params = new URLSearchParams(locationHook.search);
+          const branchParam = params.get("branchId");
+          if (branchParam) {
+            const found = loadedBranches.find((b) => String(b.id || b._id) === String(branchParam));
+            if (found) {
+              setSelectedBranchId(String(found.id || found._id));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load branches:", err);
+      } finally {
+        if (!cancelled) setBranchesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [locationHook.search]);
+
+  // Find active branches & selected branch
+  const activeBranches = branches.filter((b) => b.status === "ACTIVE" || b.status === "Active");
+  const selectedBranch = branches.find(
+    (b) => String(b.id || b._id) === String(selectedBranchId)
+  );
+
+  // ── Auto-prefill and lock Location & City when branch is selected ──
+  useEffect(() => {
+    if (selectedBranch) {
+      const branchCity = selectedBranch.city ? selectedBranch.city.trim() : "";
+      const branchRegion = selectedBranch.region ? selectedBranch.region.trim() : "";
+      const branchLocation = branchRegion ? `${branchCity}, ${branchRegion}` : branchCity;
+
+      setForm((prev) => ({
+        ...prev,
+        location: branchLocation,
+        city: branchCity,
+      }));
+    }
+  }, [selectedBranch]);
+
+  // ── Image Upload Handling (Drag & Drop + Cloudinary/Storage) ──
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImageFileChange = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select a valid image file (PNG, JPG, or WebP)." });
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image file size exceeds the 20MB limit." });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setMessage(null);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const dataUrl = evt.target.result;
+      const img = new Image();
+      img.onload = async () => {
+        const detectedWidth = img.naturalWidth || 1200;
+        const detectedHeight = img.naturalHeight || 800;
+
+        try {
+          const res = await superAdminApi.uploadProjectImage(
+            {
+              fileData: dataUrl,
+              mimeType: file.type,
+              width: detectedWidth,
+              height: detectedHeight,
+            },
+            "new"
+          );
+
+          if (res?.success && res.data?.imageUrl) {
+            const uploadedUrl = res.data.imageUrl;
+            setForm((prev) => {
+              const newImgs = [...prev.images];
+              if (newImgs.length === 0) newImgs.push(uploadedUrl);
+              else newImgs[0] = uploadedUrl;
+              return { ...prev, image: uploadedUrl, images: newImgs };
+            });
+            setMessage({ type: "success", text: "Project layout / cover image uploaded successfully!" });
+          } else {
+            setMessage({ type: "error", text: res?.message || "Failed to upload image." });
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          setMessage({ type: "error", text: err.data?.message || err.message || "Upload failed." });
+        } finally {
+          setIsUploadingImage(false);
+        }
+      };
+      img.onerror = () => {
+        setIsUploadingImage(false);
+        setMessage({ type: "error", text: "Failed to read image dimensions." });
+      };
+      img.src = dataUrl;
+    };
+    reader.onerror = () => {
+      setIsUploadingImage(false);
+      setMessage({ type: "error", text: "Failed to read image file." });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setForm((prev) => {
+      const newImgs = [...prev.images];
+      if (newImgs.length > 0 && newImgs[0] === prev.image) {
+        newImgs.shift();
+      }
+      return { ...prev, image: "", images: newImgs };
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // ── Plot validation logic ──
   const total = Number(form.totalPlots) || 0;
   const available = Number(form.availablePlots) || 0;
   const reserved = Number(form.reservedPlots) || 0;
   const sold = Number(form.soldPlots) || 0;
+
   const plotsValid =
     total > 0 &&
     available >= 0 &&
@@ -139,29 +294,7 @@ const SuperAdminProjectForm = () => {
     sold >= 0 &&
     available + reserved + sold === total;
 
-  // Branch options (tenant-scoped, ACTIVE branches can receive projects)
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await superAdminApi.getBranches();
-        if (!cancelled && res?.success) {
-          setBranches(res.data || []);
-        }
-      } catch {
-        /* non-fatal: assignment to branch stays optional */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const activeBranches = branches.filter((b) => b.status === "ACTIVE");
-  const selectedBranch = branches.find(
-    (b) => String(b.id) === String(selectedBranchId)
-  );
-
+  // ── Array & Object state updaters ──
   const updateArrayField = (fieldName, index, value) => {
     setForm((prev) => {
       const newArray = [...prev[fieldName]];
@@ -171,13 +304,23 @@ const SuperAdminProjectForm = () => {
   };
 
   const addArrayItem = (fieldName, newItem) => {
-    setForm((prev) => ({ ...prev, [fieldName]: [...prev[fieldName], newItem] }));
+    setForm((prev) => ({
+      ...prev,
+      [fieldName]: [...prev[fieldName], newItem],
+    }));
   };
 
   const removeArrayItem = (fieldName, index) => {
+    setForm((prev) => {
+      const newArray = prev[fieldName].filter((_, i) => i !== index);
+      return { ...prev, [fieldName]: newArray };
+    });
+  };
+
+  const updateObjectField = (fieldName, key, value) => {
     setForm((prev) => ({
       ...prev,
-      [fieldName]: prev[fieldName].filter((_, i) => i !== index),
+      [fieldName]: { ...prev[fieldName], [key]: value },
     }));
   };
 
@@ -212,24 +355,28 @@ const SuperAdminProjectForm = () => {
     });
   };
 
-  const validate = () => {
-    const errors = [];
-    if (!form.title.trim()) errors.push("Project title is required.");
-    if (!form.location.trim()) errors.push("Location is required.");
-    if (!form.plotPrice.trim()) errors.push("Plot price is required.");
-    if (!plotsValid && total > 0)
-      errors.push("Available + Reserved + Sold must equal Total Plots.");
-    if (total === 0) errors.push("Total plots must be greater than 0.");
-    return errors;
-  };
-
+  // ── Form submission ──
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const errors = validate();
+    const errors = [];
+    if (!selectedBranchId) errors.push("Branch & Branch Admin assignment is required. Every project must be assigned to an active branch office.");
+    if (!form.title.trim()) errors.push("Project Title is required.");
+    if (!form.location.trim()) errors.push("Location is required.");
+    if (!form.plotPrice.trim()) errors.push("Plot Price is required.");
+    if (!plotsValid) {
+      if (total === 0) errors.push("Total plots must be greater than 0.");
+      else errors.push("Available + Reserved + Sold must equal Total Plots.");
+    }
+
+    const combinedPlotPrice = combineWithSuffix(form.plotPrice, "Lakh");
+    if (isValidPlotPrice && !isValidPlotPrice(combinedPlotPrice)) {
+      errors.push("Invalid plot price format. Use format like '8.5', '12', or '12.5'");
+    }
+
     if (errors.length > 0) {
       setValidationErrors(errors);
-      setMessage({ type: "error", text: errors[0] });
+      setMessage({ type: "error", text: errors.join(". ") });
       return;
     }
 
@@ -237,16 +384,19 @@ const SuperAdminProjectForm = () => {
     setSaving(true);
     setMessage(null);
 
-    const combinedPlotPrice = combineWithSuffix(form.plotPrice, "Lakh");
+    const coverImageUrl = form.image || (form.images && form.images[0]) || "";
+    const effectiveCity = form.city ? form.city.trim() : form.location.split(",")[0].trim();
 
     const payload = {
       title: form.title.trim(),
       location: form.location.trim(),
-      city: form.city || form.location.split(",")[0].trim(),
+      city: effectiveCity,
       category: form.category,
-      budget: form.budget,
       status: form.status,
-      image: form.image || (form.images && form.images[0]) || "",
+      image: coverImageUrl,
+      ...(coverImageUrl
+        ? { layout: { imageUrl: coverImageUrl, referenceImageUrl: coverImageUrl } }
+        : {}),
       defaultPlotImage: form.defaultPlotImage ? form.defaultPlotImage.trim() : "",
       plotType: form.plotType,
       plotPrice: combinedPlotPrice,
@@ -254,30 +404,27 @@ const SuperAdminProjectForm = () => {
       plotSizes: combineWithSuffix(form.plotSizes, "Sq.ft"),
       distance: form.distance,
       projectSize: combineWithSuffix(form.projectSize, "Acres"),
-      totalPlots: Number(form.totalPlots),
-      availablePlots: Number(form.availablePlots),
-      reservedPlots: Number(form.reservedPlots),
-      soldPlots: Number(form.soldPlots),
+      totalPlots: total,
+      availablePlots: available,
+      reservedPlots: reserved,
+      soldPlots: sold,
       launchDate: form.launchDate || "Not announced",
       details: form.details,
       images: form.images,
-      about: form.about,
-      locationConnectivity: form.locationConnectivity,
       benefits: form.benefits,
+      about: form.about,
       highlights: form.highlights,
       amenities: form.amenities,
-      layout: form.layout,
-      // Optional branch association (server-validated against the tenant)
+      locationConnectivity: form.locationConnectivity,
       branchId: selectedBranchId || null,
     };
 
     try {
       const res = await superAdminApi.createProject(payload);
       const createdProject = res?.data;
-      const targetId = createdProject?.id || createdProject?.customId || createdProject?._id;
 
       // Optimistically update ProjectContext
-      if (createdProject) {
+      if (createdProject && setProjects) {
         setProjects((prev) => [
           ...prev,
           {
@@ -290,48 +437,56 @@ const SuperAdminProjectForm = () => {
 
       setMessage({
         type: "success",
-        text: res.message || "Project created and approved successfully!",
+        text: res?.message || "Project created and published successfully to the client website!",
       });
 
       setTimeout(() => {
-        navigate("/super-admin/branches");
-      }, 1200);
+        if (selectedBranchId) {
+          navigate(`/super-admin/branches/${selectedBranchId}`);
+        } else {
+          navigate("/super-admin/branches");
+        }
+      }, 700);
     } catch (err) {
       console.error("[SuperAdminProjectForm] Submit error:", err);
       setMessage({
         type: "error",
-        text: err.message || "Failed to create project. Please check required fields.",
+        text: err.data?.message || err.message || "Failed to save project. Please check required fields.",
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => navigate("/super-admin/branches");
+  const handleCancel = () => {
+    if (selectedBranchId) {
+      navigate(`/super-admin/branches/${selectedBranchId}`);
+    } else {
+      navigate("/super-admin/branches");
+    }
+  };
 
   return (
     <div className="admin-project-form-page">
-      {/* Header */}
       <div className="form-header">
         <button className="back-btn" onClick={handleCancel}>
-          <FaArrowLeft /> Back
+          <FaArrowLeft /> Back to Branches
         </button>
         <div>
-          <h1>Create New Project</h1>
+          <h1>Add New Project</h1>
           <p style={{ margin: "2px 0 0", fontSize: "13px", color: "#64748b" }}>
-            Super Admin — project will be immediately{" "}
-            <strong style={{ color: "#059669" }}>APPROVED</strong> and visible on the client site.
+            Super Admin — Project will be automatically{" "}
+            <strong style={{ color: "#059669" }}>APPROVED</strong> and published directly on the client site.
           </p>
         </div>
       </div>
 
-      {/* Messages */}
       {message && (
         <div className={`form-message ${message.type}`}>
-          {message.type === "success" ? <FaCheckCircle /> : <FaExclamationCircle />}
-          {" "}{message.text}
+          {message.type === "success" ? <FaCheckCircle /> : <FaExclamationCircle />} {message.text}
         </div>
       )}
+
       {validationErrors.length > 0 && (
         <div className="form-message error">
           <FaExclamationCircle />
@@ -345,46 +500,78 @@ const SuperAdminProjectForm = () => {
 
       <form onSubmit={handleSubmit} className="project-form" noValidate>
         {/* ==============================
-            BRANCH ASSOCIATION (SA only)
+            BRANCH & ADMIN ASSIGNMENT
         ============================== */}
-        <section className="form-section" style={{ border: "2px solid #fbf0ec", background: "#f0f9ff" }}>
-          <h2 style={{ color: "#a63d2f" }}>
-            <FaBuilding style={{ marginRight: 8, verticalAlign: "middle" }} />
-            Associate with Branch
+        <section className="form-section" style={{ border: "2px solid #e2e8f0", background: "#f8fafc" }}>
+          <h2 style={{ color: "#a63d2f", display: "flex", alignItems: "center", gap: 8 }}>
+            <FaBuilding /> Branch &amp; Admin Assignment *
           </h2>
-          <div className="form-grid">
-            <label className="full-width">
-              Associate with Branch (Optional — associates the project with one of your branches)
-              <CustomDropdown
-                value={selectedBranchId}
-                onChange={(e) => setSelectedBranchId(e.target.value)}
-                className="sa-select-input"
-                style={{ marginTop: "6px" }}
-                placeholder="— No branch association —"
-              >
-                <option value="">— No branch association —</option>
-                {activeBranches.length > 0 ? (
-                  <optgroup label="Active Branches">
-                    {activeBranches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.name} — {branch.city}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : (
-                  <option disabled>
-                    No active branches yet (create one from the Branches page)
-                  </option>
-                )}
-              </CustomDropdown>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
+            Every project must be assigned to an active branch office and managed by a Branch Admin. Selecting a branch locks the project&apos;s location &amp; city to that Branch Admin&apos;s operational territory.
+          </p>
 
-              {selectedBranchId && (
-                <small style={{ color: "#059669", fontWeight: 600, marginTop: 4, display: "block" }}>
-                  ✓ Project will be associated with "{selectedBranch?.name}" ({selectedBranch?.city}).
-                </small>
-              )}
-            </label>
-          </div>
+          {activeBranches.length === 0 && !branchesLoading ? (
+            <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, marginBottom: 12 }}>
+              <p style={{ margin: 0, color: "#991b1b", fontSize: "0.88rem", fontWeight: 600 }}>
+                <FaExclamationCircle style={{ marginRight: 6 }} />
+                No active branches found. You must create at least one Branch with an active Branch Admin before publishing a project.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/super-admin/branches")}
+                style={{
+                  marginTop: 8,
+                  padding: "6px 12px",
+                  background: "#a63d2f",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Go to Branch Management
+              </button>
+            </div>
+          ) : (
+            <div className="form-grid">
+              <label className="full-width">
+                Select Branch &amp; Branch Admin *
+                <CustomDropdown
+                  value={selectedBranchId}
+                  onChange={(e) => setSelectedBranchId(e.target.value)}
+                  placeholder="-- Select Branch & Branch Admin (Required) --"
+                  required
+                >
+                  <option value="" disabled>-- Select Branch &amp; Branch Admin (Required) --</option>
+                  {activeBranches.map((branch) => {
+                    const adminName = branch.branchAdmin?.name || branch.branchAdmin?.email || "No Admin Assigned";
+                    const regionText = branch.region ? `, ${branch.region}` : "";
+                    return (
+                      <option key={branch.id || branch._id} value={branch.id || branch._id}>
+                        {branch.name} — Admin: {adminName} ({branch.city}{regionText})
+                      </option>
+                    );
+                  })}
+                </CustomDropdown>
+
+                {selectedBranch ? (
+                  <div style={{ marginTop: 8, padding: "8px 12px", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
+                    <small style={{ color: "#065f46", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                      <FaLock size={12} />
+                      Auto-locked to territory: {selectedBranch.name} ({selectedBranch.city}{selectedBranch.region ? `, ${selectedBranch.region}` : ""}).
+                      Branch Admin: {selectedBranch.branchAdmin?.name || "Pending"}.
+                    </small>
+                  </div>
+                ) : (
+                  <small style={{ color: "#dc2626", fontWeight: 600, display: "block", marginTop: 4 }}>
+                    * Branch assignment is mandatory. Please select an active branch office above.
+                  </small>
+                )}
+              </label>
+            </div>
+          )}
         </section>
 
         {/* ==============================
@@ -399,65 +586,89 @@ const SuperAdminProjectForm = () => {
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="e.g. Greenwood Enclave"
                 required
               />
             </label>
+
             <label>
-              Location *
+              Location * (Locked to Branch)
               <input
                 type="text"
                 value={form.location}
-                onChange={(e) => setForm({ ...form, location: sanitizeTextNoDigits(e.target.value) })}
+                readOnly
+                style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }}
+                placeholder={selectedBranch ? "e.g. Dindigul, Tamil Nadu" : "Select a Branch above to lock location"}
                 required
               />
+              <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                <FaLock size={10} style={{ marginRight: 4 }} />
+                {selectedBranch
+                  ? `Locked from ${selectedBranch.name} territory.`
+                  : "Auto-set once you select a Branch Office above."}
+              </small>
             </label>
+
             <label>
-              City
+              City * (Locked to Branch)
               <input
                 type="text"
                 value={form.city}
-                onChange={(e) => setForm({ ...form, city: sanitizeTextNoDigits(e.target.value) })}
+                readOnly
+                style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }}
+                placeholder={selectedBranch ? "e.g. Dindigul" : "Select a Branch above to lock city"}
+                required
               />
+              <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                <FaLock size={10} style={{ marginRight: 4 }} />
+                {selectedBranch
+                  ? `Locked from ${selectedBranch.name} city.`
+                  : "Auto-set once you select a Branch Office above."}
+              </small>
             </label>
+
             <label>
               Category
-              <CustomDropdown value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              <CustomDropdown
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
                 <option value="Residential">Residential</option>
                 <option value="Commercial">Commercial</option>
                 <option value="Agriculture">Agriculture</option>
               </CustomDropdown>
             </label>
-            <label>
-              Budget Range
-              <CustomDropdown value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })}>
-                <option value="below10">Below ₹10 Lakh</option>
-                <option value="10-25">₹10 - ₹25 Lakh</option>
-                <option value="25-50">₹25 - ₹50 Lakh</option>
-                <option value="above50">Above ₹50 Lakh</option>
-              </CustomDropdown>
-            </label>
+
             <label>
               Status
-              <CustomDropdown value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <CustomDropdown
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
                 <option value="Active">Active</option>
                 <option value="Completed">Completed</option>
                 <option value="Upcoming">Upcoming</option>
               </CustomDropdown>
             </label>
+
             <label>
               Plot Type
-              <CustomDropdown value={form.plotType} onChange={(e) => setForm({ ...form, plotType: e.target.value })}>
+              <CustomDropdown
+                value={form.plotType}
+                onChange={(e) => setForm({ ...form, plotType: e.target.value })}
+              >
                 <option value="Residential">Residential</option>
                 <option value="Commercial">Commercial</option>
                 <option value="Agriculture">Agriculture</option>
                 <option value="Villa Plot">Villa Plot</option>
               </CustomDropdown>
             </label>
+
             <label>
               Plot Price *
               <InputWithUnit
                 value={form.plotPrice}
-                onChange={(v) => setForm({ ...form, plotPrice: v })}
+                onChange={(e) => setForm({ ...form, plotPrice: e })}
                 placeholder="e.g. 8.5"
                 suffix="Lakh"
                 sanitize={sanitizePlotPrice}
@@ -477,8 +688,8 @@ const SuperAdminProjectForm = () => {
               Project Size
               <InputWithUnit
                 value={form.projectSize}
-                onChange={(v) => setForm({ ...form, projectSize: v })}
-                placeholder="e.g., 12"
+                onChange={(e) => setForm({ ...form, projectSize: e })}
+                placeholder="e.g. 12"
                 suffix="Acres"
                 sanitize={sanitizeProjectSize}
               />
@@ -487,8 +698,8 @@ const SuperAdminProjectForm = () => {
               Plot Sizes
               <InputWithUnit
                 value={form.plotSizes}
-                onChange={(v) => setForm({ ...form, plotSizes: v })}
-                placeholder="e.g., 600 – 2400"
+                onChange={(e) => setForm({ ...form, plotSizes: e })}
+                placeholder="e.g. 600 – 2400"
                 suffix="Sq.ft"
                 sanitize={sanitizePlotSizes}
               />
@@ -499,7 +710,7 @@ const SuperAdminProjectForm = () => {
                 type="text"
                 value={form.distance}
                 onChange={(e) => setForm({ ...form, distance: e.target.value })}
-                placeholder="e.g., 2 km to NH"
+                placeholder="e.g. 2 km to NH"
               />
             </label>
             <label>
@@ -566,67 +777,162 @@ const SuperAdminProjectForm = () => {
             </div>
           )}
           {plotsValid && total > 0 && (
-            <div className="validation-success">Plot counts are valid ✓</div>
+            <div className="validation-success">
+              Plot counts are valid ✓
+            </div>
           )}
         </section>
 
         {/* ==============================
-            DESCRIPTION
+            PROJECT HERO DESCRIPTION
         ============================== */}
         <section className="form-section">
           <h2>Project Hero Description</h2>
           <label className="full-width">
             <textarea
               value={form.details}
-              maxLength={450}
+              maxLength={300}
               onChange={(e) => setForm({ ...form, details: e.target.value })}
               rows={4}
               placeholder="Short overview description for the top hero area..."
             />
             <div className="char-counter-row">
-              <span className={`char-counter ${(form.details || "").length >= 450 ? "limit-reached" : (form.details || "").length > 400 ? "warning" : ""}`}>
-                {(form.details || "").length} / 450 characters
+              <span className={`char-counter ${(form.details || "").length >= 300 ? "limit-reached" : (form.details || "").length > 250 ? "warning" : ""}`}>
+                {(form.details || "").length} / 300 characters
               </span>
             </div>
           </label>
         </section>
 
         {/* ==============================
-            IMAGES
+            ABOUT THE PROJECT SECTION
+        ============================== */}
+        <section className="form-section">
+          <h2>About The Project Section</h2>
+          <label className="full-width">
+            Main Description
+            <textarea
+              value={form.about?.description || ""}
+              maxLength={300}
+              onChange={(e) => updateObjectField("about", "description", e.target.value)}
+              rows={4}
+              placeholder="Main description for 'About The Project' section on client website..."
+            />
+            <div className="char-counter-row">
+              <span className={`char-counter ${(form.about?.description || "").length >= 300 ? "limit-reached" : (form.about?.description || "").length > 250 ? "warning" : ""}`}>
+                {(form.about?.description || "").length} / 300 characters
+              </span>
+            </div>
+          </label>
+        </section>
+
+        {/* ==============================
+            PROJECT COVER & GALLERY IMAGES
         ============================== */}
         <section className="form-section">
           <h2>Project Cover & Gallery Images</h2>
-          <label className="full-width" style={{ marginBottom: "1.25rem" }}>
-            Cover Image URL (Shows on Project Card)
+          <div className="project-image-upload-wrapper" style={{ marginBottom: "1.75rem" }}>
+            <label className="project-image-field-label">
+              Project Layout & Cover Image
+              <span className="project-image-field-hint">
+                Upload the master layout or site plan. This image is displayed on the project card and rendered as the primary layout viewer on the client site.
+              </span>
+            </label>
+
             <input
-              type="url"
-              placeholder="image URL"
-              value={form.image}
+              type="file"
+              ref={fileInputRef}
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              style={{ display: "none" }}
               onChange={(e) => {
-                const val = e.target.value;
-                setForm((prev) => {
-                  const newImgs = [...prev.images];
-                  if (val) {
-                    if (newImgs.length === 0) newImgs.push(val);
-                    else newImgs[0] = val;
-                  }
-                  return { ...prev, image: val, images: newImgs };
-                });
+                const file = e.target.files?.[0];
+                if (file) handleImageFileChange(file);
+                e.target.value = "";
               }}
             />
-          </label>
-          {form.image && (
-            <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <img
-                src={form.image}
-                alt="Cover preview"
-                style={{ width: "200px", height: "120px", objectFit: "cover", borderRadius: "8px", border: "1px solid #ddd" }}
-                onError={(e) => { e.target.style.display = "none"; }}
-                onLoad={(e) => { e.target.style.display = "block"; }}
-              />
-              <span style={{ fontSize: "0.85rem", color: "#666" }}>Preview of card cover image</span>
-            </div>
-          )}
+
+            {form.image ? (
+              <div className="project-image-preview-card">
+                <div className="project-image-preview-media">
+                  <img
+                    src={form.image}
+                    alt="Project layout preview"
+                    className="project-image-preview-img"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                    onLoad={(e) => { e.target.style.display = "block"; }}
+                  />
+                </div>
+                <div className="project-image-preview-info">
+                  <div className="project-image-preview-badge">
+                    <FaImage /> Master Layout & Cover Image
+                  </div>
+                  <p className="project-image-preview-desc">
+                    Active layout image displayed to buyers and used as the default cover.
+                  </p>
+                  <div className="project-image-preview-actions">
+                    <button
+                      type="button"
+                      className="project-image-action-btn project-image-replace-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                    >
+                      {isUploadingImage ? <FaSpinner className="fa-spin" /> : <FaCloudUploadAlt />}
+                      {isUploadingImage ? "Uploading..." : "Replace Image"}
+                    </button>
+                    <button
+                      type="button"
+                      className="project-image-action-btn project-image-remove-btn"
+                      onClick={handleRemoveImage}
+                      disabled={isUploadingImage}
+                    >
+                      <FaTimes /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`project-image-dropzone ${isDragOver ? "drag-over" : ""} ${isUploadingImage ? "uploading" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleImageFileChange(file);
+                }}
+                onClick={() => {
+                  if (!isUploadingImage) fileInputRef.current?.click();
+                }}
+              >
+                {isUploadingImage ? (
+                  <div className="dropzone-content">
+                    <FaSpinner className="dropzone-icon fa-spin" />
+                    <p className="dropzone-primary-text">Uploading image to cloud...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                  </div>
+                ) : (
+                  <div className="dropzone-content">
+                    <div className="dropzone-icon-wrap">
+                      <FaCloudUploadAlt className="dropzone-icon" />
+                    </div>
+                    <p className="dropzone-primary-text">
+                      Drag &amp; drop your layout image here, or <span className="dropzone-browse-link">browse</span>
+                    </p>
+                    <span className="dropzone-secondary-text">
+                      PNG, JPG, JPEG, WEBP supported (up to 20MB)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <label className="full-width" style={{ marginBottom: "1.25rem" }}>
             Default Plot Image URL (Applies to all plots created in this project)
@@ -636,6 +942,9 @@ const SuperAdminProjectForm = () => {
               value={form.defaultPlotImage}
               onChange={(e) => setForm({ ...form, defaultPlotImage: e.target.value })}
             />
+            <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+              If left blank, plots will automatically inherit the project cover image above.
+            </small>
           </label>
           {form.defaultPlotImage && (
             <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -663,81 +972,10 @@ const SuperAdminProjectForm = () => {
                 }));
               }}
               rows={4}
+              placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
             />
+            <small>One image URL per line. The first image will be used as the cover image.</small>
           </label>
-        </section>
-
-        {/* ==============================
-            INTERACTIVE PROJECT LAYOUT MAP
-        ============================== */}
-        <section className="form-section">
-          <div className="form-section-header">
-            <span className="section-step">LAYOUT</span>
-            <h2>Interactive Project Layout Map (Cloudinary Supported)</h2>
-          </div>
-
-          <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: "1rem" }}>
-            Upload or configure a high-resolution plotted layout plan diagram. You can visually map and draw polygon boundaries for every numbered plot to provide visitors an interactive map experience with live availability synchronization.
-          </p>
-
-          <label className="full-width" style={{ marginBottom: "1rem" }}>
-            Layout Image Diagram URL (Cloudinary or hosted persistent URL)
-            <input
-              type="url"
-              placeholder="e.g. https://res.cloudinary.com/.../layout.png"
-              value={form.layout?.imageUrl || ""}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  layout: { ...(prev.layout || {}), imageUrl: e.target.value },
-                }))
-              }
-            />
-          </label>
-
-          {form.layout?.imageUrl && (
-            <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <img
-                src={form.layout.imageUrl}
-                alt="Layout preview"
-                style={{ width: "240px", height: "140px", objectFit: "contain", borderRadius: "8px", border: "1px solid #ddd", background: "#f8fafc" }}
-                onError={(e) => { e.target.style.display = "none"; }}
-                onLoad={(e) => { e.target.style.display = "block"; }}
-              />
-              <div>
-                <strong style={{ display: "block", fontSize: "0.9rem", color: "#1e293b" }}>
-                  Layout Diagram Ready
-                </strong>
-                <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
-                  Configured: {form.layout?.regions?.length || 0} plot boundary regions mapped
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div style={{ marginTop: "0.5rem" }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowLayoutEditor(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.5rem 1rem",
-                background: "#0f172a",
-                color: "#f8fafc",
-                borderRadius: "8px",
-                border: "none",
-                fontWeight: 600,
-                fontSize: "0.88rem",
-                cursor: "pointer",
-              }}
-            >
-              <FaMapMarkedAlt />
-              <span>Manage Project Layout Image</span>
-            </button>
-          </div>
         </section>
 
         {/* ==============================
@@ -834,15 +1072,15 @@ const SuperAdminProjectForm = () => {
         </section>
 
         {/* ==============================
-            LOCATION CONNECTIVITY
+            LOCATION & CONNECTIVITY
         ============================== */}
         <section className="form-section">
-          <h2>Location & Connectivity</h2>
+          <h2>Location &amp; Connectivity</h2>
           {form.locationConnectivity.map((loc, index) => (
             <div key={index} className="array-row">
               <input
                 type="text"
-                placeholder="Name (e.g., Airport, School)"
+                placeholder="Name (e.g. Airport, School)"
                 value={loc.name}
                 onChange={(e) =>
                   updateArrayField("locationConnectivity", index, { ...loc, name: e.target.value })
@@ -870,37 +1108,12 @@ const SuperAdminProjectForm = () => {
           <button
             type="button"
             className="add-btn"
-            onClick={() => addArrayItem("locationConnectivity", { name: "", distance: "" })}
+            onClick={() =>
+              addArrayItem("locationConnectivity", { name: "", distance: "" })
+            }
           >
             <FaPlus /> Add Location
           </button>
-        </section>
-
-        {/* ==============================
-            ABOUT
-        ============================== */}
-        <section className="form-section">
-          <h2>About The Project Section</h2>
-
-          <label className="full-width" style={{ marginBottom: "1rem" }}>
-            <textarea
-              value={form.about.description}
-              maxLength={450}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  about: { ...prev.about, description: e.target.value },
-                }))
-              }
-              rows={3}
-              placeholder="Detailed description for 'About The Project' section..."
-            />
-            <div className="char-counter-row">
-              <span className={`char-counter ${(form.about?.description || "").length >= 450 ? "limit-reached" : (form.about?.description || "").length > 400 ? "warning" : ""}`}>
-                {(form.about?.description || "").length} / 450 characters
-              </span>
-            </div>
-          </label>
         </section>
 
         {/* ==============================
@@ -913,46 +1126,25 @@ const SuperAdminProjectForm = () => {
           <button
             type="submit"
             className="save-btn"
-            disabled={saving || !plotsValid}
-            style={{ background: saving || !plotsValid ? undefined : "#059669" }}
+            disabled={saving || !plotsValid || !selectedBranchId}
+            style={{
+              background: saving || !plotsValid || !selectedBranchId ? undefined : "#059669",
+            }}
           >
-            {saving
-              ? "Creating..."
-              : (
-                <>
-                  <FaSave /> Create & Approve Project
-                  {selectedBranchId && " to Branch"}
-                </>
-              )}
+            {saving ? (
+              "Creating & Publishing..."
+            ) : !selectedBranchId ? (
+              <>
+                <FaLock /> Select Branch &amp; Admin to Publish
+              </>
+            ) : (
+              <>
+                <FaSave /> Create &amp; Approve Project to {selectedBranch.name}
+              </>
+            )}
           </button>
         </div>
       </form>
-
-      {/* Interactive Layout Boundary Editor Modal */}
-      {showLayoutEditor && (
-        <LayoutEditorModal
-          project={{
-            title: form.title || "New Project",
-            layout: form.layout || {},
-          }}
-          plots={Array.from({ length: Number(form.totalPlots) || 5 }).map((_, i) => ({
-            _id: `temp_plot_${i + 1}`,
-            id: `temp_plot_${i + 1}`,
-            plotNumber: String(i + 1),
-            size: form.plotSizes ? form.plotSizes.split("–")[0].trim() : "1,200 sq.ft",
-            facing: "East",
-            price: form.plotPrice ? `₹${form.plotPrice} Lakh` : "₹12 Lakh",
-            status: i < (Number(form.availablePlots) || 3) ? "Available" : i < (Number(form.availablePlots) || 3) + (Number(form.reservedPlots) || 1) ? "Reserved" : "Sold",
-          }))}
-          onClose={() => setShowLayoutEditor(false)}
-          onSaveSuccess={(savedLayout) => {
-            setForm((prev) => ({
-              ...prev,
-              layout: savedLayout,
-            }));
-          }}
-        />
-      )}
     </div>
   );
 };

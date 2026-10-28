@@ -1247,22 +1247,41 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       }
     }
 
-    // ── Branch assignment (server-validated; never trusted from the client) ──
-    // Invariants maintained:
-    //   • branchId set  ⇒ project.adminId is null OR owns/belongs to that branch
-    //   • a legacy admin (no branch) can never own a branch-scoped project
-    let assignedBranch = null;
-
-    if (requestedBranchId) {
-      assignedBranch = await Branch.findOne({
-        _id: requestedBranchId,
-        tenantId: req.user._id,
+    // ── Branch assignment (server-validated; strictly required for all new projects) ──
+    if (!requestedBranchId) {
+      return res.status(400).json({
+        success: false,
+        message: "Branch & Branch Admin assignment is required. Every project must be assigned to an active branch office.",
       });
-      if (!assignedBranch) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid branch ID. Branch does not belong to your organization.",
-        });
+    }
+
+    let assignedBranch = await Branch.findOne({
+      _id: requestedBranchId,
+      tenantId: req.user._id,
+      status: "ACTIVE",
+    });
+    if (!assignedBranch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or inactive branch selected. Please assign the project to an active branch office.",
+      });
+    }
+
+    // Resolve branch admin if not explicitly passed
+    if (!assignedAdmin && assignedBranch.branchAdmin) {
+      assignedAdmin = await User.findById(assignedBranch.branchAdmin);
+    }
+    if (!assignedAdmin) {
+      const activeBranchAdmin = await User.findOne({
+        role: "ADMIN",
+        tenantId: req.user._id,
+        branchId: assignedBranch._id,
+        status: "ACTIVE",
+      });
+      if (activeBranchAdmin) {
+        assignedAdmin = activeBranchAdmin;
+        assignedBranch.branchAdmin = activeBranchAdmin._id;
+        await assignedBranch.save();
       }
     }
 
@@ -1324,10 +1343,20 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       }
     }
 
+    // Determine location and city; when assigned to a branch, authoritatively lock to branch territory
+    let effectiveLocation = location ? location.trim() : "";
+    let effectiveCity = city ? city.trim() : (location ? location.split(",")[0].trim() : "");
+    if (assignedBranch) {
+      effectiveLocation = assignedBranch.region
+        ? `${assignedBranch.city}, ${assignedBranch.region}`
+        : assignedBranch.city;
+      effectiveCity = assignedBranch.city;
+    }
+
     const newProject = await Project.create({
       title: title.trim(),
-      location: location.trim(),
-      city: city || location.split(",")[0].trim(),
+      location: effectiveLocation,
+      city: effectiveCity,
       category: category || "Residential",
       budget: budget || "below10",
       status: status || "Active",

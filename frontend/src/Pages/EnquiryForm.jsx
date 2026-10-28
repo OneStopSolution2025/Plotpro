@@ -9,6 +9,8 @@ import { ArrowRight, MapPin, User, Phone, Mail, AlertCircle, CheckCircle, Messag
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useProjects, getProjectRouteSlug, findProjectByIdentifier } from "../context/ProjectContext";
 import { usePlots } from "../context/PlotContext";
+import { useAuth } from "../context/AuthContext";
+import { parsePhoneString } from "../utils/phoneUtils";
 import { publicApi } from "../services/api";
 
 const CONTACT_METHODS = [
@@ -24,6 +26,7 @@ export default function EnquiryForm() {
     const navigate = useNavigate();
     const { projects } = useProjects();
     const { plots } = usePlots();
+    const { user: authUser } = useAuth();
 
     const preSelectedPlot = searchParams.get("plot") || "";
 
@@ -71,6 +74,22 @@ export default function EnquiryForm() {
         contactMethod: "",
         message: "",
     });
+
+    // Prefill user details if logged in
+    useEffect(() => {
+        if (authUser) {
+            const parsedPhone = parsePhoneString(authUser.phone || "");
+            if (parsedPhone.countryCode) {
+                setCountryCode(parsedPhone.countryCode);
+            }
+            setForm((prev) => ({
+                ...prev,
+                fullName: authUser.name || prev.fullName,
+                email: authUser.email || prev.email,
+                mobile: parsedPhone.digits || prev.mobile,
+            }));
+        }
+    }, [authUser]);
 
     const [errors, setErrors] = useState({});
     const [status, setStatus] = useState(null);
@@ -213,16 +232,17 @@ export default function EnquiryForm() {
 
                             <div className="field">
                                 <label htmlFor="fullName">Full Name <span className="required">*</span></label>
-                                <div className="input-wrapper">
+                                <div className={`input-wrapper ${authUser ? "read-only" : ""}`}>
                                     <User size={18} />
                                     <input
                                         id="fullName"
                                         type="text"
-                                        className={`input ${errors.fullName ? "error" : ""}`}
+                                        className={`input ${authUser ? "read-only-input" : ""} ${errors.fullName ? "error" : ""}`}
                                         placeholder="Enter your full name"
                                         value={form.fullName}
                                         onChange={updateForm("fullName")}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || Boolean(authUser)}
+                                        readOnly={Boolean(authUser)}
                                     />
                                 </div>
                                 {errors.fullName && <span className="error-text">{errors.fullName}</span>}
@@ -251,16 +271,17 @@ export default function EnquiryForm() {
 
                             <div className="field">
                                 <label htmlFor="email">Email <span className="required">*</span></label>
-                                <div className="input-wrapper">
+                                <div className={`input-wrapper ${authUser ? "read-only" : ""}`}>
                                     <Mail size={18} />
                                     <input
                                         id="email"
                                         type="email"
-                                        className={`input ${errors.email ? "error" : ""}`}
+                                        className={`input ${authUser ? "read-only-input" : ""} ${errors.email ? "error" : ""}`}
                                         placeholder="Enter your email"
                                         value={form.email}
                                         onChange={updateForm("email")}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || Boolean(authUser)}
+                                        readOnly={Boolean(authUser)}
                                     />
                                 </div>
                                 {errors.email && <span className="error-text">{errors.email}</span>}
@@ -313,26 +334,29 @@ export default function EnquiryForm() {
 
                             <div className="field">
                                 <label>Preferred Contact Method <span className="required">*</span></label>
-                                <div className="contact-methods">
-                                    {CONTACT_METHODS.map((method) => (
-                                        <label
-                                            key={method.value}
-                                            className={`contact-method ${form.contactMethod === method.value ? "selected" : ""} ${errors.contactMethod ? "error" : ""}`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="contactMethod"
-                                                value={method.value}
-                                                checked={form.contactMethod === method.value}
-                                                onChange={updateForm("contactMethod")}
-                                                disabled={isSubmitting}
-                                            />
-                                            <span className="method-content">
-                                                <method.icon size={20} />
-                                                <span>{method.label}</span>
-                                            </span>
-                                        </label>
-                                    ))}
+                                <div className="v2-segmented-wrap">
+                                  {CONTACT_METHODS.map((method) => {
+                                    const isSelected = form.contactMethod === method.value;
+                                    return (
+                                      <label
+                                        key={method.value}
+                                        className={`v2-pill-btn ${isSelected ? "selected" : ""}`}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name="contactMethod"
+                                          value={method.value}
+                                          checked={isSelected}
+                                          onChange={updateForm("contactMethod")}
+                                          disabled={isSubmitting}
+                                        />
+                                        <div className="v2-icon-circle">
+                                          <method.icon size={16} />
+                                        </div>
+                                        <span className="v2-pill-title">{method.label}</span>
+                                      </label>
+                                    );
+                                  })}
                                 </div>
                                 {errors.contactMethod && <span className="error-text">{errors.contactMethod}</span>}
                             </div>

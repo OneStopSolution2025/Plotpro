@@ -566,3 +566,328 @@
   background: #872e22;
   color: #ffffff;
 }
+
+/* =========================================================
+   USER PORTAL: ENQUIRIES & SITE VISITS
+   ========================================================= */
+
+.user-portal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.user-portal-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.user-portal-section-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.user-portal-section-header p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.user-portal-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-portal-refresh-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.user-portal-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.user-portal-loading {
+  text-align: center;
+  padding: 48px 20px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-portal-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #a63d2f;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.user-portal-loading p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.user-portal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-portal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  display: flex;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-portal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+.user-portal-card-img-wrap {
+  position: relative;
+  width: 220px;
+  min-height: 160px;
+  background: #f1f5f9;
+  flex-shrink: 0;
+}
+
+.user-portal-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-portal-plot-tag {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.user-portal-card-content {
+  flex: 1;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-portal-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.user-portal-card-top > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.user-portal-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Enquiry Status */
+.user-portal-badge.status-new {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.user-portal-badge.status-contacted {
+  background: #fefce8;
+  color: #ca8a04;
+  border: 1px solid #fef08a;
+}
+
+.user-portal-badge.status-followup {
+  background: #fdf4ff;
+  color: #c026d3;
+  border: 1px solid #f5d0fe;
+}
+
+.user-portal-badge.status-closed {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Site Visit Status */
+.user-portal-badge.status-scheduled {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.user-portal-badge.status-confirmed {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.user-portal-badge.status-completed {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.user-portal-badge.status-cancelled {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.user-portal-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.user-portal-date.highlight {
+  color: #0f172a;
+  font-weight: 600;
+  background: #f8fafc;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.user-portal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a63d2f;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.user-portal-link:hover {
+  color: #872e22;
+  text-decoration: underline;
+}
+
+.user-portal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.user-portal-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.user-portal-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.user-portal-message-box {
+  background: #f8fafc;
+  border-left: 3px solid #a63d2f;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.user-portal-message-box strong {
+  color: #334155;
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
+.user-portal-message-box p {
+  color: #475569;
+  font-style: italic;
+  margin: 0;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .user-portal-card {
+    flex-direction: column;
+  }
+  .user-portal-card-img-wrap {
+    width: 100%;
+    height: 150px;
+    min-height: 150px;
+  }
+}

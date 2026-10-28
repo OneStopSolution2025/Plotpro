@@ -100,3 +100,5 @@ app/plugins/impeccable-live.client.ts
 src/plugins/impeccable-live.client.ts
 # impeccable-live-ignore-end
 
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

@@ -16,6 +16,39 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 // Load environment variables from backend/.env
 dotenv.config();
 
+// ─── Security Guard: Strictly Prohibit Device OTP Bypass Outside Local Dev ──
+export function validateBypassConfiguration() {
+  const isBypassRequested = process.env.DEV_LOCAL_BYPASS_DEVICE_OTP === "true";
+  if (!isBypassRequested) return;
+
+  const isProduction = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging";
+  const isCloudDeployment = Boolean(
+    process.env.RAILWAY_PUBLIC_DOMAIN ||
+    process.env.RAILWAY_PROJECT_ID ||
+    process.env.RAILWAY_ENVIRONMENT ||
+    process.env.RAILWAY_SERVICE_ID ||
+    process.env.RENDER_SERVICE_ID ||
+    process.env.VERCEL ||
+    process.env.HEROKU_APP_ID
+  );
+
+  if (isProduction || isCloudDeployment || process.env.NODE_ENV !== "development") {
+    const errorMsg =
+      "[SECURITY FATAL] DEV_LOCAL_BYPASS_DEVICE_OTP is strictly prohibited in production and cloud deployments! " +
+      `Detected: NODE_ENV=${process.env.NODE_ENV}, CloudDeployment=${isCloudDeployment}. Refusing to start server.`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  console.warn(
+    "[SECURITY WARNING] DEV_LOCAL_BYPASS_DEVICE_OTP is enabled for local development only. " +
+    "Administrative logins will skip email device verification on this machine."
+  );
+}
+
+// Execute guard check immediately on startup
+validateBypassConfiguration();
+
 // Connect to Database
 connectDB();
 

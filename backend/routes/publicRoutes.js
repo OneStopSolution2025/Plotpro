@@ -8,35 +8,7 @@ import {
 import { submitPublicEnquiry } from "../controllers/enquiryController.js";
 import { submitPublicSiteVisit } from "../controllers/siteVisitController.js";
 
-import { checkMaintenanceMode } from "../middleware/maintenanceMiddleware.js";
-import PlatformSettings from "../models/PlatformSettings.js";
-
 const router = express.Router();
-
-// Public Platform Status & Settings
-router.get("/settings", async (req, res, next) => {
-  try {
-    let settings = await PlatformSettings.findOne({});
-    if (!settings) {
-      settings = await PlatformSettings.create({});
-    }
-    res.status(200).json({
-      success: true,
-      data: {
-        platformName: settings.platformName,
-        supportEmail: settings.supportEmail,
-        supportPhone: settings.supportPhone,
-        maintenanceMode: settings.maintenanceMode,
-        allowSelfRegistration: settings.allowSelfRegistration,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Protect public routes with maintenance check
-router.use(checkMaintenanceMode);
 
 // Public Project & Plot Exploration
 router.get("/projects", getPublicProjects);

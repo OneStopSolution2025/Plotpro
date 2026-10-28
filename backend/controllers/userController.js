@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import Project from "../models/Project.js";
 import Plot from "../models/Plot.js";
+import Enquiry from "../models/Enquiry.js";
+import SiteVisit from "../models/SiteVisit.js";
 import { findProjectByIdentifier, findPlotByIdentifier } from "../middleware/ownershipMiddleware.js";
 
 /**
@@ -259,6 +261,79 @@ export const toggleSavePlot = async (req, res, next) => {
       message: isSaved ? "Plot added to your wishlist." : "Plot removed from your wishlist.",
       plotId: plot._id,
       plotCustomId: plot.customId,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get enquiries submitted by the current user
+ * @route   GET /api/user/enquiries
+ * @access  Private
+ */
+export const getUserEnquiries = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const matchConditions = [{ customerId: user._id }];
+
+    if (user.email) {
+      matchConditions.push({ email: { $regex: new RegExp(`^${user.email.trim()}$`, "i") } });
+    }
+    if (user.phone) {
+      // Clean phone match (digits or exact)
+      const digits = user.phone.replace(/\D/g, "");
+      if (digits.length >= 7) {
+        matchConditions.push({ mobile: { $regex: digits.slice(-10) } });
+      } else {
+        matchConditions.push({ mobile: user.phone });
+      }
+    }
+
+    const enquiries = await Enquiry.find({ $or: matchConditions })
+      .populate("projectId", "customId title location city image images layout")
+      .populate("branchId", "name location city phone email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: enquiries,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get site visits scheduled by the current user
+ * @route   GET /api/user/site-visits
+ * @access  Private
+ */
+export const getUserSiteVisits = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const matchConditions = [{ customerId: user._id }];
+
+    if (user.email) {
+      matchConditions.push({ email: { $regex: new RegExp(`^${user.email.trim()}$`, "i") } });
+    }
+    if (user.phone) {
+      const digits = user.phone.replace(/\D/g, "");
+      if (digits.length >= 7) {
+        matchConditions.push({ mobile: { $regex: digits.slice(-10) } });
+      } else {
+        matchConditions.push({ mobile: user.phone });
+      }
+    }
+
+    const siteVisits = await SiteVisit.find({ $or: matchConditions })
+      .populate("projectId", "customId title location city image images layout")
+      .populate("branchId", "name location city phone email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: siteVisits,
     });
   } catch (error) {
     next(error);

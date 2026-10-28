@@ -33,6 +33,13 @@ export function getProofsDir() {
 }
 
 /**
+ * Returns the private business verification documents directory inside the upload root.
+ */
+export function getBusinessDocsDir() {
+  return path.join(getUploadDir(), "business_docs");
+}
+
+/**
  * Returns the temp directory inside the upload root.
  */
 export function getTempDir() {
@@ -85,7 +92,7 @@ export function initStorage() {
   }
 
   const uploadDir = getUploadDir();
-  const subDirs = [uploadDir, getLayoutsDir(), getProofsDir(), getTempDir()];
+  const subDirs = [uploadDir, getLayoutsDir(), getProofsDir(), getBusinessDocsDir(), getTempDir()];
 
   try {
     for (const dir of subDirs) {
@@ -106,6 +113,7 @@ export function initStorage() {
       uploadDir,
       layoutsDir: getLayoutsDir(),
       proofsDir: getProofsDir(),
+      businessDocsDir: getBusinessDocsDir(),
       tempDir: getTempDir(),
       isProduction: isProd,
     };

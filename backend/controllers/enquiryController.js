@@ -6,6 +6,7 @@ import Plot from "../models/Plot.js";
 import jwt from "jsonwebtoken";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
+import { recordUnknownUserData } from "../utils/guestDataService.js";
 
 /**
  * @desc    Submit public enquiry (resolves project, branch, branchAdmin, tenantId)
@@ -111,6 +112,20 @@ export const submitPublicEnquiry = async (req, res, next) => {
         notes: message ? message.trim() : "Enquiry submitted by customer.",
       },
     });
+
+    // If submitted as a guest without authenticated customerId, record in UnknownUserData
+    if (!customerId && email) {
+      await recordUnknownUserData({
+        email: email.trim(),
+        fullName: fullName.trim(),
+        mobile: mobile.trim(),
+        formType: "ENQUIRY",
+        referenceId: enquiry._id,
+        projectId: resolvedProjectId,
+        plot: plot ? String(plot).trim() : "",
+        formData: { contactMethod, message: message ? message.trim() : "" },
+      });
+    }
 
     res.status(201).json({
       success: true,

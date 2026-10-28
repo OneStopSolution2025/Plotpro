@@ -6,6 +6,7 @@ import {
   getUploadDir,
   getLayoutsDir,
   getProofsDir,
+  getBusinessDocsDir,
   resolveStoragePath,
 } from "../config/storageConfig.js";
 
@@ -308,6 +309,68 @@ class StorageService {
   }
 
   /**
+   * Upload private Super Admin business verification document.
+   * Stored in private storage (not served publicly via express.static).
+   * Supports PDF, JPG, PNG up to 10MB.
+   */
+  async uploadBusinessDoc({ fileData, mimeType, requestId, docCategory = "doc" }) {
+    const allowedMimes = [
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+    ];
+    const normalizedMime = String(mimeType || "").toLowerCase();
+
+    if (!allowedMimes.includes(normalizedMime)) {
+      const err = new Error(
+        `Invalid file format: ${mimeType}. Allowed formats for business verification are PDF, JPG, and PNG.`
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const MAX_DOC_BYTES = 10 * 1024 * 1024; // 10MB limit
+    const { buffer } = parseAndValidateBase64(fileData, MAX_DOC_BYTES);
+
+    const cleanRequestId = String(requestId || "pending").replace(/[^a-zA-Z0-9_-]/g, "") || "pending";
+    const cleanCategory = String(docCategory || "doc").replace(/[^a-zA-Z0-9_-]/g, "") || "doc";
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const ext = normalizedMime === "application/pdf" ? "pdf" : getExtensionForMime(normalizedMime);
+    const filename = `bdoc_${cleanCategory}_${cleanRequestId}_${timestamp}_${randomSuffix}.${ext}`;
+
+    const bdocsDir = getBusinessDocsDir();
+    if (!fs.existsSync(bdocsDir)) {
+      fs.mkdirSync(bdocsDir, { recursive: true });
+    }
+
+    const targetPath = resolveStoragePath(path.join("business_docs", filename));
+    fs.writeFileSync(targetPath, buffer);
+
+    return {
+      success: true,
+      fileKey: filename,
+      fileName: filename,
+      mimeType: normalizedMime,
+      bytes: buffer.length,
+      uploadedAt: new Date(),
+    };
+  }
+
+  /**
+   * Read a private business document stream / buffer for authorized reviewer download.
+   */
+  getBusinessDocPath(fileKey) {
+    if (!fileKey || typeof fileKey !== "string" || !fileKey.startsWith("bdoc_")) {
+      const err = new Error("Invalid document identifier.");
+      err.statusCode = 400;
+      throw err;
+    }
+    return resolveStoragePath(path.join("business_docs", fileKey));
+  }
+
+  /**
    * Delete an asset from Persistent Volume or Cloudinary.
    * Strictly validates that the file resides inside upload root to prevent path traversal.
    *
@@ -317,11 +380,11 @@ class StorageService {
   async deleteLayoutImage(publicId, expectedProjectId) {
     if (!publicId) return false;
 
-    // 1. If publicId is a persistent volume / local filename in layouts/ or proofs/
+    // 1. If publicId is a persistent volume / local filename in layouts/, proofs/, or business_docs/
     const isLocalFilename =
       typeof publicId === "string" &&
       !publicId.includes("/") &&
-      (publicId.startsWith("layout_") || publicId.startsWith("proof_"));
+      (publicId.startsWith("layout_") || publicId.startsWith("proof_") || publicId.startsWith("bdoc_"));
 
     if (isLocalFilename) {
       // Safety check: if expectedProjectId given, verify matching identifier
@@ -333,7 +396,9 @@ class StorageService {
         }
       }
 
-      const subFolder = publicId.startsWith("proof_") ? "proofs" : "layouts";
+      let subFolder = "layouts";
+      if (publicId.startsWith("proof_")) subFolder = "proofs";
+      else if (publicId.startsWith("bdoc_")) subFolder = "business_docs";
       try {
         const filePath = resolveStoragePath(path.join(subFolder, publicId));
         if (fs.existsSync(filePath)) {

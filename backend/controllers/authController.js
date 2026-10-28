@@ -5,7 +5,6 @@ import { Resend } from "resend";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import TrustedDevice from "../models/TrustedDevice.js";
-import PlatformSettings from "../models/PlatformSettings.js";
 import SuperAdminRequest from "../models/SuperAdminRequest.js";
 import DeviceApprovalRequest from "../models/DeviceApprovalRequest.js";
 import { generateToken } from "../utils/generateToken.js";
@@ -21,10 +20,59 @@ import {
   setDeviceCookie,
   clearDeviceCookie,
 } from "../utils/deviceSecurity.js";
+import { claimGuestDataForUser } from "../utils/guestDataService.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dreamcity_super_secret_jwt_key_2026_dev";
 
 const googleClient = new OAuth2Client();
+
+/**
+ * Checks whether the local development bypass for device OTP is strictly permitted.
+ * Safe default: strictly returns false unless explicitly opted in within a verified local development environment.
+ */
+export const isPermittedLocalDeviceOtpBypass = () => {
+  // 1. Explicit opt-in required
+  if (process.env.DEV_LOCAL_BYPASS_DEVICE_OTP !== "true") return false;
+
+  // 2. Strict refusal on production / staging
+  if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging") return false;
+
+  // 3. Strict refusal on any cloud deployment platforms
+  const isCloudDeployment = Boolean(
+    process.env.RAILWAY_PUBLIC_DOMAIN ||
+    process.env.RAILWAY_PROJECT_ID ||
+    process.env.RAILWAY_ENVIRONMENT ||
+    process.env.RAILWAY_SERVICE_ID ||
+    process.env.RENDER_SERVICE_ID ||
+    process.env.VERCEL ||
+    process.env.HEROKU_APP_ID
+  );
+  if (isCloudDeployment) return false;
+
+  // 4. Must be explicitly development
+  return process.env.NODE_ENV === "development";
+};
+
+/**
+ * Centralized, consistent authorization response builder across password and Google OAuth logins.
+ */
+export const issueProductionAuthResponse = (res, user, message = "Login successful") => {
+  const token = generateToken(user._id, user.role);
+  return res.status(200).json({
+    success: true,
+    message,
+    token,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      phone: user.phone,
+      avatar: user.avatar,
+    },
+  });
+};
 
 
 /**
@@ -34,14 +82,6 @@ const googleClient = new OAuth2Client();
  */
 export const registerUser = async (req, res, next) => {
   try {
-    const settings = await PlatformSettings.findOne({});
-    if (settings && settings.allowSelfRegistration === false) {
-      return res.status(403).json({
-        success: false,
-        message: "Public self-registration is currently disabled by platform administration.",
-      });
-    }
-
     const { name, email, password, phone } = req.body;
 
     if (!name || !email || !password) {
@@ -72,7 +112,7 @@ export const registerUser = async (req, res, next) => {
     // so Supreme Admin approval never collides with a fresh customer signup.
     const pendingRetailerRequest = await SuperAdminRequest.findOne({
       email: emailNormalized,
-      status: "PENDING",
+      status: { $in: ["PENDING", "PENDING_REVIEW", "INFO_REQUESTED"] },
     });
     if (pendingRetailerRequest) {
       return res.status(409).json({
@@ -93,6 +133,8 @@ export const registerUser = async (req, res, next) => {
       phone: phone ? phone.trim() : "",
       role: "USER",
       status: "ACTIVE",
+      authProvider: "local",
+      authProviders: ["local"],
     });
 
     const token = generateToken(user._id, user.role);
@@ -416,12 +458,21 @@ export const loginUser = async (req, res, next) => {
         .sort({ createdAt: -1 });
 
       if (retailerRequest) {
-        if (retailerRequest.status === "PENDING") {
+        if (retailerRequest.status === "PENDING" || retailerRequest.status === "PENDING_REVIEW") {
           return res.status(403).json({
             success: false,
             pendingApproval: true,
             message:
               "Your Super Admin (Retailer) account request is pending approval by the Supreme Administrator. You will be able to log in once it is approved.",
+          });
+        }
+        if (retailerRequest.status === "INFO_REQUESTED") {
+          return res.status(403).json({
+            success: false,
+            infoRequested: true,
+            message: `Additional information is required for your retailer account request.${
+              retailerRequest.reviewNote ? ` Note: ${retailerRequest.reviewNote}` : ""
+            }. Please check your email or contact support.`,
           });
         }
         if (retailerRequest.status === "REJECTED") {
@@ -459,26 +510,19 @@ export const loginUser = async (req, res, next) => {
     // ─── Trusted Device Enforcement for Administrative Roles ───────────────────
     // Applies strictly to SUPER_ADMIN and ADMIN. USER and SUPREME_ADMIN proceed directly.
     if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
-      return await handleAdministrativeDeviceLogin(req, res, user);
+      if (!isPermittedLocalDeviceOtpBypass()) {
+        return await handleAdministrativeDeviceLogin(req, res, user);
+      }
+      console.warn(
+        `[SECURITY AUDIT] Local development bypass invoked for ${user.role} (${user.email}). Direct authentication permitted on local environment.`
+      );
     }
 
-    // Standard public USER and SUPREME_ADMIN issue production tokens directly
-    const token = generateToken(user._id, user.role);
+    // Claim any pending guest submissions if the user's email is verified
+    await claimGuestDataForUser(user);
 
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        phone: user.phone,
-        avatar: user.avatar,
-      },
-    });
+    // Standard public USER, SUPREME_ADMIN, or permitted local development bypass
+    return issueProductionAuthResponse(res, user, "Login successful");
   } catch (error) {
     next(error);
   }
@@ -737,6 +781,19 @@ export const googleAuth = async (req, res, next) => {
     let user = await User.findOne({ googleId });
 
     if (user) {
+      // SECURITY GUARD: If the authenticated Google email does NOT match the account's email,
+      // do not blindly authenticate into a different user account!
+      if (user.email.toLowerCase() !== emailNormalized) {
+        console.warn(
+          `[GoogleAuth] Mismatch detected: Google token email (${emailNormalized}) does not match linked account email (${user.email}). Unlinking stale googleId.`
+        );
+        user.googleId = null;
+        await user.save();
+        user = null; // Fall through to search by emailNormalized
+      }
+    }
+
+    if (user) {
       // Existing Google-linked user
       if (user.status === "INACTIVE") {
         return res.status(403).json({
@@ -760,24 +817,18 @@ export const googleAuth = async (req, res, next) => {
       }
 
       if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
-        return await handleAdministrativeDeviceLogin(req, res, user);
+        if (!isPermittedLocalDeviceOtpBypass()) {
+          return await handleAdministrativeDeviceLogin(req, res, user);
+        }
+        console.warn(
+          `[SECURITY AUDIT] Local development bypass invoked for ${user.role} (${user.email}) via Google OAuth.`
+        );
       }
 
-      const token = generateToken(user._id, user.role);
-      return res.status(200).json({
-        success: true,
-        message: "Login successful with Google",
-        token,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          status: user.status,
-          phone: user.phone,
-          avatar: user.avatar,
-        },
-      });
+      // Claim guest submissions for verified Google OAuth user
+      await claimGuestDataForUser(user);
+
+      return issueProductionAuthResponse(res, user, "Login successful with Google");
     }
 
     // 2. Not found by googleId: Check if an account already exists with the same email
@@ -791,53 +842,42 @@ export const googleAuth = async (req, res, next) => {
         });
       }
 
+      // Administrative roles must complete trusted-device verification!
+      if (existingEmailUser.role === "SUPER_ADMIN" || existingEmailUser.role === "ADMIN") {
+        if (!isPermittedLocalDeviceOtpBypass()) {
+          return await handleAdministrativeDeviceLogin(req, res, existingEmailUser);
+        }
+        console.warn(
+          `[SECURITY AUDIT] Local development bypass invoked for ${existingEmailUser.role} (${existingEmailUser.email}) via Google OAuth link.`
+        );
+      }
+
       // Link the verified Google account safely without altering passwordHash or role
       existingEmailUser.googleId = googleId;
       existingEmailUser.isEmailVerified = true;
+
+      // Update authProviders array & authProvider indicator
+      if (!Array.isArray(existingEmailUser.authProviders)) {
+        existingEmailUser.authProviders = [existingEmailUser.authProvider || "local"];
+      }
+      if (!existingEmailUser.authProviders.includes("google")) {
+        existingEmailUser.authProviders.push("google");
+      }
+      // If user had local and now adds google, mark as combined or keep list
+      existingEmailUser.authProvider = existingEmailUser.authProviders.join(",");
+
       if (avatar && existingEmailUser.avatar !== avatar) {
         existingEmailUser.avatar = avatar;
       }
       await existingEmailUser.save();
 
-      // Administrative roles must complete trusted-device verification!
-      if (existingEmailUser.role === "SUPER_ADMIN" || existingEmailUser.role === "ADMIN") {
-        return await handleAdministrativeDeviceLogin(req, res, existingEmailUser);
-      }
+      // Claim guest submissions for verified Google OAuth linked user
+      await claimGuestDataForUser(existingEmailUser);
 
-      // For standard public USER role, link the verified Google account safely without altering passwordHash or role
-      existingEmailUser.googleId = googleId;
-      existingEmailUser.isEmailVerified = true;
-      if (avatar && existingEmailUser.avatar !== avatar) {
-        existingEmailUser.avatar = avatar;
-      }
-      await existingEmailUser.save();
-
-      const token = generateToken(existingEmailUser._id, existingEmailUser.role);
-      return res.status(200).json({
-        success: true,
-        message: "Google account successfully linked",
-        token,
-        user: {
-          _id: existingEmailUser._id,
-          name: existingEmailUser.name,
-          email: existingEmailUser.email,
-          role: existingEmailUser.role,
-          status: existingEmailUser.status,
-          phone: existingEmailUser.phone,
-          avatar: existingEmailUser.avatar,
-        },
-      });
+      return issueProductionAuthResponse(res, existingEmailUser, "Google account successfully linked");
     }
 
     // 3. New User Registration via Google OAuth
-    const settings = await PlatformSettings.findOne({});
-    if (settings && settings.allowSelfRegistration === false) {
-      return res.status(403).json({
-        success: false,
-        message: "Public self-registration is currently disabled by platform administration.",
-      });
-    }
-
     // Create new customer account: strictly USER role, no tenant escalation
     try {
       user = await User.create({
@@ -845,6 +885,7 @@ export const googleAuth = async (req, res, next) => {
         email: emailNormalized,
         googleId,
         authProvider: "google",
+        authProviders: ["google"],
         isEmailVerified: true,
         role: "USER",
         status: "ACTIVE",
@@ -861,6 +902,9 @@ export const googleAuth = async (req, res, next) => {
         throw createErr;
       }
     }
+
+    // Claim guest submissions for newly registered verified Google OAuth user
+    await claimGuestDataForUser(user);
 
     const token = generateToken(user._id, user.role);
     return res.status(201).json({

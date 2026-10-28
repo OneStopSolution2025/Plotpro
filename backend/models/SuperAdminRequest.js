@@ -106,25 +106,111 @@ const retailerRequestSchema = new mongoose.Schema(
       verificationNote: { type: String, trim: true, default: "" },
     },
 
-    // ── KYC identity details ────────────────────────────────────────
+    // ── Business Verification Details (Replaces generic KYC) ───────
+    businessVerification: {
+      businessType: {
+        type: String,
+        enum: [
+          "SOLE_PROPRIETOR",
+          "PARTNERSHIP",
+          "LLP",
+          "PVT_LTD",
+          "PUBLIC_LTD",
+          "OTHER",
+        ],
+        required: [true, "Business type is required"],
+      },
+      applicantRole: {
+        type: String,
+        enum: ["OWNER_PROPRIETOR", "PARTNER", "DIRECTOR", "AUTHORIZED_REPRESENTATIVE"],
+        required: [true, "Applicant role is required"],
+      },
+      applicantLegalName: {
+        type: String,
+        required: [true, "Applicant full legal name is required"],
+        trim: true,
+      },
+      // PAN details (mandatory for all legal entities)
+      panNumber: {
+        type: String,
+        required: [true, "PAN number is required"],
+        trim: true,
+        uppercase: true,
+      },
+      panDocKey: {
+        type: String,
+        default: "",
+      },
+      panDocName: {
+        type: String,
+        default: "",
+      },
+
+      // GST details (optional / conditional if registered)
+      hasGst: {
+        type: Boolean,
+        default: false,
+      },
+      gstin: {
+        type: String,
+        trim: true,
+        uppercase: true,
+        default: "",
+      },
+      gstDocKey: {
+        type: String,
+        default: "",
+      },
+      gstDocName: {
+        type: String,
+        default: "",
+      },
+
+      // Company / LLP details (mandatory for LLP, PVT_LTD, PUBLIC_LTD)
+      registrationNumber: {
+        type: String, // CIN or LLPIN
+        trim: true,
+        uppercase: true,
+        default: "",
+      },
+      registrationDocKey: {
+        type: String, // Certificate of Incorporation
+        default: "",
+      },
+      registrationDocName: {
+        type: String,
+        default: "",
+      },
+
+      // Authorization letter (required when applicant is an AUTHORIZED_REPRESENTATIVE)
+      authLetterDocKey: {
+        type: String,
+        default: "",
+      },
+      authLetterDocName: {
+        type: String,
+        default: "",
+      },
+    },
+
+    // ── Legacy identity details (maintained for backwards compatibility with existing documents) ──
     identity: {
       idType: {
         type: String,
-        enum: ["AADHAAR", "PAN", "PASSPORT", "DRIVING_LICENSE", "VOTER_ID", "OTHER"],
-        required: [true, "ID type is required"],
+        default: null,
       },
       idNumber: {
         type: String,
-        required: [true, "ID number is required"],
         trim: true,
+        default: null,
       },
     },
 
     // ── Review workflow ─────────────────────────────────────────────
     status: {
       type: String,
-      enum: ["PENDING", "APPROVED", "REJECTED"],
-      default: "PENDING",
+      enum: ["PENDING_REVIEW", "PENDING", "APPROVED", "REJECTED", "INFO_REQUESTED"],
+      default: "PENDING_REVIEW",
       index: true,
     },
     reviewNote: { type: String, trim: true, default: "" },
@@ -134,6 +220,42 @@ const retailerRequestSchema = new mongoose.Schema(
       default: null,
     },
     reviewedAt: { type: Date, default: null },
+
+    // Audit History tracking all reviewer actions and applicant responses
+    auditHistory: [
+      {
+        action: {
+          type: String,
+          enum: [
+            "SUBMITTED",
+            "INFO_REQUESTED",
+            "INFO_SUBMITTED",
+            "APPROVED",
+            "REJECTED",
+            "PAYMENT_VERIFIED",
+          ],
+          required: true,
+        },
+        performedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+        performedByName: {
+          type: String,
+          default: "",
+        },
+        reason: {
+          type: String,
+          trim: true,
+          default: "",
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
 
     // Idempotency / provisioning audit
     provisionedUserId: {

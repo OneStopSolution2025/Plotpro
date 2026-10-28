@@ -29,8 +29,12 @@ const userSchema = new mongoose.Schema(
     },
     authProvider: {
       type: String,
-      enum: ["local", "google"],
       default: "local",
+    },
+    authProviders: {
+      type: [String],
+      enum: ["local", "google"],
+      default: ["local"],
     },
     isEmailVerified: {
       type: Boolean,
@@ -48,12 +52,13 @@ const userSchema = new mongoose.Schema(
     },
     deactivatedBySupreme: {
       type: Boolean,
-      default: false,
+      // Only applicable to staff admin roles (ADMIN, SUPER_ADMIN)
+      required: false,
     },
     tenantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null,
+      required: false,
       index: true,
     },
     // Branch assignment for staff admins ("Branch Admin" accounts).
@@ -61,13 +66,13 @@ const userSchema = new mongoose.Schema(
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
-      default: null,
+      required: false,
       index: true,
     },
     businessName: {
       type: String,
       trim: true,
-      default: "",
+      required: false,
     },
     phone: {
       type: String,
@@ -91,42 +96,42 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // Password Reset OTP
+    // Password Reset OTP (populated only on active password reset request)
     resetOtp: {
       type: String,
-      default: null,
+      required: false,
       select: false,
     },
     resetOtpExpiry: {
       type: Date,
-      default: null,
+      required: false,
       select: false,
     },
 
-    // First-Device Bootstrap OTP (HMAC-SHA256 with DEVICE_OTP_SECRET)
+    // First-Device Bootstrap OTP (populated only for administrative roles during enrollment)
     deviceEnrollmentChallengeId: {
       type: String,
-      default: null,
+      required: false,
       select: false,
     },
     deviceEnrollmentOtpHash: {
       type: String,
-      default: null,
+      required: false,
       select: false,
     },
     deviceEnrollmentOtpExpiry: {
       type: Date,
-      default: null,
+      required: false,
       select: false,
     },
     deviceEnrollmentAttempts: {
       type: Number,
-      default: 0,
+      required: false,
       select: false,
     },
     deviceEnrollmentCooldownUntil: {
       type: Date,
-      default: null,
+      required: false,
       select: false,
     },
   },

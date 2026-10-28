@@ -24,7 +24,7 @@ const Login = () => {
     const [error, setError] = useState("");
     const [infoMsg, setInfoMsg] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login, loginWithGoogle, isAuthenticated, user, isMaintenanceMode, setUser } = useAuth();
+    const { login, loginWithGoogle, isAuthenticated, user, setUser } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -151,6 +151,8 @@ const Login = () => {
             setIsTransferFlow(Boolean(result.isTransfer));
             setResendCooldown(60);
             setAuthStep("deviceOtp");
+            setError("");
+            setIsSubmitting(false);
             return;
         }
 
@@ -160,6 +162,8 @@ const Login = () => {
             setCurrentDeviceLabel(result.currentDeviceLabel || "Existing Approved Workstation");
             setPollStatus("PENDING_APPROVAL");
             setAuthStep("pendingApproval");
+            setError("");
+            setIsSubmitting(false);
             return;
         }
 
@@ -269,9 +273,21 @@ const Login = () => {
                     <div className="login-form-content">
                         <div className="login-heading">
                             <h1>
-                                Welcome <span>Back</span>
+                                {authStep === "deviceOtp" ? (
+                                    <>Verify <span>Device</span></>
+                                ) : authStep === "pendingApproval" ? (
+                                    <>Awaiting <span>Approval</span></>
+                                ) : (
+                                    <>Welcome <span>Back</span></>
+                                )}
                             </h1>
-                            <p>Enter your credentials to access your PlotPro dashboard.</p>
+                            <p>
+                                {authStep === "deviceOtp"
+                                    ? "Enter the verification code dispatched to your registered email."
+                                    : authStep === "pendingApproval"
+                                    ? "Your workstation transfer request is awaiting Supreme Administrator review."
+                                    : "Enter your credentials to access your PlotPro dashboard."}
+                            </p>
                         </div>
 
                         {/* Error Message */}

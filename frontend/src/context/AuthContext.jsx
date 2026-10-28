@@ -8,30 +8,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setTokenState] = useState(() => localStorage.getItem("dreamcity_token"));
   const [isLoading, setIsLoading] = useState(true);
-  const [platformSettings, setPlatformSettings] = useState({
-    platformName: "PlotPro",
-    supportEmail: "support@plotpro.in",
-    supportPhone: "+91 99999 00000",
-    maintenanceMode: false,
-    allowSelfRegistration: true,
-  });
 
-  const fetchPlatformSettings = useCallback(async () => {
-    try {
-      const res = await publicApi.getSettings();
-      if (res?.success && res.data) {
-        setPlatformSettings(res.data);
-      }
-    } catch (e) {
-      // Non-blocking fallback
-      console.warn("[Auth] Failed to load platform settings:", e.message);
-    }
-  }, []);
-
-  // Initialize session and settings on mount, plus instant suspension listener
+  // Initialize session on mount, plus instant suspension listener
   useEffect(() => {
-    fetchPlatformSettings();
-
     const initAuth = async () => {
       const storedToken = localStorage.getItem("dreamcity_token");
       if (!storedToken) {
@@ -116,7 +95,7 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener("plotpro:auth-error", handleAuthError);
       clearInterval(heartbeatInterval);
     };
-  }, [fetchPlatformSettings]);
+  }, []);
 
   const login = async (email, password) => {
     setIsLoading(true);
@@ -215,9 +194,6 @@ export const AuthProvider = ({ children }) => {
     isSuperAdmin: user?.role === "SUPER_ADMIN",
     isSupremeAdmin: user?.role === "SUPREME_ADMIN",
     isNormalAdmin: user?.role === "ADMIN",
-    platformSettings,
-    isMaintenanceMode: Boolean(platformSettings?.maintenanceMode),
-    reloadSettings: fetchPlatformSettings,
     login,
     signup,
     loginWithGoogle,

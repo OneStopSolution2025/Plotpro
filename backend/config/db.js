@@ -24,9 +24,6 @@ export const connectDB = async () => {
       retryWrites: false,
     });
     console.log(`[MongoDB] Connected successfully: ${conn.connection.host}/${conn.connection.name}`);
-    import("../scripts/ensureStandardPackages.js")
-      .then((m) => m.ensureStandardPackages())
-      .catch((err) => console.warn("[Packages] Ensure packages background notice:", err.message));
   } catch (error) {
     console.error(`[MongoDB] Connection Error: ${error.message}`);
     process.exit(1);

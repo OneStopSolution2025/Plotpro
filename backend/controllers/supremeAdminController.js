@@ -5,7 +5,6 @@ import Subscription from "../models/Subscription.js";
 import Project from "../models/Project.js";
 import Enquiry from "../models/Enquiry.js";
 import SiteVisit from "../models/SiteVisit.js";
-import PlatformSettings from "../models/PlatformSettings.js";
 import SuperAdminRequest from "../models/SuperAdminRequest.js";
 import Branch from "../models/Branch.js";
 import Notification from "../models/Notification.js";
@@ -1068,60 +1067,6 @@ export const getSeatUsage = async (req, res, next) => {
       success: true,
       count: usageBreakdown.length,
       data: usageBreakdown,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * @desc    Get platform global settings
- * @route   GET /api/supreme-admin/settings
- * @access  Private (Supreme Admin)
- */
-export const getPlatformSettings = async (req, res, next) => {
-  try {
-    let settings = await PlatformSettings.findOne({});
-    if (!settings) {
-      settings = await PlatformSettings.create({});
-    }
-    res.status(200).json({
-      success: true,
-      data: settings,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * @desc    Update platform global settings
- * @route   PUT /api/supreme-admin/settings
- * @access  Private (Supreme Admin)
- */
-export const updatePlatformSettings = async (req, res, next) => {
-  try {
-    const { platformName, supportEmail, supportPhone, maintenanceMode, allowSelfRegistration, defaultTrialDays } =
-      req.body;
-
-    let settings = await PlatformSettings.findOne({});
-    if (!settings) {
-      settings = new PlatformSettings();
-    }
-
-    if (platformName) settings.platformName = platformName.trim();
-    if (supportEmail) settings.supportEmail = supportEmail.trim();
-    if (supportPhone) settings.supportPhone = supportPhone.trim();
-    if (maintenanceMode !== undefined) settings.maintenanceMode = Boolean(maintenanceMode);
-    if (allowSelfRegistration !== undefined) settings.allowSelfRegistration = Boolean(allowSelfRegistration);
-    if (defaultTrialDays !== undefined) settings.defaultTrialDays = Number(defaultTrialDays);
-
-    await settings.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Platform settings updated successfully.",
-      data: settings,
     });
   } catch (error) {
     next(error);

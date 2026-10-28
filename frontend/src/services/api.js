@@ -120,7 +120,6 @@ export const authApi = {
 
 // ==================== PUBLIC APIs ====================
 export const publicApi = {
-  getSettings: () => api.get("/public/settings"),
   getProjects: () => api.get("/public/projects"),
   getProjectById: (id) => api.get(`/public/projects/${id}`),
   getProjectPlots: (id) => api.get(`/public/projects/${id}/plots`),
@@ -197,6 +196,12 @@ export const superAdminApi = {
   getProfile: () => api.get("/super-admin/profile"),
   updateProfile: (data) => api.put("/super-admin/profile", data),
   changePassword: (data) => api.put("/super-admin/profile/password", data),
+  uploadProjectImage: (data, projectId) => {
+    const url = projectId && projectId !== "new"
+      ? `/super-admin/projects/${projectId}/upload-image`
+      : `/super-admin/projects/upload-image`;
+    return api.post(url, data);
+  },
   uploadLayoutImage: (projectId, data) => api.post(`/super-admin/projects/${projectId}/layout-image`, data),
   getProjectLayout: (projectId) => api.get(`/super-admin/projects/${projectId}/layout`),
   saveProjectLayout: (projectId, layoutData) => api.put(`/super-admin/projects/${projectId}/layout`, { layout: layoutData }),
@@ -232,8 +237,6 @@ export const supremeAdminApi = {
     api.patch(`/supreme-admin/subscriptions/${id}/status`, data),
   getSeatUsage: () => api.get("/supreme-admin/seat-usage"),
 
-  getSettings: () => api.get("/supreme-admin/settings"),
-  updateSettings: (data) => api.put("/supreme-admin/settings", data),
   // Retailer (Super Admin) account creation requests
   getRetailerRequests: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
@@ -246,6 +249,12 @@ export const supremeAdminApi = {
     api.patch(`/supreme-admin/retailer-requests/${id}/approve`, data),
   rejectRetailerRequest: (id, data) =>
     api.patch(`/supreme-admin/retailer-requests/${id}/reject`, data),
+  deleteRetailerRequest: (id) =>
+    api.delete(`/supreme-admin/retailer-requests/${id}`),
+  requestAdditionalInfo: (id, data) =>
+    api.patch(`/supreme-admin/retailer-requests/${id}/request-info`, data),
+  getBusinessDocUrl: (id, docType) =>
+    `${BASE_URL}/supreme-admin/retailer-requests/${id}/documents/${docType}`,
 
   // ─── Trusted Device Oversight & Management ──────────────────────────────────
   getPendingDevices: () => api.get("/supreme-admin/devices/pending"),
@@ -268,6 +277,8 @@ export const userApi = {
   getWishlist: () => api.get("/user/wishlist"),
   toggleSaveProject: (id) => api.post(`/user/wishlist/projects/${id}`),
   toggleSavePlot: (id) => api.post(`/user/wishlist/plots/${id}`),
+  getMyEnquiries: () => api.get("/user/enquiries"),
+  getMySiteVisits: () => api.get("/user/site-visits"),
 };
 
 // ==================== NOTIFICATION APIs ====================

@@ -14,6 +14,13 @@ import {
   FaClock,
   FaBan,
   FaImage,
+  FaFileAlt,
+  FaDownload,
+  FaQuestionCircle,
+  FaHistory,
+  FaBuilding,
+  FaCopy,
+  FaTrash,
 } from "react-icons/fa";
 import "../../styles/super-admin.css";
 
@@ -24,12 +31,30 @@ import "../../styles/super-admin.css";
 const getStatusBadge = (status) => {
   const styles = {
     PENDING: { background: "#fff7e6", color: "#9a6700", border: "1px solid #f5c451" },
+    PENDING_REVIEW: { background: "#fff7e6", color: "#9a6700", border: "1px solid #f5c451" },
     APPROVED: { background: "#e6f6ec", color: "#18794e", border: "1px solid #6ecf9a" },
     REJECTED: { background: "#fdecec", color: "#b02a37", border: "1px solid #f1aeb5" },
+    INFO_REQUESTED: { background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a" },
   };
+  const label =
+    status === "PENDING_REVIEW"
+      ? "PENDING REVIEW"
+      : status === "INFO_REQUESTED"
+      ? "INFO REQUESTED"
+      : status;
+
   return (
-    <span className="badge" style={{ fontSize: "11.5px", fontWeight: 600, padding: "5px 10px", borderRadius: "999px", ...(styles[status] || styles.PENDING) }}>
-      {status}
+    <span
+      className="badge"
+      style={{
+        fontSize: "11.5px",
+        fontWeight: 600,
+        padding: "5px 10px",
+        borderRadius: "999px",
+        ...(styles[status] || styles.PENDING),
+      }}
+    >
+      {label}
     </span>
   );
 };
@@ -72,6 +97,15 @@ const RetailerRequests = () => {
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  // Delete modal (for rejected requests)
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Request Info modal
+  const [requestInfoTarget, setRequestInfoTarget] = useState(null);
+  const [requestInfoNote, setRequestInfoNote] = useState("");
+  const [docLoading, setDocLoading] = useState(false);
+
   const [actionError, setActionError] = useState("");
   const [toast, setToast] = useState(null);
 
@@ -108,6 +142,11 @@ const RetailerRequests = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRequests(false);
+    authApi.getRetailerPlans().then((res) => {
+      if (res?.success && Array.isArray(res.data)) {
+        setActivePlans(res.data);
+      }
+    }).catch(() => {});
   }, [statusFilter, search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openDetail = async (id) => {
@@ -125,8 +164,9 @@ const RetailerRequests = () => {
 
   const openApprove = async (req) => {
     setApproveTarget(req);
+    const initialPlanId = String(req?.plan?._id || req?.requestedPlanId?._id || req?.requestedPlanId || "");
     setApproveData({
-      planId: String(req.requestedPlanId || ""),
+      planId: initialPlanId,
       durationDays: "",
       isCustomOverride: false,
       assignedSeats: "",
@@ -148,8 +188,9 @@ const RetailerRequests = () => {
     setActionError("");
     try {
       const payload = {};
+      const targetRequestedPlanId = String(approveTarget?.plan?._id || approveTarget?.requestedPlanId?._id || approveTarget?.requestedPlanId || "");
       // Only send overrides when they differ from the stored application
-      if (approveData.planId && String(approveData.planId) !== String(approveTarget.requestedPlanId)) {
+      if (approveData.planId && String(approveData.planId) !== targetRequestedPlanId) {
         payload.planId = approveData.planId;
       }
       if (approveData.durationDays) payload.durationDays = Number(approveData.durationDays);
@@ -192,6 +233,75 @@ const RetailerRequests = () => {
       setActionError(err.message || "Rejection failed.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setActionError("");
+    try {
+      const res = await supremeAdminApi.deleteRetailerRequest(deleteTarget.id);
+      if (res?.success) {
+        showToast("success", res.message || `Rejected request for "${deleteTarget.businessName}" deleted successfully. The email can now apply again.`);
+        setDeleteTarget(null);
+        setDetail(null);
+        fetchRequests(true);
+      }
+    } catch (err) {
+      setActionError(err.message || "Failed to delete request.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleRequestInfo = async () => {
+    if (!requestInfoTarget || !requestInfoNote.trim()) {
+      setActionError("Please describe the specific documents or information requested.");
+      return;
+    }
+    setBusy(true);
+    setActionError("");
+    try {
+      const targetId = requestInfoTarget.id || requestInfoTarget._id;
+      const res = await supremeAdminApi.requestAdditionalInfo(targetId, {
+        note: requestInfoNote.trim(),
+      });
+      if (res?.success) {
+        showToast("success", "Information request successfully sent to the applicant.");
+        setRequestInfoTarget(null);
+        setRequestInfoNote("");
+        if (detail && (detail.id === targetId || detail._id === targetId)) {
+          setDetail(res.data);
+        }
+        fetchRequests(true);
+      }
+    } catch (err) {
+      setActionError(err.message || "Failed to submit information request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleOpenDoc = async (id, docType) => {
+    try {
+      setDocLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/supreme-admin/retailer-requests/${id}/documents/${docType}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Document could not be retrieved from secure storage.");
+      }
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank");
+    } catch (err) {
+      showToast("error", err.message || "Failed to load document.");
+    } finally {
+      setDocLoading(false);
     }
   };
 
@@ -309,27 +419,34 @@ const RetailerRequests = () => {
             background: "#f8fafc",
           }}
         >
-          <div style={{ display: "flex", gap: 6 }}>
-            {["PENDING", "APPROVED", "REJECTED", "ALL"].map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatusFilter(s)}
-                style={{
-                  padding: "7px 16px",
-                  borderRadius: "999px",
-                  border: "1px solid " + (statusFilter === s ? "#1e40af" : "#cbd5e1"),
-                  background: statusFilter === s ? "#1e40af" : "#ffffff",
-                  color: statusFilter === s ? "#ffffff" : "#475569",
-                  fontWeight: 600,
-                  fontSize: "12.5px",
-                  cursor: "pointer",
-                }}
-              >
-                {s.charAt(0) + s.slice(1).toLowerCase()}
-                {s === "PENDING" && counts.pending > 0 ? ` (${counts.pending})` : ""}
-              </button>
-            ))}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {["PENDING", "APPROVED", "REJECTED", "INFO_REQUESTED", "ALL"].map((s) => {
+              const label =
+                s === "INFO_REQUESTED"
+                  ? "Info Requested"
+                  : s.charAt(0) + s.slice(1).toLowerCase();
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(s)}
+                  style={{
+                    padding: "7px 16px",
+                    borderRadius: "999px",
+                    border: "1px solid " + (statusFilter === s ? "#1e40af" : "#cbd5e1"),
+                    background: statusFilter === s ? "#1e40af" : "#ffffff",
+                    color: statusFilter === s ? "#ffffff" : "#475569",
+                    fontWeight: 600,
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {label}
+                  {s === "PENDING" && counts.pending > 0 ? ` (${counts.pending})` : ""}
+                  {s === "INFO_REQUESTED" && counts.infoRequested > 0 ? ` (${counts.infoRequested})` : ""}
+                </button>
+              );
+            })}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", minWidth: 220 }}>
             <input
@@ -386,17 +503,48 @@ const RetailerRequests = () => {
               </thead>
               <tbody>
                 {requests.map((r) => {
-                  const planName = r.requestedPlanId?.name || r.planSnapshot?.name || "—";
+                  const planName = r.plan?.name || r.requestedPlanId?.name || r.planSnapshot?.name || "—";
+                  const isAnnual = r.plan?.billingInterval === "ANNUAL" || r.planSnapshot?.billingInterval === "ANNUAL";
                   return (
                     <tr key={r.id}>
                       <td style={{ padding: "14px 16px" }}>
                         <strong style={{ color: "#1e293b" }}>{r.businessName}</strong>
-                        <div style={{ fontSize: "12px", color: "#64748b" }}>{r.email}</div>
+                        <div style={{ fontSize: "12px", color: "#64748b" }}>
+                          {r.email} {r.businessTypeLabel ? `• ${r.businessTypeLabel}` : ""}
+                        </div>
                       </td>
                       <td>
-                        <span className="badge bg-light text-dark" style={{ border: "1px solid #cbd5e1" }}>
-                          {planName}
-                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span className="badge bg-light text-dark" style={{ border: "1px solid #cbd5e1" }}>
+                            {planName}
+                          </span>
+                          {isAnnual ? (
+                            <span
+                              className="badge"
+                              style={{
+                                background: "#ecfdf5",
+                                color: "#065f46",
+                                border: "1px solid #a7f3d0",
+                                fontSize: "10.5px",
+                                fontWeight: 700,
+                              }}
+                            >
+                              ANNUAL (1 YR)
+                            </span>
+                          ) : (
+                            <span
+                              className="badge"
+                              style={{
+                                background: "#f1f5f9",
+                                color: "#475569",
+                                border: "1px solid #cbd5e1",
+                                fontSize: "10.5px",
+                              }}
+                            >
+                              MONTHLY
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td style={{ fontSize: "13px" }}>
                         {hasPaymentEvidence(r.payment) ? (
@@ -434,8 +582,9 @@ const RetailerRequests = () => {
                         >
                           <FaEye size={12} /> Review
                         </button>
-                        {r.status === "PENDING" && (
+                        {["PENDING", "PENDING_REVIEW", "INFO_REQUESTED"].includes(r.status) && (
                           <>
+                           
                             <button
                               type="button"
                               className="btn btn-sm btn-success"
@@ -463,6 +612,20 @@ const RetailerRequests = () => {
                               <FaTimesCircle size={12} /> Reject
                             </button>
                           </>
+                        )}
+                        {r.status === "REJECTED" && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger"
+                            style={{ fontSize: "12px", borderRadius: "8px", marginInlineStart: 6 }}
+                            onClick={() => {
+                              setDeleteTarget(r);
+                              setActionError("");
+                            }}
+                            title="Delete this rejected request so the applicant can apply again"
+                          >
+                            <FaTrash size={11} style={{ marginRight: 4 }} /> Delete
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -493,11 +656,13 @@ const RetailerRequests = () => {
           <div
             style={{
               width: "100%",
-              maxWidth: 720,
+              maxWidth: 740,
               background: "#ffffff",
-              borderRadius: 16,
+              borderRadius: 20,
               overflow: "hidden",
-              boxShadow: "0 24px 60px rgba(15,23,42,0.3)",
+              boxShadow: "0 25px 70px rgba(18,29,49,0.35)",
+              border: "1px solid #eef2f6",
+              fontFamily: "'Poppins', sans-serif",
             }}
           >
             {/* Modal header */}
@@ -506,76 +671,223 @@ const RetailerRequests = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "18px 22px",
-                background: "#0f2542",
+                padding: "20px 24px",
+                background: "linear-gradient(135deg, #121d31 0%, #1e2e4a 100%)",
+                borderBottom: "3px solid #a63d2f",
                 color: "#fff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <FaShieldAlt />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(166,61,47,0.2)", border: "1px solid rgba(166,61,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fca59b", flexShrink: 0 }}>
+                  <FaBuilding size={20} />
+                </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>{detail.businessName}</h3>
-                  <span style={{ fontSize: 12, color: "#a8b9d1" }}>{detail.email} • {getStatusBadge(detail.status)}</span>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.2px" }}>{detail.businessName}</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
+                    <span style={{ fontSize: 12.5, color: "#94a3b8" }}>{detail.email}</span>
+                    <span style={{ color: "#475569" }}>•</span>
+                    {getStatusBadge(detail.status)}
+                  </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setDetail(null)}
-                style={{ background: "none", border: "none", color: "#a8b9d1", fontSize: 22, cursor: "pointer", lineHeight: 1 }}
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#cbd5e1",
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  lineHeight: 1,
+                  transition: "all 0.2s ease",
+                }}
               >
                 ×
               </button>
             </div>
 
-            <div style={{ padding: "22px" }}>
+            <div style={{ padding: "24px 26px" }}>
               {actionError && (
-                <div className="alert alert-danger py-2" style={{ fontSize: "13px" }}>
+                <div className="alert alert-danger py-2" style={{ fontSize: "13px", borderRadius: 10 }}>
                   {actionError}
                 </div>
               )}
 
-              {/* Applicant grid */}
+              {/* Applicant & Business Verification grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
-                <div style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px" }}>
-                  <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "#64748b", fontWeight: 700 }}>Applicant</div>
-                  <div style={{ marginTop: 4 }}>
-                    <div><strong>{detail.name}</strong></div>
-                    <div style={{ fontSize: 13, color: "#64748b" }}>{detail.email}</div>
-                    <div style={{ fontSize: 13, color: "#64748b" }}>{detail.phone || "No phone"}</div>
-                    <div style={{ fontSize: 13, color: "#64748b" }}>Requested: {fmtDateTime(detail.createdAt)}</div>
+                <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 16px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.6, color: "#a63d2f", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FaUserCheck size={13} color="#a63d2f" /> Applicant &amp; Authority
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6 }}>
+                    <div><strong>Legal Name:</strong> {detail.businessVerification?.applicantLegalName || detail.name}</div>
+                    <div><strong>Role:</strong> {detail.applicantRoleLabel || detail.businessVerification?.applicantRole || "Owner / Proprietor"}</div>
+                    <div style={{ color: "#64748b" }}><strong>Email:</strong> {detail.email}</div>
+                    <div style={{ color: "#64748b" }}><strong>Phone:</strong> {detail.phone || "No phone"}</div>
+                    <div style={{ color: "#64748b" }}><strong>Submitted:</strong> {fmtDateTime(detail.createdAt)}</div>
                   </div>
                 </div>
 
-                <div style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px" }}>
-                  <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "#64748b", fontWeight: 700 }}>Identity (KYC)</div>
-                  <div style={{ marginTop: 4 }}>
-                    <div style={{ fontSize: 13 }}><strong>ID type:</strong> {detail.idTypeLabel || detail.identity?.idType}</div>
-                    <div style={{ fontSize: 13 }}><strong>ID number:</strong> {detail.identity?.idNumber}</div>
+                <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 16px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.6, color: "#121d31", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FaShieldAlt size={13} color="#121d31" /> Business Entity &amp; Identifiers
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6 }}>
+                    <div><strong>Business Type:</strong> {detail.businessTypeLabel || detail.businessVerification?.businessType || "—"}</div>
+                    <div>
+                      <strong>PAN:</strong>{" "}
+                      {detail.panNumber || detail.businessVerification?.panNumber ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontFamily: "monospace", letterSpacing: 1.2, fontWeight: 700, background: "#e2e8f0", color: "#0f172a", padding: "2px 8px", borderRadius: 4, fontSize: 13 }}>
+                            {detail.panNumber || detail.businessVerification?.panNumber}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{ padding: "2px 6px", fontSize: 11, height: "auto", display: "inline-flex", alignItems: "center", gap: 4 }}
+                            onClick={() => {
+                              navigator.clipboard.writeText(detail.panNumber || detail.businessVerification?.panNumber);
+                              showToast("success", "PAN copied to clipboard!");
+                            }}
+                            title="Copy PAN for verification"
+                          >
+                            <FaCopy size={11} /> Copy
+                          </button>
+                        </span>
+                      ) : (
+                        <span style={{ fontFamily: "monospace", letterSpacing: 1, background: "#e2e8f0", padding: "1px 6px", borderRadius: 4 }}>
+                          {detail.maskedPan || "—"}
+                        </span>
+                      )}
+                    </div>
+                    {detail.businessVerification?.registrationNumber && (
+                      <div>
+                        <strong>CIN / LLPIN:</strong>{" "}
+                        <span style={{ fontFamily: "monospace" }}>{detail.businessVerification.registrationNumber}</span>
+                      </div>
+                    )}
+                    {detail.businessVerification?.hasGst && (
+                      <div>
+                        <strong>GSTIN:</strong>{" "}
+                        <span style={{ fontFamily: "monospace" }}>{detail.businessVerification.gstin || "Declared"}</span>
+                      </div>
+                    )}
+                    {!detail.businessVerification && detail.identity && (
+                      <div style={{ color: "#64748b" }}>
+                        <strong>Legacy KYC:</strong> {detail.idTypeLabel || detail.identity.idType} - {detail.identity.idNumber}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Package */}
-              <div style={{ background: "#f6f9ff", border: "1px solid #c3d9f7", borderRadius: 10, padding: "14px 16px", marginBottom: 18 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "#1e4e8f", fontWeight: 700, marginBottom: 6 }}>
-                  Requested Package
-                </div>
-                {detail.plan ? (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 22px", fontSize: 13.5 }}>
-                    <span><strong>{detail.plan.name}</strong></span>
-                    <span>{fmtMoney(detail.plan)}</span>
-                    <span>{detail.plan.durationDays} days</span>
-                    <span>
-                      {detail.plan.isUnlimitedSeats || detail.plan.maxAdminSeats >= 999999
-                        ? "Unlimited branch admin seats"
-                        : `${detail.plan.maxAdminSeats} branch admin seats`}
-                    </span>
-                    {!detail.plan.isActive && (
-                      <span style={{ color: "#b02a37", fontWeight: 600 }}>
-                        (Package now inactive — pick a different package on approval)
-                      </span>
+              {/* Uploaded Verification Documents Section (Incorporation Certificate or Authorization Letter) */}
+              {detail.businessVerification && (detail.businessVerification.registrationDocKey || detail.businessVerification.authLetterDocKey) && (
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px", marginBottom: 18 }}>
+                  <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.6, color: "#a63d2f", fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FaFileAlt color="#a63d2f" /> Uploaded Verification Documents
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+                    {/* Registration / CIN / LLPIN Document */}
+                    {["LLP", "PVT_LTD", "PUBLIC_LTD"].includes(detail.businessVerification.businessType) && (
+                      <div style={{ background: "#fff", border: "1px solid #cbd5e1", borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#1e293b" }}>Incorporation Certificate</div>
+                          <div style={{ fontSize: 11, color: "#64748b", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: 140 }}>
+                            {detail.businessVerification.registrationDocName || "Incorporation"}
+                          </div>
+                        </div>
+                        {detail.businessVerification.registrationDocKey ? (
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            style={{ fontSize: 11, borderRadius: 6, padding: "4px 10px", background: "#121d31", color: "#fff", border: "none" }}
+                            disabled={docLoading}
+                            onClick={() => handleOpenDoc(detail.id || detail._id, "registration")}
+                          >
+                            <FaEye size={10} /> View
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 11, color: "#94a3b8" }}>Missing</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Authorization Letter Document */}
+                    {detail.businessVerification.applicantRole === "AUTHORIZED_REPRESENTATIVE" && (
+                      <div style={{ background: "#fff", border: "1px solid #cbd5e1", borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#1e293b" }}>Authorization Letter</div>
+                          <div style={{ fontSize: 11, color: "#64748b", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: 140 }}>
+                            {detail.businessVerification.authLetterDocName || "Auth Letter"}
+                          </div>
+                        </div>
+                        {detail.businessVerification.authLetterDocKey ? (
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            style={{ fontSize: 11, borderRadius: 6, padding: "4px 10px", background: "#121d31", color: "#fff", border: "none" }}
+                            disabled={docLoading}
+                            onClick={() => handleOpenDoc(detail.id || detail._id, "auth")}
+                          >
+                            <FaEye size={10} /> View
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 11, color: "#94a3b8" }}>Missing</span>
+                        )}
+                      </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Package Card */}
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderLeft: "4px solid #a63d2f", borderRadius: 12, padding: "14px 18px", marginBottom: 18 }}>
+                <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.6, color: "#a63d2f", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  <FaRupeeSign size={12} /> Requested Package
+                </div>
+                {detail.plan ? (
+                  (() => {
+                    const isAnnual = detail.plan?.billingInterval === "ANNUAL" || detail.planSnapshot?.billingInterval === "ANNUAL";
+                    return (
+                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 24px", fontSize: 13.5 }}>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: "#121d31" }}>{detail.plan.name}</span>
+                        <span style={{ fontWeight: 700, color: "#a63d2f" }}>
+                          {fmtMoney(detail.plan)} <span style={{ fontSize: 12, fontWeight: 500, color: "#64748b" }}>{isAnnual ? "/year" : "/month"}</span>
+                        </span>
+                        <span
+                          style={{
+                            background: isAnnual ? "#ecfdf5" : "#e2e8f0",
+                            color: isAnnual ? "#065f46" : "#334155",
+                            border: isAnnual ? "1px solid #a7f3d0" : "none",
+                            padding: "3px 10px",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {isAnnual ? "Annual — 1 Year (365 days)" : `${detail.plan.durationDays || 30} days`}
+                        </span>
+                        <span style={{ color: "#475569" }}>
+                          {detail.plan.isUnlimitedSeats || detail.plan.maxAdminSeats >= 999999
+                            ? "Unlimited branch admin seats"
+                            : `${detail.plan.maxAdminSeats} branch admin seats`}
+                        </span>
+                        {!detail.plan.isActive && (
+                          <span style={{ color: "#b02a37", fontWeight: 600 }}>
+                            (Package now inactive — pick a different package on approval)
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div style={{ fontSize: 13, color: "#b02a37" }}>
                     The originally requested package no longer exists. Choose another active package when approving.
@@ -681,13 +993,80 @@ const RetailerRequests = () => {
                 </div>
               )}
 
+              {/* Audit History Timeline */}
+              {Array.isArray(detail.auditHistory) && detail.auditHistory.length > 0 && (
+                <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 16px", marginBottom: 18, fontSize: 13, border: "1px solid #e2e8f0" }}>
+                  <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.6, color: "#121d31", fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FaHistory color="#a63d2f" /> Verification Audit Trail
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {detail.auditHistory.map((item, idx) => (
+                      <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "6px 0", borderBottom: idx < detail.auditHistory.length - 1 ? "1px dashed #e2e8f0" : "none" }}>
+                        <span style={{
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: item.action === "APPROVED" ? "#e6f6ec" : item.action === "REJECTED" ? "#fdecec" : item.action === "INFO_REQUESTED" ? "#fffbeb" : "#f1f5f9",
+                          color: item.action === "APPROVED" ? "#18794e" : item.action === "REJECTED" ? "#b02a37" : item.action === "INFO_REQUESTED" ? "#b45309" : "#334155",
+                          flexShrink: 0
+                        }}>
+                          {item.action}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <div>
+                            <strong>{item.performedByName || "Reviewer"}</strong>
+                            {item.reason && <span style={{ color: "#475569" }}> — "{item.reason}"</span>}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#94a3b8" }}>{fmtDateTime(item.timestamp)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
-              {detail.status === "PENDING" && (
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+              {["PENDING", "PENDING_REVIEW", "INFO_REQUESTED"].includes(detail.status) && (
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap", paddingTop: 10, borderTop: "1px solid #f1f5f9" }}>
                   <button
                     type="button"
-                    className="btn btn-outline-danger"
-                    style={{ borderRadius: 10, fontWeight: 600 }}
+                    className="btn"
+                    style={{
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      color: "#b45309",
+                      background: "#fffbeb",
+                      border: "1px solid #fde68a",
+                      fontSize: 13,
+                      padding: "8px 16px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                    onClick={() => {
+                      setRequestInfoTarget(detail);
+                      setRequestInfoNote("");
+                      setActionError("");
+                    }}
+                  >
+                    <FaQuestionCircle /> Request Info
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      color: "#b02a37",
+                      background: "#fdecec",
+                      border: "1px solid #f1aeb5",
+                      fontSize: 13,
+                      padding: "8px 16px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
                     onClick={() => {
                       setRejectTarget(detail);
                       setRejectReason("");
@@ -698,8 +1077,20 @@ const RetailerRequests = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-success"
-                    style={{ borderRadius: 10, fontWeight: 600 }}
+                    className="btn"
+                    style={{
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      background: "linear-gradient(135deg, #a63d2f 0%, #872e22 100%)",
+                      border: "none",
+                      fontSize: 13,
+                      padding: "8px 18px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      boxShadow: "0 4px 12px rgba(166,61,47,0.25)",
+                    }}
                     disabled={hasPaymentEvidence(detail.payment) && !detail.payment?.verified}
                     title={
                       hasPaymentEvidence(detail.payment) && !detail.payment?.verified
@@ -712,6 +1103,47 @@ const RetailerRequests = () => {
                   </button>
                 </div>
               )}
+
+              {detail.status === "REJECTED" && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: 24,
+                    paddingTop: 18,
+                    borderTop: "1px solid #f1f5f9",
+                    flexWrap: "wrap",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ fontSize: 13, color: "#64748b" }}>
+                    This request was rejected. Deleting it frees up <strong style={{ color: "#1e293b" }}>{detail.email}</strong> so the applicant can submit a fresh application.
+                  </div>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      background: "#dc2626",
+                      border: "none",
+                      fontSize: 13,
+                      padding: "8px 18px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                    onClick={() => {
+                      setDeleteTarget(detail);
+                      setActionError("");
+                    }}
+                  >
+                    <FaTrash size={12} /> Delete Rejected Request
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -720,7 +1152,7 @@ const RetailerRequests = () => {
       {/* ── Approve modal ── */}
       {approveTarget && (
         <div
-          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4000, padding: 16 }}
+          style={{ position: "fixed", inset: 0, background: "rgba(18,29,49,0.65)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4000, padding: 16 }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setApproveTarget(null);
           }}
@@ -728,97 +1160,89 @@ const RetailerRequests = () => {
           <div
             style={{
               width: "100%",
-              maxWidth: 480,
+              maxWidth: 500,
               background: "#fff",
-              borderRadius: 14,
-              padding: 22,
-              boxShadow: "0 24px 60px rgba(15,23,42,0.35)",
+              borderRadius: 18,
+              padding: "24px 26px",
+              boxShadow: "0 24px 60px rgba(18,29,49,0.35)",
+              border: "1px solid #eef2f6",
               maxHeight: "90vh",
               overflowY: "auto",
+              fontFamily: "'Poppins', sans-serif",
             }}
           >
-            <h3 style={{ margin: "0 0 6px", fontSize: 17, fontWeight: 700, color: "#0f2542" }}>
-              Approve Super Admin Account
-            </h3>
-            <p style={{ margin: "0 0 16px", fontSize: 13, color: "#64748b" }}>
-              Provisions <strong>{approveTarget.businessName}</strong> as an active Super Admin and creates its
-              subscription (admin-seat limits included) from the selected package.
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e6f6ec", color: "#18794e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FaCheckCircle size={18} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#121d31" }}>
+                Approve Super Admin Account
+              </h3>
+            </div>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+              Provisions <strong>{approveTarget.businessName}</strong> as an active Super Admin with full workspace dashboard access.
             </p>
 
-            {actionError && <div className="alert alert-danger py-2" style={{ fontSize: 13 }}>{actionError}</div>}
+            {actionError && <div className="alert alert-danger py-2" style={{ fontSize: 13, borderRadius: 8 }}>{actionError}</div>}
 
             {/* Plan selection */}
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#475569", marginBottom: 5 }}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#a63d2f", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
                 Package to activate
               </label>
-              <select
-                value={approveData.planId}
-                onChange={(e) => setApproveData((p) => ({ ...p, planId: e.target.value }))}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 9, border: "1px solid #cbd5e1", fontSize: 13.5 }}
-              >
-                {activePlans.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name} — {fmtMoney(p)} ({p.durationDays} days, {p.isUnlimitedSeats ? "Unlimited" : `${p.maxAdminSeats}`} seats){!p.isActive ? " (inactive)" : ""}
-                  </option>
-                ))}
-              </select>
-              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
-                Entitlements (price, seats, duration) always come from the platform package configuration.
+              {(() => {
+                const snapshot = approveTarget?.planSnapshot || approveTarget?.plan;
+                const isAnnual = snapshot?.billingInterval === "ANNUAL";
+                const fallbackPlan = activePlans.find((p) => String(p._id) === String(approveData.planId));
+                const selectedPlan = snapshot || fallbackPlan;
+                const durationDays = snapshot?.durationDays || (isAnnual ? 365 : (fallbackPlan?.durationDays || 30));
+
+                return (
+                  <div
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: 10,
+                      border: "1px solid #cbd5e1",
+                      borderLeft: "4px solid #a63d2f",
+                      background: "#f8fafc",
+                      fontSize: 13.5,
+                      color: "#1e293b",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 8,
+                    }}
+                  >
+                    <span>
+                      {selectedPlan?.name || "Selected Package"} —{" "}
+                      <strong style={{ color: "#a63d2f" }}>
+                        {selectedPlan ? fmtMoney(selectedPlan) : ""}
+                      </strong>{" "}
+                      <span style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>
+                        {isAnnual ? "/year" : "/month"}
+                      </span>{" "}
+                      ({isAnnual ? "Annual — 365 days" : `${durationDays} days`},{" "}
+                      {selectedPlan?.isUnlimitedSeats ? "Unlimited" : `${selectedPlan?.maxAdminSeats ?? 0}`} seats)
+                    </span>
+                    <span style={{ fontSize: 11, background: isAnnual ? "#ecfdf5" : "#e2e8f0", color: isAnnual ? "#065f46" : "#475569", border: isAnnual ? "1px solid #a7f3d0" : "none", padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>
+                      {isAnnual ? "ANNUAL (LOCKED)" : "LOCKED"}
+                    </span>
+                  </div>
+                );
+              })()}
+              <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 4 }}>
+                This is the exact package selected by the user during signup and cannot be changed.
               </div>
             </div>
 
-            {/* Duration override */}
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#475569", marginBottom: 5 }}>
-                Duration override (days — optional)
-              </label>
-              <input
-                type="number"
-                min="1"
-                placeholder="Leave empty to use package duration"
-                value={approveData.durationDays}
-                onChange={(e) => setApproveData((p) => ({ ...p, durationDays: e.target.value }))}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 9, border: "1px solid #cbd5e1", fontSize: 13.5 }}
-              />
-            </div>
-
-            {/* Seat override */}
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: "#475569" }}>
-                <input
-                  type="checkbox"
-                  checked={approveData.isCustomOverride}
-                  onChange={(e) => setApproveData((p) => ({ ...p, isCustomOverride: e.target.checked }))}
-                />
-                Grant custom seat override
-              </label>
-              {approveData.isCustomOverride && (
-                <div style={{ marginTop: 8 }}>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="Custom branch admin seat count (0+)"
-                    value={approveData.assignedSeats}
-                    onChange={(e) => setApproveData((p) => ({ ...p, assignedSeats: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 9, border: "1px solid #cbd5e1", fontSize: 13.5, marginBottom: 8 }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Reason for the override (stored in the audit trail)"
-                    value={approveData.customOverrideReason}
-                    onChange={(e) => setApproveData((p) => ({ ...p, customOverrideReason: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 9, border: "1px solid #cbd5e1", fontSize: 13.5 }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
               <button
                 type="button"
                 className="btn btn-light"
-                style={{ borderRadius: 10, fontWeight: 600 }}
+                style={{ borderRadius: 10, fontWeight: 600, padding: "8px 16px" }}
                 disabled={busy}
                 onClick={() => setApproveTarget(null)}
               >
@@ -826,8 +1250,16 @@ const RetailerRequests = () => {
               </button>
               <button
                 type="button"
-                className="btn btn-success"
-                style={{ borderRadius: 10, fontWeight: 600 }}
+                className="btn"
+                style={{
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  color: "#fff",
+                  background: "linear-gradient(135deg, #a63d2f 0%, #872e22 100%)",
+                  padding: "8px 20px",
+                  border: "none",
+                  boxShadow: "0 4px 12px rgba(166,61,47,0.25)"
+                }}
                 disabled={busy || (approveData.isCustomOverride && approveData.assignedSeats === "")}
                 onClick={confirmApprove}
               >
@@ -891,6 +1323,145 @@ const RetailerRequests = () => {
                 onClick={confirmReject}
               >
                 {busy ? "Rejecting…" : "Confirm Rejection"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Request Additional Information Modal ── */}
+      {requestInfoTarget && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4000, padding: 16 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setRequestInfoTarget(null);
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              background: "#fff",
+              borderRadius: 14,
+              padding: 22,
+              boxShadow: "0 24px 60px rgba(15,23,42,0.35)",
+            }}
+          >
+            <h3 style={{ margin: "0 0 6px", fontSize: 17, fontWeight: 700, color: "#0f2542" }}>
+              Request Additional Information
+            </h3>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: "#64748b" }}>
+              Ask <strong>{requestInfoTarget.businessName}</strong> to provide clarification or re-upload specific documents. An email notification will be sent to <strong>{requestInfoTarget.email}</strong>.
+            </p>
+
+            {actionError && <div className="alert alert-danger py-2" style={{ fontSize: 13 }}>{actionError}</div>}
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#334155", marginBottom: 6 }}>
+                Instructions / Required Documents:
+              </label>
+              <textarea
+                rows={4}
+                value={requestInfoNote}
+                onChange={(e) => setRequestInfoNote(e.target.value)}
+                placeholder="e.g. Please provide a clearer scanned copy of the Certificate of Incorporation and updated GST certificate."
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 13,
+                  outline: "none",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                disabled={busy}
+                onClick={() => setRequestInfoTarget(null)}
+                style={{ borderRadius: 8, fontSize: 13 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-warning"
+                disabled={busy || !requestInfoNote.trim()}
+                onClick={handleRequestInfo}
+                style={{ borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", background: "#d97706", borderColor: "#d97706" }}
+              >
+                {busy ? "Sending…" : "Send Request to Applicant"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Rejected Request Modal ── */}
+      {deleteTarget && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4000, padding: 16 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setDeleteTarget(null);
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              background: "#ffffff",
+              borderRadius: 16,
+              padding: 24,
+              boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+              fontFamily: "'Poppins', sans-serif",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fee2e2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+                <FaTrash />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
+                  Delete Rejected Request?
+                </h3>
+                <span style={{ fontSize: 12.5, color: "#64748b" }}>
+                  Permanently remove this rejected application
+                </span>
+              </div>
+            </div>
+
+            <p style={{ margin: "12px 0 16px", fontSize: 13.5, color: "#475569", lineHeight: 1.6 }}>
+              Are you sure you want to delete the rejected request for <strong>{deleteTarget.businessName}</strong> (<strong>{deleteTarget.email}</strong>)?
+            </p>
+            <div style={{ padding: "10px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
+              <span style={{ fontSize: 12.5, color: "#0f172a" }}>
+                ✓ Deleting this request will completely remove it from the system and allow <strong>{deleteTarget.email}</strong> to submit a new retailer account application.
+              </span>
+            </div>
+
+            {actionError && <div className="alert alert-danger py-2" style={{ fontSize: 13, marginBottom: 14 }}>{actionError}</div>}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(null)}
+                style={{ borderRadius: 8, fontSize: 13 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={isDeleting}
+                onClick={confirmDelete}
+                style={{ borderRadius: 8, fontSize: 13, fontWeight: 600, background: "#dc2626", borderColor: "#dc2626", display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                {isDeleting ? "Deleting…" : (<><FaTrash size={12} /> Delete Request</>)}
               </button>
             </div>
           </div>

@@ -72,6 +72,8 @@ router.patch("/projects/:id/assign", assignProjectAdmin);
 router.delete("/projects/:id", archiveProject);
 
 // Project Layout Image Management
+router.post("/projects/upload-image", uploadLayoutImageSuperAdmin);
+router.post("/projects/:id/upload-image", uploadLayoutImageSuperAdmin);
 router.post("/projects/:id/layout-image", uploadLayoutImageSuperAdmin);
 router.get("/projects/:id/layout", getProjectLayoutSuperAdmin);
 router.put("/projects/:id/layout", saveProjectLayoutSuperAdmin);

@@ -15,7 +15,6 @@ export const supremeAdminNavGroups = [
       { label: "Subscriptions", icon: "calendar", path: "/supreme-admin/subscriptions" },
       { label: "Branch Admin Seat Usage", icon: "userCheck", path: "/supreme-admin/seat-usage" },
       { label: "Trusted Devices", icon: "shield", path: "/supreme-admin/trusted-devices" },
-      { label: "Platform Settings", icon: "cog", path: "/supreme-admin/settings" },
     ],
   },
 ];

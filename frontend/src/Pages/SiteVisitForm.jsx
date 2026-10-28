@@ -9,6 +9,8 @@ import { ArrowRight, Calendar, Clock, MapPin, User, Phone, Mail, AlertCircle, Ch
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useProjects, findProjectByIdentifier, getProjectRouteSlug } from "../context/ProjectContext";
 import { usePlots } from "../context/PlotContext";
+import { useAuth } from "../context/AuthContext";
+import { parsePhoneString } from "../utils/phoneUtils";
 import { publicApi } from "../services/api";
 
 export default function SiteVisitForm() {
@@ -18,6 +20,7 @@ export default function SiteVisitForm() {
     const navigate = useNavigate();
     const { projects } = useProjects();
     const { plots } = usePlots();
+    const { user: authUser } = useAuth();
 
     const preSelectedPlot = searchParams.get("plot") || "";
 
@@ -66,6 +69,22 @@ export default function SiteVisitForm() {
         preferredTime: "",
         message: "",
     });
+
+    // Prefill user details if logged in
+    useEffect(() => {
+        if (authUser) {
+            const parsedPhone = parsePhoneString(authUser.phone || "");
+            if (parsedPhone.countryCode) {
+                setCountryCode(parsedPhone.countryCode);
+            }
+            setForm((prev) => ({
+                ...prev,
+                fullName: authUser.name || prev.fullName,
+                email: authUser.email || prev.email,
+                mobile: parsedPhone.digits || prev.mobile,
+            }));
+        }
+    }, [authUser]);
 
     const [errors, setErrors] = useState({});
     const [status, setStatus] = useState(null);
@@ -223,16 +242,17 @@ export default function SiteVisitForm() {
 
                             <div className="field">
                                 <label htmlFor="fullName">Full Name <span className="required">*</span></label>
-                                <div className="input-wrapper">
+                                <div className={`input-wrapper ${authUser ? "read-only" : ""}`}>
                                     <User size={18} />
                                     <input
                                         id="fullName"
                                         type="text"
-                                        className={`input ${errors.fullName ? "error" : ""}`}
+                                        className={`input ${authUser ? "read-only-input" : ""} ${errors.fullName ? "error" : ""}`}
                                         placeholder="Enter your full name"
                                         value={form.fullName}
                                         onChange={updateForm("fullName")}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || Boolean(authUser)}
+                                        readOnly={Boolean(authUser)}
                                     />
                                 </div>
                                 {errors.fullName && <span className="error-text">{errors.fullName}</span>}
@@ -261,16 +281,17 @@ export default function SiteVisitForm() {
 
                             <div className="field">
                                 <label htmlFor="email">Email</label>
-                                <div className="input-wrapper">
+                                <div className={`input-wrapper ${authUser ? "read-only" : ""}`}>
                                     <Mail size={18} />
                                     <input
                                         id="email"
                                         type="email"
-                                        className={`input ${errors.email ? "error" : ""}`}
+                                        className={`input ${authUser ? "read-only-input" : ""} ${errors.email ? "error" : ""}`}
                                         placeholder="Enter your email (optional)"
                                         value={form.email}
                                         onChange={updateForm("email")}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || Boolean(authUser)}
+                                        readOnly={Boolean(authUser)}
                                     />
                                 </div>
                                 {errors.email && <span className="error-text">{errors.email}</span>}

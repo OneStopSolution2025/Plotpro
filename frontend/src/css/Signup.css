@@ -373,6 +373,77 @@
   color: #a4adba;
 }
 
+/* ── Unified Phone Input Pill (Harmonized with auth inputs) ── */
+.auth-page .phone-input-group-unified {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 48px;
+  background: #ffffff;
+  border: 1px solid #e0e5eb;
+  border-radius: 25px;
+  padding: 0 16px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.auth-page .phone-input-group-unified:focus-within {
+  border-color: #a63d2f;
+  box-shadow: 0 0 0 3px rgba(166, 61, 47, 0.12);
+}
+
+.auth-page .phone-country-wrapper-unified {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  border-right: 1px solid #e2e8f0;
+  padding-right: 22px;
+}
+
+.auth-page .phone-country-select-unified {
+  border: none !important;
+  background: transparent !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none !important;
+  cursor: pointer;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 2px;
+  font-family: inherit;
+}
+
+.auth-page .phone-country-chevron-unified {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #94a3b8;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+
+.auth-page .phone-country-wrapper-unified:focus-within .phone-country-chevron-unified {
+  transform: translateY(-50%) rotate(180deg) scale(1.15);
+  color: #a63d2f;
+}
+
+.auth-page .phone-number-input-unified {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 14px;
+  color: #172033;
+  padding: 0 !important;
+  font-family: inherit;
+}
+
+.auth-page .phone-number-input-unified::placeholder {
+  color: #a4adba;
+}
+
 
 /* =========================================
    COLLISION FIX — DOUBLE BORDER
@@ -399,8 +470,8 @@
    untouched, so focus feedback still works.
    ========================================= */
 
-.auth-page .form-group input,
-.auth-page .form-group select {
+.auth-page .form-group :not(.phone-input-group) input,
+.auth-page .form-group :not(.phone-input-group) select {
   padding: 0;
 
   border: none;
@@ -413,8 +484,8 @@
   font-size: 14px;
 }
 
-.auth-page .form-group input:focus,
-.auth-page .form-group select:focus {
+.auth-page .form-group :not(.phone-input-group) input:focus,
+.auth-page .form-group :not(.phone-input-group) select:focus {
   padding: 0;
 
   border: none;
@@ -1091,15 +1162,39 @@
 }
 
 .sub-plan-toggle {
+  position: relative;
   display: flex;
-  background: #edf2f7;
-  padding: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 14px;
-  gap: 4px;
+  padding: 3px;
   width: 100%;
+  isolation: isolate;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  user-select: none;
+}
+
+.sub-plan-pill {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  background: #ffffff;
+  border-radius: 11px;
+  border: 1px solid rgba(166, 61, 47, 0.15);
+  box-shadow: 0 6px 16px rgba(166, 61, 47, 0.12), 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sub-plan-pill.annual {
+  transform: translateX(100%);
 }
 
 .sub-plan-tab {
+  position: relative;
   flex: 1;
   padding: 10px 16px;
   border: none;
@@ -1107,16 +1202,21 @@
   color: #64748b;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  z-index: 2;
   font-family: inherit;
+  transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
+}
+
+.sub-plan-tab:active {
+  transform: scale(0.98);
 }
 
 .sub-plan-tab.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: transparent;
+  color: #a63d2f;
+  font-weight: 700;
+  box-shadow: none;
 }
 
 .sub-plan-list {
@@ -1131,28 +1231,43 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
-  border-radius: 14px;
-  background: #f1f5f9;
-  border: 2px solid transparent;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 2px solid #eef2f6;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   gap: 16px;
+  position: relative;
 }
 
 .sub-plan-card:hover {
   background: #ffffff;
-  border-color: #f2c7c2;
-  box-shadow: 0 4px 12px rgba(166, 61, 47, 0.08);
-  transform: translateY(-1px);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
 }
 
 .sub-plan-card.selected {
-  background: #ffffff;
-  border-color: #a63d2f;
-  box-shadow: 0 4px 16px rgba(166, 61, 47, 0.12);
+  background: #f9faf8;
+  border-color: #17240f;
+  box-shadow: 0 8px 24px rgba(23, 36, 15, 0.12);
+}
+
+.sub-plan-card-tag {
+  position: absolute;
+  top: -9px;
+  right: 18px;
+  background: #17240f;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 10px;
+  border-radius: 20px;
 }
 
 .sub-plan-left {
@@ -1179,7 +1294,7 @@
 }
 
 .sub-plan-card.selected .sub-plan-name {
-  color: #a63d2f;
+  color: #17240f;
 }
 
 .sub-plan-meta {
@@ -1206,7 +1321,22 @@
 }
 
 .sub-plan-card.selected .sub-plan-right {
-  color: #a63d2f;
+  color: #17240f;
+}
+
+.sub-plan-original-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: line-through;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.sub-plan-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
 .sub-plan-currency {
@@ -1496,4 +1626,107 @@
   background: #a63d2f;
   color: #ffffff;
 }
+
+/* =========================================
+   BUSINESS VERIFICATION STYLES
+   ========================================= */
+
+.bdoc-upload-box {
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.bdoc-upload-box:hover {
+  border-color: #a63d2f;
+  background: #ffffff;
+}
+
+.bdoc-upload-box.has-file {
+  border: 1.5px solid #86efac;
+  background: #f0fdf4;
+}
+
+.bdoc-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: #166534;
+  font-weight: 500;
+}
+
+.bdoc-remove-btn {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.bdoc-remove-btn:hover {
+  background: #fee2e2;
+}
+
+.bdoc-custom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.bdoc-custom-btn:hover {
+  border-color: #a63d2f;
+  color: #a63d2f;
+}
+
+.bdoc-hint {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.bdoc-badge-optional {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 6px;
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.bdoc-gst-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  user-select: none;
+}
+
 
