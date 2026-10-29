@@ -174,6 +174,11 @@ const AdminProjectForm = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ── Default Plot Image Upload Handling ──
+  const [isUploadingPlotImage, setIsUploadingPlotImage] = useState(false);
+  const [isPlotDragOver, setIsPlotDragOver] = useState(false);
+  const plotFileInputRef = useRef(null);
+
   const handleImageFileChange = async (file) => {
     if (!file) return;
 
@@ -252,6 +257,76 @@ const AdminProjectForm = () => {
     });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handlePlotImageFileChange = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select a valid image file (PNG, JPG, or WebP) for the plot image." });
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Plot image file size exceeds the 20MB limit." });
+      return;
+    }
+
+    setIsUploadingPlotImage(true);
+    setMessage(null);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const dataUrl = evt.target.result;
+      const img = new Image();
+      img.onload = async () => {
+        const detectedWidth = img.naturalWidth || 1200;
+        const detectedHeight = img.naturalHeight || 800;
+
+        try {
+          const targetId = projectId || "new";
+          const res = await adminApi.uploadProjectImage(
+            {
+              fileData: dataUrl,
+              mimeType: file.type,
+              width: detectedWidth,
+              height: detectedHeight,
+            },
+            targetId
+          );
+
+          if (res?.success && res.data?.imageUrl) {
+            const uploadedUrl = res.data.imageUrl;
+            setForm((prev) => ({ ...prev, defaultPlotImage: uploadedUrl }));
+            setMessage({ type: "success", text: "Default plot image uploaded successfully!" });
+          } else {
+            setMessage({ type: "error", text: res?.message || "Failed to upload plot image." });
+          }
+        } catch (err) {
+          console.error("Upload plot image error:", err);
+          setMessage({ type: "error", text: err.data?.message || err.message || "Upload plot image failed." });
+        } finally {
+          setIsUploadingPlotImage(false);
+        }
+      };
+      img.onerror = () => {
+        setIsUploadingPlotImage(false);
+        setMessage({ type: "error", text: "Failed to read plot image dimensions." });
+      };
+      img.src = dataUrl;
+    };
+    reader.onerror = () => {
+      setIsUploadingPlotImage(false);
+      setMessage({ type: "error", text: "Failed to read plot image file." });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePlotImage = () => {
+    setForm((prev) => ({ ...prev, defaultPlotImage: "" }));
+    if (plotFileInputRef.current) {
+      plotFileInputRef.current.value = "";
     }
   };
 
@@ -1092,7 +1167,7 @@ const AdminProjectForm = () => {
                 </div>
                 <div className="project-image-preview-info">
                   <div className="project-image-preview-badge">
-                    <FaImage /> Master Layout & Cover Image
+                    <FaImage /> Cover Image
                   </div>
                   <p className="project-image-preview-desc">
                     Active layout image displayed to buyers and used as the default cover.
@@ -1162,30 +1237,110 @@ const AdminProjectForm = () => {
             )}
           </div>
 
-          <label className="full-width" style={{ marginBottom: "1.25rem" }}>
-            Default Plot Image URL (Applies to all plots created in this project)
+          {/* Default Plot Image Upload Area */}
+          <div className="project-image-upload-wrapper full-width" style={{ marginBottom: "1.25rem" }}>
+            <label className="project-image-field-label">
+              Default Plot Image
+              <span className="project-image-optional-badge">Applies to all plots created in this project</span>
+            </label>
+            <p className="project-image-field-sub">
+              Upload a default image for plots in this project. If not provided, plots will automatically inherit the project layout cover image.
+            </p>
+
             <input
-              type="url"
-              placeholder="e.g. https://images.unsplash.com/..."
-              value={form.defaultPlotImage}
-              onChange={(e) => setForm({ ...form, defaultPlotImage: e.target.value })}
+              ref={plotFileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePlotImageFileChange(file);
+              }}
             />
-            <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
-              If left blank, plots will automatically inherit the project cover image above.
-            </small>
-          </label>
-          {form.defaultPlotImage && (
-            <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <img
-                src={form.defaultPlotImage}
-                alt="Default plot preview"
-                style={{ width: "200px", height: "120px", objectFit: "cover", borderRadius: "8px", border: "1px solid #ddd" }}
-                onError={(e) => { e.target.style.display = "none"; }}
-                onLoad={(e) => { e.target.style.display = "block"; }}
-              />
-              <span style={{ fontSize: "0.85rem", color: "#666" }}>Preview of default plot image</span>
-            </div>
-          )}
+
+            {form.defaultPlotImage ? (
+              <div className="project-image-preview-card">
+                <div className="project-image-preview-thumb-wrap">
+                  <img
+                    src={form.defaultPlotImage}
+                    alt="Default Plot Preview"
+                    className="project-image-preview-thumb"
+                  />
+                  <div className="project-image-preview-overlay">
+                    <span className="preview-badge">Plot Image</span>
+                  </div>
+                </div>
+                <div className="project-image-preview-meta">
+                  <div className="project-image-preview-name-row">
+                    <span className="project-image-name">Default Plot Cover</span>
+                    <span className="project-image-status-pill">Ready</span>
+                  </div>
+                  <p className="project-image-preview-url" title={form.defaultPlotImage}>
+                    {form.defaultPlotImage}
+                  </p>
+                  <div className="project-image-btn-row">
+                    <button
+                      type="button"
+                      className="project-image-action-btn project-image-replace-btn"
+                      onClick={() => plotFileInputRef.current?.click()}
+                      disabled={isUploadingPlotImage}
+                    >
+                      <FaCloudUploadAlt /> Replace Plot Image
+                    </button>
+                    <button
+                      type="button"
+                      className="project-image-action-btn project-image-remove-btn"
+                      onClick={handleRemovePlotImage}
+                      disabled={isUploadingPlotImage}
+                    >
+                      <FaTimes /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`project-image-dropzone ${isPlotDragOver ? "drag-over" : ""} ${isUploadingPlotImage ? "uploading" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsPlotDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsPlotDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsPlotDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handlePlotImageFileChange(file);
+                }}
+                onClick={() => {
+                  if (!isUploadingPlotImage) plotFileInputRef.current?.click();
+                }}
+              >
+                {isUploadingPlotImage ? (
+                  <div className="dropzone-content">
+                    <FaSpinner className="dropzone-icon fa-spin" />
+                    <p className="dropzone-primary-text">Uploading plot image to cloud...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                  </div>
+                ) : (
+                  <div className="dropzone-content">
+                    <div className="dropzone-icon-wrap">
+                      <FaCloudUploadAlt className="dropzone-icon" />
+                    </div>
+                    <p className="dropzone-primary-text">
+                      Drag &amp; drop default plot image here, or <span className="dropzone-browse-link">browse</span>
+                    </p>
+                    <span className="dropzone-secondary-text">
+                      PNG, JPG, JPEG, WEBP supported (up to 20MB)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <label className="full-width">
             Gallery Images (One per line)

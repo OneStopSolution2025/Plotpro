@@ -540,8 +540,8 @@ function ProjectDetails() {
                                 }}
                             />
                             <div className="layout-overlay-pill">
-                                <LandPlot size={16} />
-                                <span>Master Layout • Click to View Plots</span>
+                                
+                                <span>Click to View Plots</span>
                             </div>
                         </div>
 
