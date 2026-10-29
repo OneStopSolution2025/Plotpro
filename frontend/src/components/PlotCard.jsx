@@ -41,11 +41,16 @@ function PlotCard({
 
     const status = (plot?.status || "Available").trim();
     const statusLower = status.toLowerCase();
+    const isReserved = statusLower === "reserved";
+    const isSold = statusLower === "sold";
+    const isUnavailable = isReserved || isSold;
+    const bannerText = isSold ? "SOLD OUT" : isReserved ? "RESERVED" : "";
 
     return (
-        <article className="plot-card">
+        <article className={`plot-card ${isUnavailable ? `is-unavailable status-${statusLower}` : ""}`}>
 
-            <div className="plot-image">
+            <div className={`plot-image ${isUnavailable ? "plot-image-faded" : ""}`}>
+                {isUnavailable && <div className="plot-fade-backdrop"></div>}
 
                 <img
                     src={resolvedImage}
@@ -59,6 +64,15 @@ function PlotCard({
                 />
 
                 <div className="plot-image-overlay"></div>
+
+                {/* Diagonal Banner for Reserved / Sold Out (Top-Left to Bottom-Right) */}
+                {isUnavailable && (
+                    <div className={`plot-diagonal-banner-wrapper banner-${statusLower}`}>
+                        <div className="plot-diagonal-banner-bar">
+                            <span>{bannerText}</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Status Indicator Badge */}
                 <div className={`plot-card-status-badge status-${statusLower}`}>

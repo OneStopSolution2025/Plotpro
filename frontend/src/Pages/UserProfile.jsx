@@ -31,7 +31,12 @@ import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 import { useProjects, getProjectRouteSlug, findProjectByIdentifier } from "../context/ProjectContext";
 import { userApi } from "../services/api";
+import { resolveImageUrl } from "../utils/imageUrl";
 import "../css/UserProfile.css";
+
+export const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
+export const DEFAULT_PLOT_IMAGE = "/assets/plot.png";
+export const FALLBACK_PLOT_IMAGE = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80";
 
 export default function UserProfile() {
   const { user: authUser, setUser: setAuthUser, logout } = useAuth();
@@ -656,21 +661,31 @@ export default function UserProfile() {
                 ) : (
                   <div className="wishlist-grid">
                     {savedProjects.map((project) => {
-                      const image =
-                        project.images?.[0] ||
+                      const matchedProject = projects.find((p) =>
+                        String(p._id) === String(project._id) ||
+                        String(p.id) === String(project._id) ||
+                        String(p.customId) === String(project.customId)
+                      );
+                      const rawImage =
+                        (project.images && project.images[0]) ||
                         project.image ||
-                        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+                        (matchedProject?.images && matchedProject.images[0]) ||
+                        matchedProject?.image ||
+                        "";
+                      const resolvedImage = resolveImageUrl(rawImage) || DEFAULT_PROJECT_IMAGE;
 
                       return (
                         <div key={project._id || project.customId} className="wishlist-card">
                           <div className="wishlist-card-img-wrap">
                             <img
-                              src={image}
+                              src={resolvedImage}
                               alt={project.title}
                               className="wishlist-card-img"
                               onError={(e) => {
-                                e.currentTarget.src =
-                                  "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+                                if (e.currentTarget.src !== DEFAULT_PROJECT_IMAGE) {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = DEFAULT_PROJECT_IMAGE;
+                                }
                               }}
                             />
                             <span className="wishlist-card-badge">
@@ -741,24 +756,35 @@ export default function UserProfile() {
                 ) : (
                   <div className="wishlist-grid">
                     {savedPlots.map((plot) => {
-                      const image =
-                        plot.images?.[0] ||
-                        plot.image ||
-                        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+                      const parentProj = findProjectByIdentifier(
+                        projects,
+                        plot.projectId?._id || plot.projectId?.id || plot.projectId || plot.projectCustomId || plot.projectMongoId
+                      ) || plot.projectId;
 
-                      const projectTitle = plot.projectId?.title || "DreamCity Project";
-                      const projectLocation = plot.projectId?.location || "Prime Location";
+                      const rawImage =
+                        (plot.images && plot.images[0]) ||
+                        plot.image ||
+                        parentProj?.defaultPlotImage ||
+                        parentProj?.image ||
+                        (parentProj?.images && parentProj.images[0]) ||
+                        DEFAULT_PLOT_IMAGE;
+                      const resolvedImage = resolveImageUrl(rawImage) || DEFAULT_PLOT_IMAGE;
+
+                      const projectTitle = parentProj?.title || plot.projectId?.title || "PlotPro Project";
+                      const projectLocation = parentProj?.location || plot.projectId?.location || "Prime Location";
 
                       return (
                         <div key={plot._id || plot.customId} className="wishlist-card">
                           <div className="wishlist-card-img-wrap">
                             <img
-                              src={image}
+                              src={resolvedImage}
                               alt={`Plot #${plot.plotNumber}`}
                               className="wishlist-card-img"
                               onError={(e) => {
-                                e.currentTarget.src =
-                                  "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+                                if (e.currentTarget.src !== FALLBACK_PLOT_IMAGE) {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = FALLBACK_PLOT_IMAGE;
+                                }
                               }}
                             />
                             <span className="wishlist-card-badge">
@@ -844,7 +870,9 @@ export default function UserProfile() {
                   const proj = enq.projectId;
                   const projectTitle = proj?.title || "General Enquiry";
                   const projectLocation = proj?.location ? `${proj.location}${proj?.city ? `, ${proj.city}` : ""}` : (enq.branchId?.city || "Tamil Nadu");
-                  const projectImage = proj?.image || (proj?.images && proj.images[0]) || "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&auto=format&fit=crop";
+                  const matchedEnqProject = findProjectByIdentifier(projects, proj?._id || proj?.id || proj?.customId) || proj;
+                  const rawEnqImg = matchedEnqProject?.image || (matchedEnqProject?.images && matchedEnqProject.images[0]) || "";
+                  const projectImage = resolveImageUrl(rawEnqImg) || DEFAULT_PROJECT_IMAGE;
                   
                   const statusClass = 
                     enq.status === "NEW" ? "status-new" :
@@ -956,7 +984,9 @@ export default function UserProfile() {
                   const proj = visit.projectId;
                   const projectTitle = proj?.title || "Property Visit";
                   const projectLocation = proj?.location ? `${proj.location}${proj?.city ? `, ${proj.city}` : ""}` : (visit.branchId?.city || "Tamil Nadu");
-                  const projectImage = proj?.image || (proj?.images && proj.images[0]) || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop";
+                  const matchedVisitProject = findProjectByIdentifier(projects, proj?._id || proj?.id || proj?.customId) || proj;
+                  const rawVisitImg = matchedVisitProject?.image || (matchedVisitProject?.images && matchedVisitProject.images[0]) || "";
+                  const projectImage = resolveImageUrl(rawVisitImg) || DEFAULT_PROJECT_IMAGE;
 
                   const statusClass = 
                     visit.status === "Scheduled" ? "status-scheduled" :

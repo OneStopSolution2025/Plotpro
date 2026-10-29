@@ -460,6 +460,13 @@ function PlotDetails() {
     }
 
 
+    const status = (plot?.status || "Available").trim();
+    const statusLower = status.toLowerCase();
+    const isReserved = statusLower === "reserved";
+    const isSold = statusLower === "sold";
+    const isUnavailable = isReserved || isSold;
+    const bannerText = isSold ? "SOLD OUT" : isReserved ? "RESERVED" : "";
+
     return (
         <main className="plot-details-page" ref={containerRef}>
 
@@ -495,7 +502,8 @@ function PlotDetails() {
 
                 <div className="plot-gallery">
 
-                    <div className="plot-main-image">
+                    <div className={`plot-main-image ${isUnavailable ? "plot-image-faded" : ""}`}>
+                        {isUnavailable && <div className="plot-fade-backdrop"></div>}
 
                         <img
                             src={activeImage}
@@ -507,6 +515,14 @@ function PlotDetails() {
                                 }
                             }}
                         />
+
+                        {isUnavailable && (
+                            <div className={`plot-diagonal-banner-wrapper banner-${statusLower}`}>
+                                <div className="plot-diagonal-banner-bar">
+                                    <span>{bannerText}</span>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="plot-image-gradient"></div>
 
@@ -711,44 +727,56 @@ function PlotDetails() {
 
 
                     {/* CTA */}
+                    {isUnavailable ? (
+                        <div className={`plot-unavailable-notice notice-${statusLower}`}>
+                            <div className="notice-badge">
+                                <span>{statusLower === "sold" ? "Plot Sold Out" : "Plot Reserved"}</span>
+                            </div>
+                            <p>
+                                {statusLower === "sold"
+                                    ? "This plot has already been sold out."
+                                    : "This plot is currently reserved by a customer."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="plot-hero-actions">
+                            <button
+                                type="button"
+                                className="primary-plot-btn"
+                                onClick={() => navigate(`/site-visit/${project.id}?plot=${plot.plotNumber}`, {
+                                    state: {
+                                        from: location.pathname
+                                    }
+                                })}
+                            >
+                                <span>
+                                    Book a Site Visit
+                                </span>
 
-                    <div className="plot-hero-actions">
-                        <button
-                            type="button"
-                            className="primary-plot-btn"
-                            onClick={() => navigate(`/site-visit/${project.id}?plot=${plot.plotNumber}`, {
-                                state: {
-                                    from: location.pathname
-                                }
-                            })}
-                        >
-                            <span>
-                                Book a Site Visit
-                            </span>
+                                <ArrowRight />
 
-                            <ArrowRight />
-
-                        </button>
+                            </button>
 
 
-                        <button
-                            type="button"
-                            className="secondary-plot-btn"
-                            onClick={() => navigate(`/enquiry/${project.id}?plot=${plot.plotNumber}`, {
-                                state: {
-                                    from: location.pathname
-                                }
-                            })}
-                        >
-                            <Phone />
+                            <button
+                                type="button"
+                                className="secondary-plot-btn"
+                                onClick={() => navigate(`/enquiry/${project.id}?plot=${plot.plotNumber}`, {
+                                    state: {
+                                        from: location.pathname
+                                    }
+                                })}
+                            >
+                                <Phone />
 
-                            <span>
-                                Enquiry
-                            </span>
+                                <span>
+                                    Enquiry
+                                </span>
 
-                        </button>
+                            </button>
 
-                    </div>
+                        </div>
+                    )}
 
                 </div>
 
@@ -1263,49 +1291,59 @@ function PlotDetails() {
                     </p>
 
 
-                    <div className="contact-card-bottom">
-
-                        <button
-                            onClick={() => navigate(`/enquiry/${project.id}?plot=${plot.plotNumber}`, {
-                                state: {
-                                    from: location.pathname
-                                }
-                            })}
-                            type="button"
-                        >
-
-                            <span>Contact Us</span>
-
-                            <ArrowRight />
-
-                        </button>
-
-
-                        <div className="contact-big-icon">
-                            <Phone />
+                    {isUnavailable ? (
+                        <div className="contact-card-bottom" style={{ marginTop: "16px" }}>
+                            <div style={{ padding: "14px 18px", background: "rgba(255,255,255,0.12)", borderRadius: "14px", width: "100%", textAlign: "center", fontSize: "13px", fontWeight: "600" }}>
+                                {statusLower === "sold" ? "Plot is Sold Out" : "Plot is Reserved"}
+                            </div>
                         </div>
+                    ) : (
+                        <>
+                            <div className="contact-card-bottom">
 
-                    </div>
+                                <button
+                                    onClick={() => navigate(`/enquiry/${project.id}?plot=${plot.plotNumber}`, {
+                                        state: {
+                                            from: location.pathname
+                                        }
+                                    })}
+                                    type="button"
+                                >
 
-                    <div
-                        className="schedule"
-                        onClick={() => navigate(`/site-visit/${project.id}?plot=${plot.plotNumber}`, {
-                            state: {
-                                from: location.pathname
-                            }
-                        })}
-                        style={{ cursor: "pointer" }}
-                    >
+                                    <span>Contact Us</span>
 
-                        <CalendarDays />
+                                    <ArrowRight />
 
-                        <span>
-                            Schedule a
-                            <br />
-                            Site Visit
-                        </span>
+                                </button>
 
-                    </div>
+
+                                <div className="contact-big-icon">
+                                    <Phone />
+                                </div>
+
+                            </div>
+
+                            <div
+                                className="schedule"
+                                onClick={() => navigate(`/site-visit/${project.id}?plot=${plot.plotNumber}`, {
+                                    state: {
+                                        from: location.pathname
+                                    }
+                                })}
+                                style={{ cursor: "pointer" }}
+                            >
+
+                                <CalendarDays />
+
+                                <span>
+                                    Schedule a
+                                    <br />
+                                    Site Visit
+                                </span>
+
+                            </div>
+                        </>
+                    )}
 
                 </div>
 

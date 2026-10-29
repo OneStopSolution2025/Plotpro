@@ -37,6 +37,11 @@ export default function EnquiryForm() {
         String(plot.projectMongoId) === String(project?._id)
     );
 
+    // Only Available plots should be listed for enquiries
+    const availablePlots = projectPlots.filter(
+        (plot) => (plot.status || "Available").trim().toLowerCase() === "available"
+    );
+
     const handleBackNavigation = () => {
         if (location.state?.from && typeof location.state.from === "string") {
             navigate(location.state.from);
@@ -70,7 +75,14 @@ export default function EnquiryForm() {
         fullName: "",
         mobile: "",
         email: "",
-        plot: preSelectedPlot,
+        plot: (() => {
+            if (!preSelectedPlot) return "";
+            const matched = projectPlots.find((p) => String(p.plotNumber) === String(preSelectedPlot));
+            if (matched && (matched.status || "Available").trim().toLowerCase() !== "available") {
+                return "";
+            }
+            return preSelectedPlot;
+        })(),
         contactMethod: "",
         message: "",
     });
@@ -319,9 +331,9 @@ export default function EnquiryForm() {
                                         disabled={isSubmitting}
                                     >
                                         <option value="">Select a plot (optional)</option>
-                                        {projectPlots.map((plot) => (
+                                        {availablePlots.map((plot) => (
                                             <option key={plot.id} value={plot.plotNumber}>
-                                                Plot {plot.plotNumber} - {plot.size} - {plot.facing} Facing - {plot.price} - {plot.status}
+                                                Plot {plot.plotNumber} - {plot.size} - {plot.facing} Facing - {plot.price}
                                             </option>
                                         ))}
                                     </select>

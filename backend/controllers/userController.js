@@ -22,10 +22,10 @@ export const getUserProfile = async (req, res, next) => {
       })
       .populate({
         path: "savedPlots",
-        select: "customId plotNumber size facing price status projectId projectCustomId",
+        select: "customId plotNumber size facing price status projectId projectCustomId image images",
         populate: {
           path: "projectId",
-          select: "customId title location",
+          select: "customId title location image images defaultPlotImage",
         },
       });
 
@@ -159,7 +159,7 @@ export const getUserWishlist = async (req, res, next) => {
         select: "customId plotNumber size facing price status projectId projectCustomId image images",
         populate: {
           path: "projectId",
-          select: "customId title location",
+          select: "customId title location image images defaultPlotImage",
         },
       });
 

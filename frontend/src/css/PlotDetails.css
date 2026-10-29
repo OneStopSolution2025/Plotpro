@@ -36,7 +36,10 @@
 
     width: calc(100% - 100px);
 
-    margin: 110px 0 20px 100px;
+    margin: 110px auto 20px;
+    max-width: 1340px;
+    padding: 0 40px;
+    box-sizing: border-box;
 
 
 
@@ -4089,4 +4092,248 @@
 
     }
 
+}
+
+/* =========================================================
+   DIAGONAL BANNER & UNAVAILABLE NOTICE (PLOT DETAILS)
+========================================================= */
+.plot-main-image .plot-diagonal-banner-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 6;
+}
+
+.plot-main-image .plot-diagonal-banner-bar {
+    position: absolute;
+    top: 48px;
+    left: -80px;
+    width: 320px;
+    padding: 12px 0;
+    text-align: center;
+    transform: rotate(-45deg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.5);
+    letter-spacing: 2.5px;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.plot-main-image .plot-diagonal-banner-bar span {
+    display: inline-block;
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.plot-main-image .banner-sold .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+}
+
+.plot-main-image .banner-reserved .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* Unavailable Notice Card (Replacing CTA buttons) */
+.plot-unavailable-notice {
+    margin-top: 24px;
+    padding: 20px 24px;
+    border-radius: 18px;
+    border: 1.5px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.plot-unavailable-notice.notice-sold {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.plot-unavailable-notice.notice-reserved {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.plot-unavailable-notice .notice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.plot-unavailable-notice.notice-sold .notice-badge {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.plot-unavailable-notice.notice-reserved .notice-badge {
+    background: #f59e0b;
+    color: #ffffff;
+}
+
+.plot-unavailable-notice p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    opacity: 0.92;
+}
+
+@media (max-width: 768px) {
+    .plot-main-image .plot-diagonal-banner-bar {
+        top: 36px;
+        left: -65px;
+        width: 250px;
+        padding: 9px 0;
+        font-size: 13px;
+    }
+    
+    .plot-unavailable-notice {
+        padding: 16px;
+        margin-top: 18px;
+    }
+}
+
+/* =========================================================
+   CENTERED PROMINENT RIBBON & FADED IMAGE (PLOT DETAILS)
+========================================================= */
+.plot-main-image.plot-image-faded img {
+    filter: brightness(0.75) saturate(0.7) contrast(0.92);
+    opacity: 0.7;
+    transition: all 0.4s ease;
+}
+
+.plot-main-image .plot-fade-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 28px;
+}
+
+.plot-main-image .plot-diagonal-banner-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 28px;
+}
+
+.plot-main-image .plot-diagonal-banner-bar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(255, 255, 255, 0.3);
+    border-top: 3px solid rgba(255, 255, 255, 0.85);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.85);
+    letter-spacing: 6px;
+    font-size: 28px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.plot-main-image .plot-diagonal-banner-bar span {
+    display: inline-block;
+    color: #ffffff;
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
+}
+
+.plot-main-image .banner-sold .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.96) 0%, rgba(153, 27, 27, 0.98) 100%);
+}
+
+.plot-main-image .banner-reserved .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.96) 0%, rgba(180, 83, 9, 0.98) 100%);
+}
+
+/* Unavailable Notice Card (Replacing CTA buttons) */
+.plot-unavailable-notice {
+    margin-top: 24px;
+    padding: 20px 24px;
+    border-radius: 18px;
+    border: 1.5px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.plot-unavailable-notice.notice-sold {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.plot-unavailable-notice.notice-reserved {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.plot-unavailable-notice .notice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.plot-unavailable-notice.notice-sold .notice-badge {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.plot-unavailable-notice.notice-reserved .notice-badge {
+    background: #f59e0b;
+    color: #ffffff;
+}
+
+.plot-unavailable-notice p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    opacity: 0.92;
+}
+
+@media (max-width: 768px) {
+    .plot-main-image .plot-diagonal-banner-bar {
+        padding: 13px 0;
+        font-size: 18px;
+        letter-spacing: 3.5px;
+    }
+    
+    .plot-unavailable-notice {
+        padding: 16px;
+        margin-top: 18px;
+    }
 }

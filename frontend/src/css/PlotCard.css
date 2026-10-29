@@ -690,3 +690,115 @@
     }
 
 }
+
+/* =========================================================
+   DIAGONAL BANNER (TOP-LEFT TO BOTTOM-RIGHT) FOR RESERVED / SOLD OUT
+========================================================= */
+.plot-diagonal-banner-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 6;
+}
+
+.plot-diagonal-banner-bar {
+    position: absolute;
+    top: 36px;
+    left: -65px;
+    width: 250px;
+    padding: 8px 0;
+    text-align: center;
+    transform: rotate(-45deg);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.plot-diagonal-banner-bar span {
+    display: inline-block;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Sold Out Banner - Rich Terracotta / Crimson */
+.banner-sold .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+}
+
+/* Reserved Banner - Amber / Golden Warning */
+.banner-reserved .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* =========================================================
+   CENTERED PROMINENT RIBBON & FADED IMAGE FOR RESERVED / SOLD OUT
+========================================================= */
+.plot-image-faded img {
+    filter: brightness(0.72) saturate(0.65) contrast(0.9);
+    opacity: 0.68;
+    transition: all 0.4s ease;
+}
+
+.plot-fade-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.plot-diagonal-banner-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plot-diagonal-banner-bar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150%;
+    transform: translate(-50%, -50%) rotate(-32deg);
+    padding: 14px 0;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.25);
+    border-top: 2.5px solid rgba(255, 255, 255, 0.7);
+    border-bottom: 2.5px solid rgba(255, 255, 255, 0.7);
+    letter-spacing: 4px;
+    font-size: 19px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.plot-diagonal-banner-bar span {
+    display: inline-block;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+}
+
+/* Sold Out Banner - Bold Crimson Gradient */
+.banner-sold .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.96) 0%, rgba(153, 27, 27, 0.98) 100%);
+}
+
+/* Reserved Banner - Vibrant Amber / Gold Warning */
+.banner-reserved .plot-diagonal-banner-bar {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.96) 0%, rgba(180, 83, 9, 0.98) 100%);
+}

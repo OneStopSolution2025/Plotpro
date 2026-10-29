@@ -739,31 +739,6 @@ const SubscriberManagement = () => {
 
             <div className="sa-modal-body-scroll">
               <form onSubmit={handleAssignSubmit}>
-                <div className="mb-3">
-                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
-                    Select Subscription Plan
-                  </label>
-                  <CustomDropdown
-                    value={assignForm.planId}
-                    onChange={(e) => {
-                      const sel = plans.find((p) => p._id === e.target.value);
-                      setAssignForm({
-                        ...assignForm,
-                        planId: e.target.value,
-                        assignedSeats: sel ? sel.maxAdminSeats : assignForm.assignedSeats,
-                        durationDays: sel ? sel.durationDays : assignForm.durationDays,
-                      });
-                    }}
-                    placeholder="Select a plan..."
-                  >
-                    <option value="">Select a plan...</option>
-                    {plans.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.name} — ₹{p.price} ({p.isUnlimitedSeats || p.maxAdminSeats >= 999999 ? "Unlimited" : p.maxAdminSeats} seats, {p.durationDays} days)
-                      </option>
-                    ))}
-                  </CustomDropdown>
-                </div>
 
                 <div className="row mb-3">
                   <div className="col-12 col-sm-6 mb-2 mb-sm-0">

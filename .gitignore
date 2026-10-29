@@ -7,40 +7,54 @@ dist/
 build/
 */dist/
 
-# Environment files
+# Environment files (.env is ignored, but .env.example files are kept)
 .env
 .env.*
-.env.example
 *.env.local
+!*.env.example
+!.env.example
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Backup directories, restore safety snapshots and backup files
+*_backup*/
+*_backups*/
+*.backup
+*.bak
+*.old
+.restore_safety_snapshots/
+*/.restore_safety_snapshots/
 
-# OS / Editor files
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Impeccable & Impeccable Live artifacts
+.impeccable/
+*/.impeccable/
+.impeccable-live.json
+.impeccable-live/
+*/.impeccable-live/
+src/lib/impeccable/
+plugins/impeccable-live.*
+app/plugins/impeccable-live.*
+src/plugins/impeccable-live.*
 
-# Testing & temporary
-.momentic/
-*/.momentic/
-test-results/
-*/test-results/
+# Kilo folders & files
+.kilo/
+*/.kilo/
+
+# Playwright folders, traces & CLI output
 .playwright/
 */.playwright/
+.playwright-cli/
+*/.playwright-cli/
+playwright-report/
+*/playwright-report/
+test-results/
+*/test-results/
 *.test.yaml
 *.spec.yaml
-frontend/.kilo/
+
+# Testing, Pytest & temporary caches
+.pytest_cache/
+*/.pytest_cache/
+.momentic/
+*/.momentic/
 *.zip
 
 # Agent & Skill files
@@ -67,38 +81,22 @@ opencode.json
 # Local scripts & DB migrations
 backend/scripts/migrateToAtlas.js
 
-# impeccable-live-ignore-start
-.impeccable/hook.cache.json
-.impeccable/hook.pending.json
-.impeccable/config.local.json
-.impeccable/live/server.json
-.impeccable/live/roots.json
-.impeccable/live/app-root.json
-.impeccable/live/inject-journal.json
-.impeccable/live/sessions/
-.impeccable/live/previews/
-.impeccable/live/annotations/
-.impeccable/live/artifacts/
-.impeccable/live/accept-receipts/
-.impeccable/live/locks/
-.impeccable/live/cache/
-.impeccable/live/manual-edit-apply-transaction.json
-.impeccable/live/manual-edit-events.jsonl
-.impeccable/live/manual-edit-evidence/
-.impeccable/live/pending-manual-edits.json
-.impeccable/live/deferred-svelte-component-accepts.json
-.impeccable-live.json
-.impeccable-live/
-app/.impeccable-live/
-src/.impeccable-live/
-node_modules/.impeccable-live/
-src/lib/impeccable/ImpeccableLiveRoot.svelte
-src/lib/impeccable/__runtime.js
-src/lib/impeccable/[0-9a-f]*/
-plugins/impeccable-live.client.ts
-app/plugins/impeccable-live.client.ts
-src/plugins/impeccable-live.client.ts
-# impeccable-live-ignore-end
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Playwright CLI output (may contain credentials)
-.playwright-cli/
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+*/.vscode/
+.idea/
+*/.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

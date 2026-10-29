@@ -33,8 +33,6 @@ import {
     Layers
 } from "lucide-react";
 
-import entrance from "../assets/Projects/Greenvalley/Entrance.png";
-
 import { useState, useEffect, useRef, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -836,14 +834,6 @@ function ProjectDetails() {
 
                     </div>
 
-                    <div className="about-image">
-
-                        <img
-                            src={entrance}
-                            alt={project.title}
-                        />
-
-                    </div>
 
                 </section>
 

@@ -13,6 +13,17 @@ import { useAuth } from "../context/AuthContext";
 import { parsePhoneString } from "../utils/phoneUtils";
 import { publicApi } from "../services/api";
 
+const TIME_SLOTS = [
+    { value: "09:00", label: "9:00 AM", hour: 9, minute: 0 },
+    { value: "10:00", label: "10:00 AM", hour: 10, minute: 0 },
+    { value: "11:00", label: "11:00 AM", hour: 11, minute: 0 },
+    { value: "12:00", label: "12:00 PM", hour: 12, minute: 0 },
+    { value: "14:00", label: "2:00 PM", hour: 14, minute: 0 },
+    { value: "15:00", label: "3:00 PM", hour: 15, minute: 0 },
+    { value: "16:00", label: "4:00 PM", hour: 16, minute: 0 },
+    { value: "17:00", label: "5:00 PM", hour: 17, minute: 0 },
+];
+
 export default function SiteVisitForm() {
     const { projectId } = useParams();
     const [searchParams] = useSearchParams();
@@ -29,6 +40,11 @@ export default function SiteVisitForm() {
         String(plot.projectId) === String(project?.id) ||
         String(plot.projectCustomId) === String(project?.customId) ||
         String(plot.projectMongoId) === String(project?._id)
+    );
+
+    // Only Available plots should be listed for booking/scheduling visits
+    const availablePlots = projectPlots.filter(
+        (plot) => (plot.status || "Available").trim().toLowerCase() === "available"
     );
 
     const handleBackNavigation = () => {
@@ -64,7 +80,14 @@ export default function SiteVisitForm() {
         fullName: "",
         mobile: "",
         email: "",
-        plot: preSelectedPlot,
+        plot: (() => {
+            if (!preSelectedPlot) return "";
+            const matched = projectPlots.find((p) => String(p.plotNumber) === String(preSelectedPlot));
+            if (matched && (matched.status || "Available").trim().toLowerCase() !== "available") {
+                return "";
+            }
+            return preSelectedPlot;
+        })(),
         preferredDate: "",
         preferredTime: "",
         message: "",
@@ -98,7 +121,18 @@ export default function SiteVisitForm() {
 
     const updateForm = (key) => (event) => {
         const value = event.target.value;
-        setForm((current) => ({ ...current, [key]: value }));
+        setForm((current) => {
+            const updated = { ...current, [key]: value };
+            if (key === "preferredDate") {
+                if (current.preferredTime) {
+                    const matchedSlot = TIME_SLOTS.find((s) => s.value === current.preferredTime);
+                    if (matchedSlot && isTimeSlotPast(matchedSlot, value)) {
+                        updated.preferredTime = "";
+                    }
+                }
+            }
+            return updated;
+        });
         setErrors((current) => ({ ...current, [key]: undefined }));
     };
 
@@ -145,6 +179,11 @@ export default function SiteVisitForm() {
 
         if (!form.preferredTime) {
             newErrors.preferredTime = "Preferred time is required";
+        } else if (form.preferredDate) {
+            const matchedSlot = TIME_SLOTS.find((s) => s.value === form.preferredTime);
+            if (matchedSlot && isTimeSlotPast(matchedSlot, form.preferredDate)) {
+                newErrors.preferredTime = "Selected time has already passed for today. Please select an upcoming time slot.";
+            }
         }
 
         return newErrors;
@@ -194,9 +233,26 @@ export default function SiteVisitForm() {
         }
     };
 
+    const getLocalDateString = (d = new Date()) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const isTimeSlotPast = (slot, selectedDateStr) => {
+        if (!selectedDateStr) return false;
+        const todayStr = getLocalDateString();
+        if (selectedDateStr < todayStr) return true;
+        if (selectedDateStr > todayStr) return false;
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        return slot.hour < currentHour || (slot.hour === currentHour && currentMinute >= slot.minute);
+    };
+
     const getMinDate = () => {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
+        return getLocalDateString();
     };
 
     if (!project) {
@@ -329,9 +385,9 @@ export default function SiteVisitForm() {
                                         disabled={isSubmitting}
                                     >
                                         <option value="">Select a plot (optional)</option>
-                                        {projectPlots.map((plot) => (
+                                        {availablePlots.map((plot) => (
                                             <option key={plot.id} value={plot.plotNumber}>
-                                                Plot {plot.plotNumber} - {plot.size} - {plot.facing} Facing - {plot.price} - {plot.status}
+                                                Plot {plot.plotNumber} - {plot.size} - {plot.facing} Facing - {plot.price}
                                             </option>
                                         ))}
                                     </select>
@@ -369,17 +425,21 @@ export default function SiteVisitForm() {
                                             className={`input ${errors.preferredTime ? "error" : ""}`}
                                             value={form.preferredTime}
                                             onChange={updateForm("preferredTime")}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || !form.preferredDate}
                                         >
-                                            <option value="">Select time</option>
-                                            <option value="09:00">9:00 AM</option>
-                                            <option value="10:00">10:00 AM</option>
-                                            <option value="11:00">11:00 AM</option>
-                                            <option value="12:00">12:00 PM</option>
-                                            <option value="14:00">2:00 PM</option>
-                                            <option value="15:00">3:00 PM</option>
-                                            <option value="16:00">4:00 PM</option>
-                                            <option value="17:00">5:00 PM</option>
+                                            <option value="">{form.preferredDate ? "Select time" : "Select date first"}</option>
+                                            {TIME_SLOTS.map((slot) => {
+                                                const isPast = isTimeSlotPast(slot, form.preferredDate);
+                                                return (
+                                                    <option
+                                                        key={slot.value}
+                                                        value={slot.value}
+                                                        disabled={isPast}
+                                                    >
+                                                        {slot.label}{isPast ? "" : ""}
+                                                    </option>
+                                                );
+                                            })}
                                         </select>
                                     </div>
                                     {errors.preferredTime && <span className="error-text">{errors.preferredTime}</span>}

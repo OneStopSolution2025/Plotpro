@@ -444,7 +444,10 @@
 }
 
 .benefits-header {
-    padding: 10px 50px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 10px 40px;
+    box-sizing: border-box;
 }
 
 .section-tag {
@@ -473,15 +476,18 @@
 }
 
 .benefits {
-    padding: 40px 50px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 40px 40px;
+    box-sizing: border-box;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
 .benefit-card {
-    transform: translateX(30px);
-    width: 75%;
+    transform: none;
+    width: 100%;
     padding: 25px;
     background: rgba(0, 0, 0, 0.02);
     border: 1px solid #e8f1f8;
@@ -530,11 +536,14 @@
 /*about-section*/
 
 .about-section {
-    padding: 50px 50px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 50px 40px;
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.85fr);
+    grid-template-columns: 1fr 1fr;
     gap: 35px;
     align-items: stretch;
+    box-sizing: border-box;
 }
 
 .about-content {
@@ -732,7 +741,10 @@
 /*Amenties-section*/
 
 .amenities-section {
-    padding: 50px 50px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 50px 40px;
+    box-sizing: border-box;
 }
 
 .amenities-header h2 {
@@ -913,13 +925,13 @@
 /*Location-section*/
 
 .location-section {
+    max-width: 1340px;
+    margin: 0 auto;
     display: grid;
-
     grid-template-columns: 1fr 1.2fr 0.8fr;
-
     gap: 15px;
-
-    padding: 50px 50px;
+    padding: 50px 40px;
+    box-sizing: border-box;
 }
 
 .location-list {
@@ -1080,7 +1092,11 @@
 @media (max-width: 992px) {
 
     .project-details-page {
-        width: 92%;
+        width: 100%;
+        max-width: 100%;
+        padding-left: 20px;
+        padding-right: 20px;
+        box-sizing: border-box;
     }
 
     .project-gallery {
@@ -1132,9 +1148,10 @@
 @media (max-width: 576px) {
 
     .project-details-page {
-        width: 92%;
-
-        margin: 25px auto;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        box-sizing: border-box;
     }
 
     .big-image {
@@ -1149,9 +1166,11 @@
     }
 
     .share-detail {
-        flex-wrap: wrap;
-
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 10px;
+        width: 100%;
     }
 
     .pro-de {
@@ -1296,7 +1315,10 @@
 }
 
 .plots-section {
-    padding: 50px 50px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 50px 40px;
+    box-sizing: border-box;
 }
 
 .plots-grid {
@@ -1600,20 +1622,100 @@
 
     .share {
         display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .share .hero-action-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #4b5563;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        box-sizing: border-box;
+        white-space: nowrap;
+    }
+
+    .share .hero-action-pill svg {
+        width: 15px;
+        height: 15px;
+        padding: 0;
+        display: block;
+        flex-shrink: 0;
+    }
+
+
+    /* ---------- PRICING & HERO ACTIONS (MOBILE) ---------- */
+    .project-pricing-card {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .pricing-card-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .pricing-value-row {
+        flex-wrap: wrap;
+    }
+
+    .pricing-amount {
+        font-size: 28px;
+    }
+
+    .plot-hero-actions {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .primary-plot-btn,
+    .secondary-plot-btn {
+        min-height: 46px;
+        font-size: 13.5px;
+    }
+
+    .patta-verify-wrap {
+        margin-top: 14px;
+    }
+
+    .patta-verify-btn {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 13px;
+        padding: 9px 14px;
+    }
+
+    .patta-verify-btn svg {
+        width: 22px;
+        height: 22px;
+        padding: 4px;
+    }
+
+    .approval-box {
+        padding: 12px 14px;
         gap: 10px;
     }
 
-    .share button {
-        gap: 4px;
-        padding: 0;
-        font-size: 11px;
+    .approval-item svg {
+        width: 20px;
+        height: 20px;
     }
 
-    .share button svg {
-        width: 16px;
-        height: 16px;
+    .approval-item span {
+        font-size: 12px;
     }
-
 
     /* ---------- TITLE ---------- */
 

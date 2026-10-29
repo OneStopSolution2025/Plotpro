@@ -194,7 +194,6 @@ export default function ProjectPlotPanel({
             </div>
             <div>
               <h2 className="plot-panel-heading">{projectTitle}</h2>
-              <p className="plot-panel-subheading">Select a plot to view details and availability</p>
             </div>
           </div>
           <div className="plot-panel-actions">
