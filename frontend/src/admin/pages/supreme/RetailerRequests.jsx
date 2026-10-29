@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getLenis } from "../../../components/SmoothScrollProvider";
 import { supremeAdminApi, authApi } from "../../../services/api";
 import {
   FaClipboardList,
@@ -15,7 +16,6 @@ import {
   FaBan,
   FaImage,
   FaFileAlt,
-  FaDownload,
   FaQuestionCircle,
   FaHistory,
   FaBuilding,
@@ -23,7 +23,6 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import "../../styles/super-admin.css";
-import { resolveImageUrl } from "../../../utils/imageUrl";
 
 /* ────────────────────────────────────────────────────────────────
    Shared small helpers
@@ -150,6 +149,23 @@ const RetailerRequests = () => {
     }).catch(() => {});
   }, [statusFilter, search]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Lock body & smooth scroll when detail modal or action modals are active
+  const isAnyModalOpen = Boolean(detail || approveTarget || rejectTarget || requestInfoTarget || deleteTarget);
+  useEffect(() => {
+    const lenis = getLenis();
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+      if (lenis) lenis.stop();
+    } else {
+      document.body.style.overflow = "";
+      if (lenis) lenis.start();
+    }
+    return () => {
+      document.body.style.overflow = "";
+      if (lenis) lenis.start();
+    };
+  }, [isAnyModalOpen]);
+
   const openDetail = async (id) => {
     setDetailLoading(true);
     setActionError("");
@@ -244,7 +260,13 @@ const RetailerRequests = () => {
     try {
       const res = await supremeAdminApi.deleteRetailerRequest(deleteTarget.id);
       if (res?.success) {
-        showToast("success", res.message || `Rejected request for "${deleteTarget.businessName}" deleted successfully. The email can now apply again.`);
+        showToast(
+          "success",
+          res.message ||
+            (deleteTarget.status === "APPROVED"
+              ? `Approved Super Admin "${deleteTarget.businessName}" and associated workspace deleted successfully.`
+              : `Rejected request for "${deleteTarget.businessName}" deleted successfully. The email can now apply again.`)
+        );
         setDeleteTarget(null);
         setDetail(null);
         fetchRequests(true);
@@ -614,7 +636,7 @@ const RetailerRequests = () => {
                             </button>
                           </>
                         )}
-                        {r.status === "REJECTED" && (
+                        {["REJECTED", "APPROVED"].includes(r.status) && (
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-danger"
@@ -623,7 +645,11 @@ const RetailerRequests = () => {
                               setDeleteTarget(r);
                               setActionError("");
                             }}
-                            title="Delete this rejected request so the applicant can apply again"
+                            title={
+                              r.status === "APPROVED"
+                                ? "Delete this approved Super Admin account and workspace data"
+                                : "Delete this rejected request so the applicant can apply again"
+                            }
                           >
                             <FaTrash size={11} style={{ marginRight: 4 }} /> Delete
                           </button>
@@ -649,15 +675,32 @@ const RetailerRequests = () => {
 
       {detail && !detailLoading && (
         <div
-          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 3000, overflowY: "auto", padding: "40px 16px" }}
+          className="sa-modal-backdrop"
+          data-lenis-prevent
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15,23,42,0.65)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3000,
+            padding: "24px 16px",
+          }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setDetail(null);
           }}
         >
           <div
+            className="sa-modal-content"
+            data-lenis-prevent
             style={{
               width: "100%",
-              maxWidth: 740,
+              maxWidth: 780,
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
               background: "#ffffff",
               borderRadius: 20,
               overflow: "hidden",
@@ -666,16 +709,17 @@ const RetailerRequests = () => {
               fontFamily: "'Poppins', sans-serif",
             }}
           >
-            {/* Modal header */}
+            {/* Modal header (Fixed at top) */}
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "20px 24px",
+                padding: "18px 24px",
                 background: "linear-gradient(135deg, #121d31 0%, #1e2e4a 100%)",
                 borderBottom: "3px solid #a63d2f",
                 color: "#fff",
+                flexShrink: 0,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -714,7 +758,16 @@ const RetailerRequests = () => {
               </button>
             </div>
 
-            <div style={{ padding: "24px 26px" }}>
+            {/* Scrollable body content */}
+            <div
+              data-lenis-prevent
+              style={{
+                padding: "24px 26px",
+                overflowY: "auto",
+                flex: 1,
+                overscrollBehavior: "contain",
+              }}
+            >
               {actionError && (
                 <div className="alert alert-danger py-2" style={{ fontSize: "13px", borderRadius: 10 }}>
                   {actionError}
@@ -850,42 +903,141 @@ const RetailerRequests = () => {
               )}
 
               {/* Package Card */}
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderLeft: "4px solid #a63d2f", borderRadius: 12, padding: "14px 18px", marginBottom: 18 }}>
-                <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.6, color: "#a63d2f", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <div
+                style={{
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderLeft: "4px solid #a63d2f",
+                  borderRadius: 14,
+                  padding: "16px 20px",
+                  marginBottom: 18,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11.5,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.6,
+                    color: "#a63d2f",
+                    fontWeight: 700,
+                    marginBottom: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
                   <FaRupeeSign size={12} /> Requested Package
                 </div>
                 {detail.plan ? (
                   (() => {
-                    const isAnnual = detail.plan?.billingInterval === "ANNUAL" || detail.planSnapshot?.billingInterval === "ANNUAL";
+                    const isAnnual =
+                      detail.plan?.billingInterval === "ANNUAL" ||
+                      detail.planSnapshot?.billingInterval === "ANNUAL";
                     return (
-                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 24px", fontSize: 13.5 }}>
-                        <span style={{ fontSize: 15, fontWeight: 700, color: "#121d31" }}>{detail.plan.name}</span>
-                        <span style={{ fontWeight: 700, color: "#a63d2f" }}>
-                          {fmtMoney(detail.plan)} <span style={{ fontSize: 12, fontWeight: 500, color: "#64748b" }}>{isAnnual ? "/year" : "/month"}</span>
-                        </span>
-                        <span
+                      <div>
+                        {/* Top line: Plan Name, Price, and Duration */}
+                        <div
                           style={{
-                            background: isAnnual ? "#ecfdf5" : "#e2e8f0",
-                            color: isAnnual ? "#065f46" : "#334155",
-                            border: isAnnual ? "1px solid #a7f3d0" : "none",
-                            padding: "3px 10px",
-                            borderRadius: 6,
-                            fontSize: 12,
-                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                            gap: 12,
+                            paddingBottom: 12,
+                            borderBottom: "1px solid #e2e8f0",
+                            marginBottom: 12,
                           }}
                         >
-                          {isAnnual ? "Annual — 1 Year (365 days)" : `${detail.plan.durationDays || 30} days`}
-                        </span>
-                        <span style={{ color: "#475569" }}>
-                          {detail.plan.isUnlimitedSeats || detail.plan.maxAdminSeats >= 999999
-                            ? "Unlimited branch admin seats"
-                            : `${detail.plan.maxAdminSeats} branch admin seats`}
-                        </span>
-                        {!detail.plan.isActive && (
-                          <span style={{ color: "#b02a37", fontWeight: 600 }}>
-                            (Package now inactive — pick a different package on approval)
-                          </span>
-                        )}
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                            <span style={{ fontSize: 18, fontWeight: 800, color: "#121d31" }}>
+                              {detail.plan.name}
+                            </span>
+                            <span style={{ fontSize: 13, color: "#64748b", fontWeight: 500 }}>
+                              ({isAnnual ? "Annual Subscription" : "Monthly Subscription"})
+                            </span>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <span
+                              style={{
+                                background: isAnnual ? "#ecfdf5" : "#f1f5f9",
+                                color: isAnnual ? "#065f46" : "#334155",
+                                border: isAnnual ? "1px solid #a7f3d0" : "1px solid #cbd5e1",
+                                padding: "4px 12px",
+                                borderRadius: 8,
+                                fontSize: 12,
+                                fontWeight: 700,
+                              }}
+                            >
+                              {isAnnual ? "Annual — 1 Year (365 days)" : `${detail.plan.durationDays || 30} days`}
+                            </span>
+                            <div style={{ fontSize: 17, fontWeight: 800, color: "#a63d2f" }}>
+                              {fmtMoney(detail.plan)}{" "}
+                              <span style={{ fontSize: 12, fontWeight: 500, color: "#64748b" }}>
+                                {isAnnual ? "/year" : "/month"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Entitlement Chips Grid */}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                          <div
+                            style={{
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: 8,
+                              padding: "6px 14px",
+                              fontSize: 13,
+                              color: "#1e293b",
+                              fontWeight: 600,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <span style={{ color: "#a63d2f", fontWeight: 700 }}>Project Limit:</span>{" "}
+                            {detail.plan.isUnlimitedProjects || detail.plan.maxProjects >= 999999
+                              ? "Unlimited projects"
+                              : `${detail.plan.maxProjects ?? 10} projects max`}
+                          </div>
+
+                          <div
+                            style={{
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: 8,
+                              padding: "6px 14px",
+                              fontSize: 13,
+                              color: "#1e293b",
+                              fontWeight: 600,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <span style={{ color: "#a63d2f", fontWeight: 700 }}>Staff Admin Seats:</span>{" "}
+                            {detail.plan.isUnlimitedSeats || detail.plan.maxAdminSeats >= 999999
+                              ? "Unlimited seats"
+                              : `${detail.plan.maxAdminSeats} branch admin seats`}
+                          </div>
+
+                          {!detail.plan.isActive && (
+                            <div
+                              style={{
+                                background: "#fef2f2",
+                                border: "1px solid #fecaca",
+                                borderRadius: 8,
+                                padding: "6px 12px",
+                                fontSize: 12,
+                                color: "#b91c1c",
+                                fontWeight: 600,
+                              }}
+                            >
+                              Package now inactive — pick a different package on approval
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })()
@@ -947,15 +1099,16 @@ const RetailerRequests = () => {
                   {detail.payment?.proofUrl ? (
                     <div style={{ marginTop: 10 }}>
                       <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
-                        <FaImage /> Payment proof screenshot ({detail.payment.proofUrl ? "Cloudinary" : ""})
+                        <FaImage /> Payment proof screenshot (legacy record — securely served)
                       </div>
-                      <a href={resolveImageUrl(detail.payment.proofUrl)} target="_blank" rel="noreferrer">
-                        <img
-                          src={resolveImageUrl(detail.payment.proofUrl)}
-                          alt="Payment proof"
-                          style={{ maxWidth: "100%", maxHeight: 260, borderRadius: 8, border: "1px solid #e2e8f0" }}
-                        />
-                      </a>
+                      <button
+                        type="button"
+                        className="sa-btn-outline"
+                        onClick={() => handleOpenDoc(detail.id || detail._id, "paymentProof")}
+                        disabled={docLoading}
+                      >
+                        {docLoading ? "Loading proof..." : "View Payment Proof (Secure)"}
+                      </button>
                       {detail.payment.verifiedAt && (
                         <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                           Verified at {fmtDateTime(detail.payment.verifiedAt)}
@@ -1105,7 +1258,7 @@ const RetailerRequests = () => {
                 </div>
               )}
 
-              {detail.status === "REJECTED" && (
+              {["REJECTED", "APPROVED"].includes(detail.status) && (
                 <div
                   style={{
                     display: "flex",
@@ -1119,7 +1272,15 @@ const RetailerRequests = () => {
                   }}
                 >
                   <div style={{ fontSize: 13, color: "#64748b" }}>
-                    This request was rejected. Deleting it frees up <strong style={{ color: "#1e293b" }}>{detail.email}</strong> so the applicant can submit a fresh application.
+                    {detail.status === "APPROVED" ? (
+                      <>
+                        This Super Admin is provisioned. Deleting it will permanently remove the <strong style={{ color: "#1e293b" }}>{detail.email}</strong> account, its subscription, staff branch admins, and all projects/plots in this workspace.
+                      </>
+                    ) : (
+                      <>
+                        This request was rejected. Deleting it frees up <strong style={{ color: "#1e293b" }}>{detail.email}</strong> so the applicant can submit a fresh application.
+                      </>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -1141,7 +1302,7 @@ const RetailerRequests = () => {
                       setActionError("");
                     }}
                   >
-                    <FaTrash size={12} /> Delete Rejected Request
+                    <FaTrash size={12} /> {detail.status === "APPROVED" ? "Delete Approved Super Admin" : "Delete Rejected Request"}
                   </button>
                 </div>
               )}
@@ -1226,6 +1387,7 @@ const RetailerRequests = () => {
                         {isAnnual ? "/year" : "/month"}
                       </span>{" "}
                       ({isAnnual ? "Annual — 365 days" : `${durationDays} days`},{" "}
+                      {selectedPlan?.isUnlimitedProjects || selectedPlan?.maxProjects >= 999999 ? "Unlimited" : `${selectedPlan?.maxProjects ?? 50}`} projects,{" "}
                       {selectedPlan?.isUnlimitedSeats ? "Unlimited" : `${selectedPlan?.maxAdminSeats ?? 0}`} seats)
                     </span>
                     <span style={{ fontSize: 11, background: isAnnual ? "#ecfdf5" : "#e2e8f0", color: isAnnual ? "#065f46" : "#475569", border: isAnnual ? "1px solid #a7f3d0" : "none", padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>
@@ -1401,7 +1563,7 @@ const RetailerRequests = () => {
         </div>
       )}
 
-      {/* ── Delete Rejected Request Modal ── */}
+      {/* ── Delete Request Modal (Rejected or Approved) ── */}
       {deleteTarget && (
         <div
           style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4000, padding: 16 }}
@@ -1412,7 +1574,7 @@ const RetailerRequests = () => {
           <div
             style={{
               width: "100%",
-              maxWidth: 480,
+              maxWidth: 520,
               background: "#ffffff",
               borderRadius: 16,
               padding: 24,
@@ -1426,22 +1588,40 @@ const RetailerRequests = () => {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
-                  Delete Rejected Request?
+                  {deleteTarget.status === "APPROVED" ? "Delete Approved Super Admin?" : "Delete Rejected Request?"}
                 </h3>
                 <span style={{ fontSize: 12.5, color: "#64748b" }}>
-                  Permanently remove this rejected application
+                  {deleteTarget.status === "APPROVED"
+                    ? "Permanently remove Super Admin account and workspace data"
+                    : "Permanently remove this rejected application"}
                 </span>
               </div>
             </div>
 
             <p style={{ margin: "12px 0 16px", fontSize: 13.5, color: "#475569", lineHeight: 1.6 }}>
-              Are you sure you want to delete the rejected request for <strong>{deleteTarget.businessName}</strong> (<strong>{deleteTarget.email}</strong>)?
+              Are you sure you want to delete {deleteTarget.status === "APPROVED" ? "the approved Super Admin account" : "the rejected request"} for{" "}
+              <strong>{deleteTarget.businessName}</strong> (<strong>{deleteTarget.email}</strong>)?
             </p>
-            <div style={{ padding: "10px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
-              <span style={{ fontSize: 12.5, color: "#0f172a" }}>
-                ✓ Deleting this request will completely remove it from the system and allow <strong>{deleteTarget.email}</strong> to submit a new retailer account application.
-              </span>
-            </div>
+
+            {deleteTarget.status === "APPROVED" ? (
+              <div style={{ padding: "12px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, marginBottom: 16 }}>
+                <div style={{ fontSize: 12.5, color: "#991b1b", fontWeight: 600, marginBottom: 4 }}>
+                  ⚠️ Irreversible Action:
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "#b91c1c", lineHeight: 1.6 }}>
+                  <li>Super Admin login and subscription will be permanently removed.</li>
+                  <li>All staff branch admins under this tenant will be deleted.</li>
+                  <li>All branches, projects, plots, enquiries, and site visits will be cleaned up.</li>
+                  <li>The email address <strong>{deleteTarget.email}</strong> will be freed for fresh registration if needed.</li>
+                </ul>
+              </div>
+            ) : (
+              <div style={{ padding: "10px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 12.5, color: "#0f172a" }}>
+                  ✓ Deleting this request will completely remove it from the system and allow <strong>{deleteTarget.email}</strong> to submit a new retailer account application.
+                </span>
+              </div>
+            )}
 
             {actionError && <div className="alert alert-danger py-2" style={{ fontSize: 13, marginBottom: 14 }}>{actionError}</div>}
 
@@ -1462,7 +1642,7 @@ const RetailerRequests = () => {
                 onClick={confirmDelete}
                 style={{ borderRadius: 8, fontSize: 13, fontWeight: 600, background: "#dc2626", borderColor: "#dc2626", display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                {isDeleting ? "Deleting…" : (<><FaTrash size={12} /> Delete Request</>)}
+                {isDeleting ? "Deleting…" : (<><FaTrash size={12} /> {deleteTarget.status === "APPROVED" ? "Delete Super Admin" : "Delete Request"}</>)}
               </button>
             </div>
           </div>

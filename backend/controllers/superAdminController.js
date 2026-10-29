@@ -10,6 +10,7 @@ import Branch from "../models/Branch.js";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { createNotification } from "./notificationController.js";
 import { storageService } from "../services/storageService.js";
+import { countTenantProjects, verifyTenantProjectQuota } from "../utils/projectQuotaHelper.js";
 
 /**
  * Helper to resolve tenant admins, projects, and plot IDs for a Super Admin
@@ -1212,21 +1213,36 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       });
     }
 
-    // Check subscription status and expiry
-    const activeSub = await Subscription.findOne({ subscriberId: req.user._id });
-    if (activeSub) {
-      if (activeSub.status === "SUSPENDED") {
-        return res.status(403).json({
-          success: false,
-          message: "Your subscription has been suspended. Cannot create projects.",
-        });
-      }
-      if (new Date(activeSub.expiryDate) <= new Date()) {
-        return res.status(403).json({
-          success: false,
-          message: "Your subscription plan has expired. Please renew your subscription to create new projects.",
-        });
-      }
+    if (!image && (!images || !images.length || !images[0])) {
+      return res.status(400).json({
+        success: false,
+        message: "Project Cover / Layout Image is required.",
+      });
+    }
+
+    if (!details || (typeof details === "string" && !details.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Project Hero Description is required.",
+      });
+    }
+
+    if (!about || !about.description || (typeof about.description === "string" && !about.description.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "About The Project Section description is required.",
+      });
+    }
+
+    // Authoritative Subscription status, expiry, and project quota verification
+    const quotaCheck = await verifyTenantProjectQuota(req.user._id);
+    if (!quotaCheck.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: quotaCheck.code || "PROJECT_LIMIT_REACHED",
+        message: quotaCheck.message,
+        data: quotaCheck.data || null,
+      });
     }
 
     // Validate assigned admin if provided
@@ -1598,6 +1614,13 @@ export const getSubscriptionInfo = async (req, res, next) => {
     const effectiveUsed = Math.max(activeAdminsCount, sub.lifetimeAssignedSeats || 0);
     const remainingSeats = Math.max(0, effectiveSeats - effectiveUsed);
 
+    // Project creation quota calculation for this tenant
+    const effectiveProjects = sub.getEffectiveProjects ? sub.getEffectiveProjects() : 3;
+    const isUnlimitedProjects = effectiveProjects >= 999999 || Boolean(sub.planId?.isUnlimitedProjects);
+    const usedProjects = await countTenantProjects(req.user._id);
+    const remainingProjects = isUnlimitedProjects ? 999999 : Math.max(0, effectiveProjects - usedProjects);
+    const isProjectLimitReached = !isUnlimitedProjects && usedProjects >= effectiveProjects;
+
     res.status(200).json({
       success: true,
       data: {
@@ -1611,6 +1634,13 @@ export const getSubscriptionInfo = async (req, res, next) => {
         lifetimeAssignedSeats: sub.lifetimeAssignedSeats || activeAdminsCount,
         actualActiveAdmins: activeAdminsCount,
         remainingSeats,
+        // Authoritative project quota fields
+        assignedProjects: isUnlimitedProjects ? 999999 : effectiveProjects,
+        maxProjects: isUnlimitedProjects ? 999999 : effectiveProjects,
+        usedProjects,
+        remainingProjects,
+        isProjectLimitReached,
+        isUnlimitedProjects,
         isCustomOverride: sub.isCustomOverride || false,
         customOverrideReason: sub.customOverrideReason || "",
         startDate: sub.startDate,

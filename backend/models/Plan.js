@@ -53,6 +53,15 @@ const planSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    maxProjects: {
+      type: Number,
+      min: [0, "Project limit cannot be negative"],
+      default: 3,
+    },
+    isUnlimitedProjects: {
+      type: Boolean,
+      default: false,
+    },
 
     features: [
       {

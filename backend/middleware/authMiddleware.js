@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Subscription from "../models/Subscription.js";
 import TrustedDevice from "../models/TrustedDevice.js";
+import { getJwtSecret } from "../config/jwtConfig.js";
 
 /**
  * Authentication Middleware.
@@ -17,11 +18,8 @@ export const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      // Verify token
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || "dreamcity_super_secret_jwt_key_2026_dev"
-      );
+      // Verify token (central fail-closed secret — Fix 3; payload: userId/role/deviceId)
+      const decoded = jwt.verify(token, getJwtSecret());
 
       // Fetch user without password
       const user = await User.findById(decoded.userId).select("-passwordHash");

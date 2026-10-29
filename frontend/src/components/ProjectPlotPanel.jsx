@@ -15,6 +15,7 @@ import {
   Layers,
 } from "lucide-react";
 import { getProjectRouteSlug } from "../context/ProjectContext";
+import { getLenis } from "./SmoothScrollProvider";
 import "../css/ProjectPlotPanel.css";
 
 /**
@@ -54,15 +55,25 @@ export default function ProjectPlotPanel({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Lock body scroll when drawer is open
+  // Lock body & Lenis scroll when drawer is open
   useEffect(() => {
+    const lenis = getLenis();
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      if (lenis) {
+        lenis.stop();
+      }
     } else {
       document.body.style.overflow = "";
+      if (lenis) {
+        lenis.start();
+      }
     }
     return () => {
       document.body.style.overflow = "";
+      if (lenis) {
+        lenis.start();
+      }
     };
   }, [isOpen]);
 
@@ -173,6 +184,7 @@ export default function ProjectPlotPanel({
         className={`plot-panel-drawer ${isOpen ? "open" : ""}`}
         aria-label="Project Plot Selection Panel"
         aria-hidden={!isOpen}
+        data-lenis-prevent
       >
         {/* Header */}
         <header className="plot-panel-header">
@@ -285,7 +297,7 @@ export default function ProjectPlotPanel({
         </section>
 
         {/* Scrollable Body List */}
-        <div className="plot-panel-body">
+        <div className="plot-panel-body" data-lenis-prevent>
           {isLoading && uniquePlots.length === 0 ? (
             <div className="plot-panel-state">
               <div className="plot-panel-spinner" />

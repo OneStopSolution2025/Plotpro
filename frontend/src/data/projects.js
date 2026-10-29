@@ -18,8 +18,10 @@ export const AVAILABLE_HIGHLIGHTS = [
   "Immediate Construction",
 ];
 
-// Safe defaults for new projects only. Legal/financial claims (DTCP, RERA, Bank Loan) are NEVER preselected by default.
+// Default highlights for new projects: DTCP and RERA Approved are always preapplied by default as required.
 export const DEFAULT_NEW_PROJECT_HIGHLIGHTS = [
+  "DTCP Approved",
+  "RERA Approved",
   "Strategic and well-connected location",
   "Gated community with 24/7 security",
   "Wide blacktop roads",

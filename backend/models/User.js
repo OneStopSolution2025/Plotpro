@@ -96,9 +96,35 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // Password Reset OTP (populated only on active password reset request)
-    resetOtp: {
+    // Password Reset OTP (populated only on an active password reset request)
+    // Stored as HMAC-SHA256 hash — the plaintext OTP is NEVER persisted.
+    resetOtpHash: {
       type: String,
+      required: false,
+      select: false,
+    },
+    // Random challenge ID binding the OTP to this specific reset request
+    // (prevents cross-user / cross-challenge / cross-flow OTP reuse)
+    resetOtpChallengeId: {
+      type: String,
+      required: false,
+      select: false,
+    },
+    // Failed verification attempts for the active challenge (max 5, then invalidated)
+    resetOtpAttempts: {
+      type: Number,
+      required: false,
+      select: false,
+    },
+    // True after successful OTP verification; consumed atomically by reset-password
+    resetOtpVerified: {
+      type: Boolean,
+      required: false,
+      select: false,
+    },
+    // Cooldown timestamp preventing email bombing via repeated reset requests
+    resetOtpCooldownUntil: {
+      type: Date,
       required: false,
       select: false,
     },
@@ -130,6 +156,20 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     deviceEnrollmentCooldownUntil: {
+      type: Date,
+      required: false,
+      select: false,
+    },
+
+    // Login lockout (Fix 2): consecutive failed password attempt counter +
+    // temporary lock timestamp. Mutated ONLY via atomic updates in
+    // authController.loginUser (no stale-read bypass possible).
+    loginFailedAttempts: {
+      type: Number,
+      required: false,
+      select: false,
+    },
+    loginLockedUntil: {
       type: Date,
       required: false,
       select: false,

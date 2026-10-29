@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Plotimg from '../assets/projectimg1.png'
 import aboutimg from '../assets/About-section.jpg'
 import section4 from '../assets/bg-image.jpg'
@@ -6,7 +9,135 @@ import Navbar from '../components/Navbar'
 import Finalcta from '../components/Final-cta';
 import Footer from '../components/Footer'
 
+gsap.registerPlugin(ScrollTrigger);
+
 const About = () => {
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+            // 1. Hero Content entrance
+            gsap.from(".about-hero-content > *", {
+                opacity: 0,
+                y: 35,
+                duration: 0.9,
+                stagger: 0.15,
+                ease: "power3.out",
+            });
+
+            // Hero Image entrance
+            gsap.from(".about-hero-image-wrap", {
+                opacity: 0,
+                scale: 0.92,
+                duration: 1,
+                delay: 0.2,
+                ease: "power2.out",
+            });
+
+            // 2. Who We Are Section
+            gsap.from(".about-intro-heading", {
+                opacity: 0,
+                x: -30,
+                duration: 0.8,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-intro",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+            gsap.from(".about-intro-description", {
+                opacity: 0,
+                x: 30,
+                duration: 0.8,
+                delay: 0.1,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-intro",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+            gsap.from(".about-intro-visual", {
+                opacity: 0,
+                y: 40,
+                duration: 0.9,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-intro-visual",
+                    start: "top 85%",
+                    once: true,
+                },
+            });
+
+            // 3. Process Section
+            gsap.from(".about-process-header", {
+                opacity: 0,
+                y: 30,
+                duration: 0.7,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-process",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+            gsap.from(".about-process-item", {
+                opacity: 0,
+                y: 40,
+                duration: 0.7,
+                stagger: 0.15,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-process-list",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+            // 4. Why DreamCity Section
+            gsap.from(".about-why-heading", {
+                opacity: 0,
+                y: 30,
+                duration: 0.7,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-why",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+            gsap.from(".about-why-visual", {
+                opacity: 0,
+                scale: 0.94,
+                duration: 0.8,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-why-main",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+
+            gsap.from(".about-why-item", {
+                opacity: 0,
+                x: 30,
+                duration: 0.6,
+                stagger: 0.12,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: ".about-why-list",
+                    start: "top 80%",
+                    once: true,
+                },
+            });
+        });
+
+        return () => ctx.revert();
+    }, []);
+
     return (
         <main className="about-page">
             <Navbar />

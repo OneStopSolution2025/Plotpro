@@ -61,6 +61,8 @@ const retailerRequestSchema = new mongoose.Schema(
       durationDays: { type: Number, default: 30 },
       maxAdminSeats: { type: Number, default: 3 },
       isUnlimitedSeats: { type: Boolean, default: false },
+      maxProjects: { type: Number, default: 50 },
+      isUnlimitedProjects: { type: Boolean, default: false },
       features: [{ type: String }],
     },
 

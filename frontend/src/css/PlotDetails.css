@@ -180,11 +180,11 @@
 
 
 
-    object-fit: contain;
+    object-fit: cover;
 
     background: #f8fafc;
 
-    padding: 12px;
+    padding: 0;
 
 
 

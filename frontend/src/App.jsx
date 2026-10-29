@@ -28,6 +28,7 @@ import SiteVisitForm from "./Pages/SiteVisitForm";
 import EnquiryForm from "./Pages/EnquiryForm";
 import ProjectPlots from "./Pages/ProjectPlots.jsx";
 import UserProfile from "./Pages/UserProfile.jsx";
+import NotFound from "./Pages/NotFound.jsx";
 
 
 import AdminLayout from "./admin/layouts/Adminlayouts.jsx";
@@ -60,6 +61,7 @@ import SeatUsageOverview from "./admin/pages/supreme/SeatUsageOverview.jsx";
 import SupremeAdminProfile from "./admin/pages/supreme/SupremeAdminProfile.jsx";
 import RetailerRequests from "./admin/pages/supreme/RetailerRequests.jsx";
 import TrustedDevices from "./admin/pages/supreme/TrustedDevices.jsx";
+import SmoothScrollProvider from "./components/SmoothScrollProvider.jsx";
 
 
 function App() {
@@ -71,6 +73,7 @@ function App() {
             <NotificationProvider>
               <AdminProvider>
                 <AdminProfileProvider>
+                  <SmoothScrollProvider />
                   <Routes>
                   {/* Public Client Website (Guarded by Maintenance Mode) */}
                   <Route element={<PublicRoute />}>
@@ -90,6 +93,9 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/site-visit/:projectId" element={<SiteVisitForm />} />
                     <Route path="/enquiry/:projectId" element={<EnquiryForm />} />
+
+                    {/* Catch-all: custom 404 for any unknown public URL */}
+                    <Route path="*" element={<NotFound />} />
                   </Route>
 
                   {/* Auth routes (Always reachable so admins/owners can log in during maintenance) */}

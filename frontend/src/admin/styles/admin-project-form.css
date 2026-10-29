@@ -537,6 +537,92 @@
   border: 1px solid rgba(166, 61, 47, 0.2);
 }
 
+/* ── Benefits Section Grid & Cards (Clean Dense 3-Column, No Glow) ── */
+.benefits-grid-dense {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+@media (max-width: 992px) {
+  .benefits-grid-dense {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .benefits-grid-dense {
+    grid-template-columns: 1fr;
+  }
+}
+
+.benefit-card-dense {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  user-select: none;
+  box-shadow: none !important;
+}
+
+.benefit-card-dense:hover {
+  border-color: #94a3b8;
+}
+
+.benefit-card-dense.selected {
+  border-color: #17240f;
+  background: #f8fafc;
+}
+
+.benefit-card-dense input[type="checkbox"] {
+  display: none;
+}
+
+.benefit-card-dense-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.benefit-card-dense-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.benefit-card-dense.selected .benefit-card-dense-title {
+  color: #17240f;
+}
+
+.benefit-card-dense-pill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.benefit-card-dense.selected .benefit-card-dense-pill {
+  background: #17240f;
+  color: #ffffff;
+}
+
+.benefit-card-dense-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
 .checkbox-group-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

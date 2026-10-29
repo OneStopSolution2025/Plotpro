@@ -397,6 +397,19 @@ class StorageService {
   }
 
   /**
+   * Resolve a legacy payment-proof file path for authorized reviewer download.
+   * Proof uploads are no longer accepted; this only serves previously stored files.
+   */
+  getProofPath(fileKey) {
+    if (!fileKey || typeof fileKey !== "string" || !fileKey.startsWith("proof_") || fileKey.includes("..") || fileKey.includes("/") || fileKey.includes("\\")) {
+      const err = new Error("Invalid payment proof identifier.");
+      err.statusCode = 400;
+      throw err;
+    }
+    return resolveStoragePath(path.join("proofs", fileKey));
+  }
+
+  /**
    * Delete an asset from Persistent Volume or Cloudinary.
    * Strictly validates that the file resides inside upload root to prevent path traversal.
    *

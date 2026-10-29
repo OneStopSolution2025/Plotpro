@@ -76,6 +76,7 @@ export const markNotificationRead = async (req, res, next) => {
     }
 
     notification.read = true;
+    notification.readAt = new Date();
     await notification.save();
 
     res.status(200).json({
@@ -97,7 +98,7 @@ export const markAllNotificationsRead = async (req, res, next) => {
   try {
     await Notification.updateMany(
       { recipient: req.user._id, read: false },
-      { $set: { read: true } }
+      { $set: { read: true, readAt: new Date() } }
     );
 
     res.status(200).json({
@@ -121,6 +122,28 @@ export const clearMyNotifications = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Notifications cleared",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Manual trigger to clean up all viewed notifications from DB
+ * @route   POST /api/notifications/cleanup
+ * @access  Private (Admin / Super Admin / Supreme Admin)
+ */
+export const triggerNotificationCleanup = async (req, res, next) => {
+  try {
+    const { cleanupViewedNotifications } = await import(
+      "../services/notificationCleanupService.js"
+    );
+    const result = await cleanupViewedNotifications();
+
+    res.status(200).json({
+      success: true,
+      message: `Cleaned up ${result.deletedCount} viewed notifications from database.`,
+      deletedCount: result.deletedCount,
     });
   } catch (error) {
     next(error);

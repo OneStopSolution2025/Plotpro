@@ -40,6 +40,12 @@ const subscriptionSchema = new mongoose.Schema(
       min: [0, "Assigned seats cannot be negative"],
       default: 0,
     },
+    // Effective project limit for this subscriber (snapshot from plan or customized by Supreme Admin)
+    assignedProjects: {
+      type: Number,
+      min: [0, "Assigned projects cannot be negative"],
+      default: 0,
+    },
     // Atomic counter for active admin accounts belonging to this subscriber
     usedSeats: {
       type: Number,
@@ -84,6 +90,19 @@ subscriptionSchema.methods.getEffectiveSeats = function () {
     return this.planId.maxAdminSeats;
   }
   return typeof this.assignedSeats === "number" ? this.assignedSeats : 0;
+};
+
+// Helper method to compute authoritative effective project limit
+subscriptionSchema.methods.getEffectiveProjects = function () {
+  if (this.isCustomOverride && typeof this.assignedProjects === "number" && this.assignedProjects > 0) {
+    return this.assignedProjects;
+  }
+  if (this.planId && typeof this.planId.maxProjects === "number") {
+    return this.planId.maxProjects;
+  }
+  return typeof this.assignedProjects === "number" && this.assignedProjects > 0
+    ? this.assignedProjects
+    : 3;
 };
 
 // Virtual to check if subscription is dynamically active and not expired

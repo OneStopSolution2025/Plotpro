@@ -19,8 +19,7 @@ import {
   setDeviceCookie,
 } from "../utils/deviceSecurity.js";
 import { supportsTransactions } from "../config/db.js";
-
-const JWT_SECRET = process.env.JWT_SECRET || "dreamcity_super_secret_jwt_key_2026_dev";
+import { getJwtSecret } from "../config/jwtConfig.js";
 
 /**
  * Extract descriptive browser and OS info from User-Agent.
@@ -216,10 +215,9 @@ export const verifyDeviceOtpAndProceed = async (req, res, next) => {
       const candidateSecret = generateDeviceSecret();
       const candidateTokenHash = hashDeviceSecret(candidateSecret);
 
-      // Invalidate any previously pending requests for this user
-      await DeviceApprovalRequest.updateMany(
-        { userId: user._id, status: "PENDING_APPROVAL" },
-        { $set: { status: "CANCELLED" } },
+      // Cleanly delete any stale pending requests for this user so DB only holds the live one
+      await DeviceApprovalRequest.deleteMany(
+        { userId: user._id },
         session ? { session } : undefined
       );
 
@@ -259,7 +257,7 @@ export const verifyDeviceOtpAndProceed = async (req, res, next) => {
           userId: String(user._id),
           purpose: "DEVICE_TRANSFER_POLL",
         },
-        JWT_SECRET,
+        getJwtSecret(),
         { expiresIn: "30m" }
       );
 
@@ -394,7 +392,7 @@ export const getRequestStatus = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, getJwtSecret());
     } catch {
       return res.status(401).json({ success: false, message: "Polling token expired." });
     }
@@ -445,7 +443,7 @@ export const claimApprovedSession = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, getJwtSecret());
     } catch {
       return res.status(401).json({ success: false, message: "Polling token has expired." });
     }
@@ -506,26 +504,7 @@ export const claimApprovedSession = async (req, res, next) => {
       });
     }
 
-    // 3. Revoke existing APPROVED device for this user
-    const existingApprovedQuery = TrustedDevice.findOne({
-      userId: requestDoc.userId,
-      status: "APPROVED",
-    });
-    const existingApproved = session
-      ? await existingApprovedQuery.session(session)
-      : await existingApprovedQuery;
-
-    let replacedDeviceId = null;
-    if (existingApproved) {
-      existingApproved.status = "REPLACED";
-      existingApproved.isCurrentSession = false;
-      existingApproved.revokedAt = new Date();
-      existingApproved.revocationReason = `Replaced by workstation '${requestDoc.deviceLabel}' via approved transfer.`;
-      await existingApproved.save(session ? { session } : undefined);
-      replacedDeviceId = existingApproved._id;
-    }
-
-    // 4. Create new TrustedDevice with APPROVED status and isCurrentSession: true
+    // 3. Create new TrustedDevice with APPROVED status and isCurrentSession: true
     const newDevice = new TrustedDevice({
       userId: requestDoc.userId,
       tenantId: requestDoc.tenantId,
@@ -546,10 +525,20 @@ export const claimApprovedSession = async (req, res, next) => {
 
     await newDevice.save(session ? { session } : undefined);
 
-    // 5. Mark request as CLAIMED (anti-replay)
-    requestDoc.status = "CLAIMED";
-    requestDoc.claimedAt = new Date();
-    await requestDoc.save(session ? { session } : undefined);
+    // 4. Permanently delete all previous TrustedDevice records for this user so only current approved device remains
+    await TrustedDevice.deleteMany(
+      {
+        userId: requestDoc.userId,
+        _id: { $ne: newDevice._id },
+      },
+      session ? { session } : undefined
+    );
+
+    // 5. Permanently delete all DeviceApprovalRequests for this user to keep DB clean
+    await DeviceApprovalRequest.deleteMany(
+      { userId: requestDoc.userId },
+      session ? { session } : undefined
+    );
 
     // 6. Record Audit Log
     

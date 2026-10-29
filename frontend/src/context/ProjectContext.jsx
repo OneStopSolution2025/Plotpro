@@ -82,6 +82,18 @@ const validateProject = (project) => {
     errors.push("Location is required");
   }
 
+  if (!project.image && (!project.images || !project.images.length || !project.images[0])) {
+    errors.push("Project Cover / Master Layout Image is required");
+  }
+
+  if (!project.details || !project.details.trim()) {
+    errors.push("Project Hero Description is required");
+  }
+
+  if (!project.about || !project.about.description || !project.about.description.trim()) {
+    errors.push("About The Project Section (Main Description) is required");
+  }
+
   if (!VALID_STATUSES.includes(project.status)) {
     errors.push(`Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}`);
   }

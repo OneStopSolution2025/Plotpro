@@ -307,6 +307,19 @@ const PlanManagement = () => {
                     )}
                   </div>
 
+                  <div style={{ fontSize: "13px", marginBottom: "14px", color: "#334155", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <strong>Project Limit:</strong>
+                    {p.isUnlimitedProjects || p.maxProjects >= 999999 ? (
+                      <span className="badge bg-primary d-inline-flex align-items-center gap-1" style={{ fontSize: "11px" }}>
+                        <FaInfinity /> Unlimited Projects
+                      </span>
+                    ) : (
+                      <span className="badge" style={{ backgroundColor: "#e0f2fe", color: "#0369a1", fontWeight: 700, border: "1px solid #bae6fd" }}>
+                        {p.maxProjects ?? 10} projects max
+                      </span>
+                    )}
+                  </div>
+
                   {Array.isArray(p.features) && p.features.length > 0 && (
                     <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "12px", color: "#64748b" }}>
                       {p.features.map((feat, idx) => (
@@ -450,6 +463,26 @@ const PlanManagement = () => {
                     onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
                     required
                   />
+                </div>
+              </div>
+
+              <div className="row mb-3">
+                <div className="col-12">
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
+                    Project Limit (Max Projects)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="form-control"
+                    value={formData.maxProjects}
+                    onChange={(e) => setFormData({ ...formData, maxProjects: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                    placeholder="e.g. 3, 15, 50"
+                    required
+                  />
+                  <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                    Maximum active non-archived projects allowed under this plan quota.
+                  </div>
                 </div>
               </div>
 

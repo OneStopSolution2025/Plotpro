@@ -2525,6 +2525,7 @@ select.sa-admin-select {
   padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
+  overscroll-behavior: contain;
 }
 
 .sa-modal-footer-responsive {

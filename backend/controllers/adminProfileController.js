@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import Subscription from "../models/Subscription.js";
 import Branch from "../models/Branch.js";
+import { countTenantProjects } from "../utils/projectQuotaHelper.js";
 
 /**
  * @desc    Get current admin profile
@@ -10,11 +11,26 @@ import Branch from "../models/Branch.js";
  */
 export const getAdminProfile = async (req, res) => {
   let isSubscriptionExpired = false;
+  let projectQuota = null;
+
   if (req.user.tenantId) {
-    const sub = await Subscription.findOne({ subscriberId: req.user.tenantId });
+    const sub = await Subscription.findOne({ subscriberId: req.user.tenantId }).populate("planId");
     if (sub) {
       const isDateExpired = Boolean(sub.expiryDate && new Date(sub.expiryDate) <= new Date());
       isSubscriptionExpired = sub.status === "EXPIRED" || isDateExpired;
+
+      const maxProjects = sub.getEffectiveProjects ? sub.getEffectiveProjects() : 3;
+      const isUnlimitedProjects = maxProjects >= 999999 || Boolean(sub.planId?.isUnlimitedProjects);
+      const usedProjects = await countTenantProjects(req.user.tenantId);
+      const remainingProjects = isUnlimitedProjects ? 999999 : Math.max(0, maxProjects - usedProjects);
+
+      projectQuota = {
+        maxProjects: isUnlimitedProjects ? 999999 : maxProjects,
+        usedProjects,
+        remainingProjects,
+        isLimitReached: !isUnlimitedProjects && usedProjects >= maxProjects,
+        isUnlimitedProjects,
+      };
     }
   }
 
@@ -40,6 +56,7 @@ export const getAdminProfile = async (req, res) => {
     data: {
       ...req.user.toObject ? req.user.toObject() : req.user,
       isSubscriptionExpired,
+      projectQuota,
       branch,
     },
   });

@@ -1,4 +1,6 @@
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 import User from "../models/User.js";
 import Plan from "../models/Plan.js";
 import Subscription from "../models/Subscription.js";
@@ -8,7 +10,12 @@ import SiteVisit from "../models/SiteVisit.js";
 import SuperAdminRequest from "../models/SuperAdminRequest.js";
 import Branch from "../models/Branch.js";
 import Notification from "../models/Notification.js";
+import Plot from "../models/Plot.js";
+import TrustedDevice from "../models/TrustedDevice.js";
+import DeviceApprovalRequest from "../models/DeviceApprovalRequest.js";
+import { storageService } from "../services/storageService.js";
 import { createNotification } from "./notificationController.js";
+import { countTenantProjects } from "../utils/projectQuotaHelper.js";
 
 /**
  * @desc    Get Supreme Admin platform overview stats
@@ -158,13 +165,11 @@ export const getSubscribers = async (req, res, next) => {
           tenantId: sub._id,
         });
 
-        // Project metrics belonging to subscriber
-        const projectCount = await Project.countDocuments({
-          isArchived: false,
-          approvedBy: sub._id,
-        });
+        // Project metrics belonging to subscriber (including tenant staff admins)
+        const projectCount = await countTenantProjects(sub._id);
 
         const effectiveSeats = subscription ? subscription.getEffectiveSeats() : 3;
+        const effectiveProjects = subscription ? subscription.getEffectiveProjects() : 3;
 
         let subSubStatus = null;
         if (subscription) {
@@ -201,6 +206,9 @@ export const getSubscribers = async (req, res, next) => {
                 expiryDate: subscription.expiryDate,
                 assignedSeats: effectiveSeats,
                 usedSeats: subscription.usedSeats,
+                assignedProjects: effectiveProjects,
+                usedProjects: projectCount,
+                remainingProjects: effectiveProjects >= 999999 ? 999999 : Math.max(0, effectiveProjects - projectCount),
                 isCustomOverride: subscription.isCustomOverride || false,
                 customOverrideReason: subscription.customOverrideReason || "",
               }
@@ -513,14 +521,20 @@ export const deleteSubscriber = async (req, res, next) => {
     const branches = await Branch.find({ tenantId: subscriber._id }).select("_id");
     const branchIds = branches.map((b) => b._id);
 
-    // 3. Delete all projects created by or assigned to this tenant's branches/admins
-    await Project.deleteMany({
+    // 3. Find and delete all projects and their associated plots
+    const tenantProjects = await Project.find({
       $or: [
         { branchId: { $in: branchIds } },
         { adminId: { $in: allTenantUserIds } },
         { approvedBy: subscriber._id },
       ],
-    });
+    }).select("_id");
+    const tenantProjectIds = tenantProjects.map((p) => p._id);
+
+    if (tenantProjectIds.length > 0) {
+      await Plot.deleteMany({ projectId: { $in: tenantProjectIds } });
+      await Project.deleteMany({ _id: { $in: tenantProjectIds } });
+    }
 
     // 4. Delete customer enquiries and site visits belonging to this tenant
     await Enquiry.deleteMany({
@@ -547,10 +561,61 @@ export const deleteSubscriber = async (req, res, next) => {
     // 7. Delete subscriptions and seat requests
     await Subscription.deleteMany({ subscriberId: subscriber._id });
 
-    // 8. Delete notifications for this subscriber and their admins
+    // 8. Delete trusted devices & device requests belonging to this tenant
+    await TrustedDevice.deleteMany({
+      $or: [{ tenantId: subscriber._id }, { userId: { $in: allTenantUserIds } }],
+    });
+    await DeviceApprovalRequest.deleteMany({
+      $or: [{ tenantId: subscriber._id }, { userId: { $in: allTenantUserIds } }],
+    });
+
+    // 9. Delete notifications for this subscriber and their admins
     await Notification.deleteMany({ recipient: { $in: allTenantUserIds } });
 
-    // 9. Finally delete the Super Admin user
+    // 10. Clean up any linked SuperAdminRequest records (including payment proofs and uploaded docs)
+    const linkedRequests = await SuperAdminRequest.find({
+      $or: [
+        { provisionedUserId: subscriber._id },
+        { email: subscriber.email.toLowerCase() },
+        { email: subscriber.email },
+      ],
+    });
+
+    for (const reqItem of linkedRequests) {
+      // Clean up verification documents from storage
+      const keys = [
+        reqItem.businessVerification?.panDocKey,
+        reqItem.businessVerification?.gstDocKey,
+        reqItem.businessVerification?.registrationDocKey,
+        reqItem.businessVerification?.authLetterDocKey,
+      ].filter(Boolean);
+
+      for (const key of keys) {
+        try {
+          const filePath = storageService.getBusinessDocPath(key);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (docErr) {
+          /* ignore error */
+        }
+      }
+
+      // Clean up payment proof screenshot if any
+      if (reqItem.payment?.proofPublicId) {
+        await storageService.deleteLayoutImage(reqItem.payment.proofPublicId).catch(() => {});
+      }
+    }
+
+    await SuperAdminRequest.deleteMany({
+      $or: [
+        { provisionedUserId: subscriber._id },
+        { email: subscriber.email.toLowerCase() },
+        { email: subscriber.email },
+      ],
+    });
+
+    // 11. Finally delete the Super Admin user
     await User.findByIdAndDelete(subscriber._id);
 
     res.status(200).json({
@@ -640,6 +705,7 @@ export const assignSubscriberSubscription = async (req, res, next) => {
       subscription.startDate = startDate;
       subscription.expiryDate = expiryDate;
       subscription.assignedSeats = effectiveSeats;
+      subscription.assignedProjects = plan.maxProjects || 3;
       subscription.usedSeats = currentActiveAdmins;
       subscription.isCustomOverride = overrideFlag;
       subscription.customOverrideReason = overrideReasonText;
@@ -739,9 +805,35 @@ export const createPlan = async (req, res, next) => {
       durationDays: Number(durationDays),
       maxAdminSeats: effectiveSeats,
       isUnlimitedSeats: unlimited,
-      maxProjects: maxProjects ? Number(maxProjects) : 50,
+      maxProjects: maxProjects ? Number(maxProjects) : 10,
       features: Array.isArray(features) ? features : [],
     });
+
+    // If a MONTHLY plan is created, automatically generate its corresponding ANNUAL plan (12 months with 20% discount)
+    if ((billingInterval || "MONTHLY") === "MONTHLY") {
+      const annualName = `${name.trim()} (Annual)`;
+      const annualSlug = `${slug}-annual`;
+      const originalAnnualPrice = Number(price) * 12;
+      const discountedAnnualPrice = Math.round(originalAnnualPrice * 0.8);
+
+      const existingAnnual = await Plan.findOne({ $or: [{ name: annualName }, { slug: annualSlug }] });
+      if (!existingAnnual) {
+        await Plan.create({
+          name: annualName,
+          slug: annualSlug,
+          description: description ? `${description.trim()} (Annual Edition - 20% savings)` : `${name.trim()} 1-year annual plan with 20% discount.`,
+          price: discountedAnnualPrice,
+          currency: currency || "INR",
+          billingInterval: "ANNUAL",
+          durationDays: 365,
+          maxAdminSeats: effectiveSeats,
+          isUnlimitedSeats: unlimited,
+          maxProjects: maxProjects ? Number(maxProjects) : 10,
+          features: Array.isArray(features) ? features : [],
+          isActive: true,
+        });
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -800,11 +892,34 @@ export const updatePlan = async (req, res, next) => {
     } else if (maxAdminSeats !== undefined && maxAdminSeats !== null && maxAdminSeats !== "") {
       plan.maxAdminSeats = Number(maxAdminSeats);
     }
-    if (maxProjects) plan.maxProjects = Number(maxProjects);
+    if (maxProjects !== undefined && maxProjects !== null && maxProjects !== "") {
+      plan.maxProjects = Number(maxProjects);
+    }
     if (features) plan.features = Array.isArray(features) ? features : plan.features;
     if (isActive !== undefined) plan.isActive = Boolean(isActive);
 
     await plan.save();
+
+    // If a MONTHLY plan was updated, automatically keep its corresponding ANNUAL plan in sync
+    if (plan.billingInterval === "MONTHLY") {
+      const annualSlug = `${plan.slug}-annual`;
+      const annualName = `${plan.name} (Annual)`;
+      const discountedAnnualPrice = Math.round(Number(plan.price) * 12 * 0.8);
+
+      const annualPlan = await Plan.findOne({
+        $or: [{ slug: annualSlug }, { name: annualName }],
+      });
+
+      if (annualPlan) {
+        annualPlan.price = discountedAnnualPrice;
+        annualPlan.maxProjects = plan.maxProjects;
+        annualPlan.maxAdminSeats = plan.maxAdminSeats;
+        annualPlan.isUnlimitedSeats = plan.isUnlimitedSeats;
+        annualPlan.features = plan.features;
+        if (isActive !== undefined) annualPlan.isActive = Boolean(isActive);
+        await annualPlan.save();
+      }
+    }
 
     res.status(200).json({
       success: true,

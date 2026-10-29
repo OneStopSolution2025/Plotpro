@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
 import { recordUnknownUserData } from "../utils/guestDataService.js";
+import { getJwtSecret } from "../config/jwtConfig.js";
 
 /**
  * @desc    Submit public site visit (requires approved project)
@@ -51,9 +52,12 @@ export const submitPublicSiteVisit = async (req, res, next) => {
     if (req.headers?.authorization?.startsWith("Bearer ")) {
       try {
         const token = req.headers.authorization.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key");
-        if (decoded?.id) {
-          customerId = decoded.id;
+        // Best-effort customer attribution. Token payload contract (generateToken):
+        // { userId, role, deviceId? } — verified with the central fail-closed
+        // secret; any failure silently downgrades to a guest submission.
+        const decoded = jwt.verify(token, getJwtSecret());
+        if (decoded?.userId) {
+          customerId = decoded.userId;
         }
       } catch {
         // Guest submission, customerId remains null

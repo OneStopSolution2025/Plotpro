@@ -14,8 +14,10 @@ import {
   FaTimes,
   FaBuilding,
   FaLock,
+  FaLayerGroup,
 } from "react-icons/fa";
 import { superAdminApi } from "../../services/api";
+import { useAdmins } from "../context/AdminContext";
 import { resolveImageUrl } from "../../utils/imageUrl";
 import {
   AVAILABLE_BENEFITS,
@@ -107,6 +109,19 @@ const SuperAdminProjectForm = () => {
     parsePriceLakhs,
     isValidPlotPrice,
   } = useProjects();
+  const { subscriptionInfo, fetchSubscriptionInfo } = useAdmins();
+
+  useEffect(() => {
+    if (fetchSubscriptionInfo) {
+      fetchSubscriptionInfo();
+    }
+  }, [fetchSubscriptionInfo]);
+
+  const maxProjects = subscriptionInfo?.maxProjects ?? 10;
+  const usedProjects = subscriptionInfo?.usedProjects ?? (projects ? projects.filter((p) => !p.isArchived).length : 0);
+  const remainingProjects = subscriptionInfo?.remainingProjects ?? Math.max(0, maxProjects - usedProjects);
+  const isUnlimitedProjects = Boolean(subscriptionInfo?.isUnlimitedProjects || maxProjects >= 999999);
+  const isProjectLimitReached = Boolean(subscriptionInfo?.isProjectLimitReached || (!isUnlimitedProjects && remainingProjects <= 0));
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -329,6 +344,10 @@ const SuperAdminProjectForm = () => {
     setForm((prev) => {
       const current = Array.isArray(prev.benefits) ? prev.benefits : [];
       const exists = current.some((b) => b.title === benefitObj.title);
+      if (!exists && current.length >= 4) {
+        setMessage({ type: "error", text: "You can select a maximum of 4 project benefits (Why Choose Us)." });
+        return prev;
+      }
       const updated = exists
         ? current.filter((b) => b.title !== benefitObj.title)
         : [...current, benefitObj];
@@ -349,7 +368,12 @@ const SuperAdminProjectForm = () => {
   const handleToggleAmenity = (item) => {
     setForm((prev) => {
       const current = Array.isArray(prev.amenities) ? prev.amenities : [];
-      const updated = current.includes(item)
+      const exists = current.includes(item);
+      if (!exists && current.length >= 8) {
+        setMessage({ type: "error", text: "You can select a maximum of 8 project amenities." });
+        return prev;
+      }
+      const updated = exists
         ? current.filter((a) => a !== item)
         : [...current, item];
       return { ...prev, amenities: updated };
@@ -365,6 +389,15 @@ const SuperAdminProjectForm = () => {
     if (!form.title.trim()) errors.push("Project Title is required.");
     if (!form.location.trim()) errors.push("Location is required.");
     if (!form.plotPrice.trim()) errors.push("Plot Price is required.");
+    if (!form.image && (!form.images || !form.images.length || !form.images[0])) {
+      errors.push("Project Cover / Master Layout Image is required.");
+    }
+    if (!form.details || !form.details.trim()) {
+      errors.push("Project Hero Description is required.");
+    }
+    if (!form.about?.description || !form.about.description.trim()) {
+      errors.push("About The Project Section (Main Description) is required.");
+    }
     if (!plotsValid) {
       if (total === 0) errors.push("Total plots must be greater than 0.");
       else errors.push("Available + Reserved + Sold must equal Total Plots.");
@@ -469,16 +502,66 @@ const SuperAdminProjectForm = () => {
 
   return (
     <div className="admin-project-form-page">
-      <div className="form-header">
-        <button className="back-btn" onClick={handleCancel}>
-          <FaArrowLeft /> Back to Branches
-        </button>
-        <div>
-          <h1>Add New Project</h1>
-          <p style={{ margin: "2px 0 0", fontSize: "13px", color: "#64748b" }}>
-            Super Admin — Project will be automatically{" "}
-            <strong style={{ color: "#059669" }}>APPROVED</strong> and published directly on the client site.
-          </p>
+      <div className="form-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button className="back-btn" onClick={handleCancel}>
+            <FaArrowLeft /> Back to Branches
+          </button>
+          <div>
+            <h1>Add New Project</h1>
+            <p style={{ margin: "2px 0 0", fontSize: "13px", color: "#64748b" }}>
+              Super Admin — Project will be automatically{" "}
+              <strong style={{ color: "#059669" }}>APPROVED</strong> and published directly on the client site.
+            </p>
+          </div>
+        </div>
+
+        {/* Project Quota Limit Banner */}
+        <div
+          style={{
+            background: isProjectLimitReached ? "#fef2f2" : "#f0fdf4",
+            border: `1px solid ${isProjectLimitReached ? "#fecaca" : "#bbf7d0"}`,
+            borderRadius: "12px",
+            padding: "10px 16px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "12px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+          }}
+        >
+          <div
+            style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "8px",
+              background: isProjectLimitReached ? "#fee2e2" : "#dcfce7",
+              color: isProjectLimitReached ? "#dc2626" : "#16a34a",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              flexShrink: 0,
+            }}
+          >
+            <FaLayerGroup />
+          </div>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: isProjectLimitReached ? "#991b1b" : "#15803d" }}>
+              Subscription Project Quota
+            </div>
+            <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#1e293b", marginTop: "1px" }}>
+              {isUnlimitedProjects ? (
+                <span>Unlimited Projects Available</span>
+              ) : (
+                <span>
+                  <strong>{usedProjects}</strong> / <strong>{maxProjects}</strong> Projects Used{" "}
+                  <span style={{ color: isProjectLimitReached ? "#dc2626" : "#16a34a", fontWeight: 600, fontSize: "12.5px", marginLeft: "4px" }}>
+                    ({remainingProjects} remaining)
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -593,7 +676,7 @@ const SuperAdminProjectForm = () => {
             </label>
 
             <label>
-              Location * (Locked to Branch)
+              Location *
               <input
                 type="text"
                 value={form.location}
@@ -602,16 +685,11 @@ const SuperAdminProjectForm = () => {
                 placeholder={selectedBranch ? "e.g. Dindigul, Tamil Nadu" : "Select a Branch above to lock location"}
                 required
               />
-              <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
-                <FaLock size={10} style={{ marginRight: 4 }} />
-                {selectedBranch
-                  ? `Locked from ${selectedBranch.name} territory.`
-                  : "Auto-set once you select a Branch Office above."}
-              </small>
+             
             </label>
 
             <label>
-              City * (Locked to Branch)
+              City *
               <input
                 type="text"
                 value={form.city}
@@ -620,12 +698,7 @@ const SuperAdminProjectForm = () => {
                 placeholder={selectedBranch ? "e.g. Dindigul" : "Select a Branch above to lock city"}
                 required
               />
-              <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
-                <FaLock size={10} style={{ marginRight: 4 }} />
-                {selectedBranch
-                  ? `Locked from ${selectedBranch.name} city.`
-                  : "Auto-set once you select a Branch Office above."}
-              </small>
+            
             </label>
 
             <label>
@@ -788,7 +861,7 @@ const SuperAdminProjectForm = () => {
             PROJECT HERO DESCRIPTION
         ============================== */}
         <section className="form-section">
-          <h2>Project Hero Description</h2>
+          <h2>Project Hero Description *</h2>
           <label className="full-width">
             <textarea
               value={form.details}
@@ -796,6 +869,7 @@ const SuperAdminProjectForm = () => {
               onChange={(e) => setForm({ ...form, details: e.target.value })}
               rows={4}
               placeholder="Short overview description for the top hero area..."
+              required
             />
             <div className="char-counter-row">
               <span className={`char-counter ${(form.details || "").length >= 300 ? "limit-reached" : (form.details || "").length > 250 ? "warning" : ""}`}>
@@ -809,15 +883,16 @@ const SuperAdminProjectForm = () => {
             ABOUT THE PROJECT SECTION
         ============================== */}
         <section className="form-section">
-          <h2>About The Project Section</h2>
+          <h2>About The Project Section *</h2>
           <label className="full-width">
-            Main Description
+            Main Description *
             <textarea
               value={form.about?.description || ""}
               maxLength={300}
               onChange={(e) => updateObjectField("about", "description", e.target.value)}
               rows={4}
               placeholder="Main description for 'About The Project' section on client website..."
+              required
             />
             <div className="char-counter-row">
               <span className={`char-counter ${(form.about?.description || "").length >= 300 ? "limit-reached" : (form.about?.description || "").length > 250 ? "warning" : ""}`}>
@@ -831,12 +906,12 @@ const SuperAdminProjectForm = () => {
             PROJECT COVER & GALLERY IMAGES
         ============================== */}
         <section className="form-section">
-          <h2>Project Cover & Gallery Images</h2>
+          <h2>Project Cover &amp; Gallery Images</h2>
           <div className="project-image-upload-wrapper" style={{ marginBottom: "1.75rem" }}>
             <label className="project-image-field-label">
-              Project Layout & Cover Image
+              Project Layout &amp; Cover Image *
               <span className="project-image-field-hint">
-                Upload the master layout or site plan. This image is displayed on the project card and rendered as the primary layout viewer on the client site.
+                Mandatory: Upload the master layout or site plan. This image is displayed on the project card and rendered as the primary layout viewer on the client site.
               </span>
             </label>
 
@@ -985,27 +1060,34 @@ const SuperAdminProjectForm = () => {
         <section className="form-section">
           <div className="checkbox-section-header">
             <h2>Project Benefits (Why Choose Us)</h2>
-            <span className={`checkbox-count-badge ${form.benefits.length > 0 ? "has-selected" : ""}`}>
-              {form.benefits.length} selected
+            <span className={`checkbox-count-badge ${form.benefits.length >= 4 ? "limit-reached" : form.benefits.length > 0 ? "has-selected" : ""}`}>
+              {form.benefits.length} / 4 selected (Max 4)
             </span>
           </div>
           <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
-            Select the key benefits displayed in the &quot;Benefits of Project&quot; section on the client site.
+            Select up to 4 key benefits displayed in the &quot;Benefits of Project&quot; section on the client site.
           </p>
-          <div className="checkbox-group-grid">
+          <div className="benefits-grid-dense">
             {AVAILABLE_BENEFITS.map((benefit) => {
               const isChecked = form.benefits.some((b) => b.title === benefit.title);
+              const isDisabled = !isChecked && form.benefits.length >= 4;
               return (
-                <label key={benefit.title} className={`checkbox-card has-desc ${isChecked ? "selected" : ""}`}>
+                <label
+                  key={benefit.title}
+                  className={`benefit-card-dense ${isChecked ? "selected" : ""} ${isDisabled ? "disabled-card" : ""}`}
+                  style={isDisabled ? { opacity: 0.55, cursor: "not-allowed", filter: "grayscale(20%)" } : {}}
+                >
                   <input
                     type="checkbox"
                     checked={isChecked}
+                    disabled={isDisabled}
                     onChange={() => handleToggleBenefit(benefit)}
                   />
-                  <div className="checkbox-content-wrap">
-                    <span className="checkbox-title">{benefit.title}</span>
-                    <span className="checkbox-desc">{benefit.description}</span>
+                  <div className="benefit-card-dense-header">
+                    <span className="benefit-card-dense-title">{benefit.title}</span>
+                    <span className="benefit-card-dense-pill">{isChecked ? "Active" : isDisabled ? "Max 4" : "Add"}</span>
                   </div>
+                  <span className="benefit-card-dense-desc">{benefit.description}</span>
                 </label>
               );
             })}
@@ -1023,19 +1105,31 @@ const SuperAdminProjectForm = () => {
             </span>
           </div>
           <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
-            Select key selling points and verified features for this project.
+            DTCP and RERA Approved are pre-applied by default. Select key selling points and verified features for this project.
           </p>
           <div className="checkbox-group-grid">
             {AVAILABLE_HIGHLIGHTS.map((item) => {
               const isChecked = form.highlights.includes(item);
+              const isGovernmentApproval = item === "DTCP Approved" || item === "RERA Approved";
               return (
-                <label key={item} className={`checkbox-card ${isChecked ? "selected" : ""}`}>
+                <label
+                  key={item}
+                  className={`checkbox-card ${isChecked ? "selected" : ""}`}
+                  style={isGovernmentApproval ? { borderColor: "#059669", borderWidth: "1.5px" } : {}}
+                >
                   <input
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => handleToggleHighlight(item)}
                   />
-                  <span className="checkbox-label-text">{item}</span>
+                  <span className="checkbox-label-text">
+                    {item}
+                    {isGovernmentApproval && (
+                      <span style={{ marginLeft: 6, fontSize: "0.7rem", color: "#059669", fontWeight: 700, background: "#ecfdf5", padding: "2px 6px", borderRadius: 4 }}>
+                        Default
+                      </span>
+                    )}
+                  </span>
                 </label>
               );
             })}
@@ -1048,24 +1142,35 @@ const SuperAdminProjectForm = () => {
         <section className="form-section">
           <div className="checkbox-section-header">
             <h2>Project Amenities</h2>
-            <span className={`checkbox-count-badge ${form.amenities.length > 0 ? "has-selected" : ""}`}>
-              {form.amenities.length} selected
+            <span className={`checkbox-count-badge ${form.amenities.length >= 8 ? "limit-reached" : form.amenities.length > 0 ? "has-selected" : ""}`}>
+              {form.amenities.length} / 8 selected (Max 8)
             </span>
           </div>
           <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
-            Select verified amenities available in this layout or gated community.
+            Select up to 8 verified amenities available in this layout or gated community.
           </p>
           <div className="checkbox-group-grid">
             {AVAILABLE_AMENITIES.map((item) => {
               const isChecked = form.amenities.includes(item);
+              const isDisabled = !isChecked && form.amenities.length >= 8;
               return (
-                <label key={item} className={`checkbox-card ${isChecked ? "selected" : ""}`}>
+                <label
+                  key={item}
+                  className={`checkbox-card ${isChecked ? "selected" : ""} ${isDisabled ? "disabled-card" : ""}`}
+                  style={isDisabled ? { opacity: 0.55, cursor: "not-allowed", filter: "grayscale(20%)" } : {}}
+                >
                   <input
                     type="checkbox"
                     checked={isChecked}
+                    disabled={isDisabled}
                     onChange={() => handleToggleAmenity(item)}
                   />
-                  <span className="checkbox-label-text">{item}</span>
+                  <span className="checkbox-label-text">
+                    {item}
+                    {isDisabled && (
+                      <span style={{ marginLeft: 6, fontSize: "0.7rem", color: "#64748b" }}>(Max 8)</span>
+                    )}
+                  </span>
                 </label>
               );
             })}

@@ -3,7 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
-import { initStorage, getUploadDir, getLayoutsDir, getProofsDir } from "./config/storageConfig.js";
+import { assertJwtConfigAtStartup } from "./config/jwtConfig.js";
+import { initStorage, getUploadDir, getLayoutsDir } from "./config/storageConfig.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
@@ -12,9 +13,16 @@ import superAdminRoutes from "./routes/superAdminRoutes.js";
 import supremeAdminRoutes from "./routes/supremeAdminRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import { startNotificationCleanupScheduler } from "./services/notificationCleanupService.js";
 
 // Load environment variables from backend/.env
 dotenv.config();
+
+// ─── Security Guard: Fail Closed on Invalid JWT Configuration (Fix 3) ────────
+// Refuses to boot when JWT_SECRET is missing, empty, whitespace-only, too
+// short (<32 chars), or matches a known-insecure committed default. Logs only
+// non-sensitive metadata — never the secret itself.
+assertJwtConfigAtStartup();
 
 // ─── Security Guard: Strictly Prohibit Device OTP Bypass Outside Local Dev ──
 export function validateBypassConfiguration() {
@@ -53,6 +61,12 @@ validateBypassConfiguration();
 connectDB();
 
 const app = express();
+
+// ─── Trust Proxy (Railway / reverse-proxy deployments) ───────────────────────
+// Railway terminates TLS at a proxy layer. Without this, req.ip is the proxy
+// IP for every client and per-IP rate limiting (express-rate-limit) would be
+// inaccurate — all clients would share a single bucket.
+app.set("trust proxy", 1);
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 // Allow localhost, local network IP, VS Code forwarded ports (*.app.github.dev)
@@ -107,9 +121,12 @@ const staticUploadOptions = {
   index: false,
 };
 
-// Public upload directories (Layouts map/cover and Payment proofs)
+// Public upload directory (Layouts map/cover)
 app.use("/uploads/layouts", express.static(getLayoutsDir(), staticUploadOptions));
-app.use("/uploads/proofs", express.static(getProofsDir(), staticUploadOptions));
+
+// NOTE: /uploads/proofs is intentionally NOT served publicly — payment-proof
+// uploads are retired and legacy proof files are only viewable through the
+// SUPREME_ADMIN-gated document endpoint.
 
 // Explicit 404 handler for missing uploads or unauthorized access to private folders (e.g. business_docs)
 app.use("/uploads", (req, res) => {
@@ -146,6 +163,9 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`[PlotPro Server] Listening on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`);
   console.log(`[PlotPro Server] Local:   http://localhost:${PORT}`);
+
+  // Start 2-hour automated cleanup for viewed/read notifications
+  startNotificationCleanupScheduler();
 });
 
 export default app;

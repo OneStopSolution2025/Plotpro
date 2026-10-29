@@ -10,7 +10,8 @@
     "seed": "node seed/seed.js",
     "test": "node scripts/testGoogleAuth.js",
     "test:layout": "node scripts/testLayoutSecurity.js",
-    "test:device": "node scripts/testDeviceSecurity.js"
+    "test:device": "node scripts/testDeviceSecurity.js",
+    "test:security": "node scripts/runIsolatedSecurityTests.js"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",
@@ -20,6 +21,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
     "google-auth-library": "^11.3.1",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.7.0",
@@ -28,6 +30,7 @@
     "resend": "^6.31.0"
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
     "nodemon": "^3.1.14"
   }
 }

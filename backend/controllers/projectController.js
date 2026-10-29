@@ -5,6 +5,7 @@ import Branch from "../models/Branch.js";
 import { createNotification } from "./notificationController.js";
 import { resolveAdminProjectScope } from "../middleware/ownershipMiddleware.js";
 import storageService from "../services/storageService.js";
+import { verifyTenantProjectQuota } from "../utils/projectQuotaHelper.js";
 
 const ALLOWED_PROJECT_FIELDS = [
   "title",
@@ -166,6 +167,41 @@ export const createAdminProject = async (req, res, next) => {
         success: false,
         message: "Title, location, and plotPrice are required.",
       });
+    }
+
+    if (!sanitized.image && (!sanitized.images || !sanitized.images.length || !sanitized.images[0])) {
+      return res.status(400).json({
+        success: false,
+        message: "Project Cover / Layout Image is required.",
+      });
+    }
+
+    if (!sanitized.details || (typeof sanitized.details === "string" && !sanitized.details.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Project Hero Description is required.",
+      });
+    }
+
+    if (!sanitized.about || !sanitized.about.description || (typeof sanitized.about.description === "string" && !sanitized.about.description.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "About The Project Section description is required.",
+      });
+    }
+
+    // ── Tenant Project Quota Check ──
+    const tenantId = req.user.tenantId;
+    if (tenantId) {
+      const quotaCheck = await verifyTenantProjectQuota(tenantId);
+      if (!quotaCheck.allowed) {
+        return res.status(403).json({
+          success: false,
+          code: quotaCheck.code || "PROJECT_LIMIT_REACHED",
+          message: quotaCheck.message,
+          data: quotaCheck.data || null,
+        });
+      }
     }
 
     // ── Branch scoping (server-side only; never trusted from the client) ──

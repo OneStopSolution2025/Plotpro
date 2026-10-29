@@ -30,6 +30,7 @@
   width: 520px;
   max-width: 94vw;
   height: 100vh;
+  height: 100dvh;
   background: #ffffff;
   z-index: 1050;
   box-shadow: -10px 0 35px rgba(15, 23, 42, 0.16);
@@ -38,6 +39,7 @@
   transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  overscroll-behavior: contain;
   font-family: inherit;
 }
 
@@ -295,6 +297,8 @@
 .plot-panel-body {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;

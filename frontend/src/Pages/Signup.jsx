@@ -14,15 +14,11 @@ import {
     Clock,
     Users,
     FileText,
-    Upload,
-    Check,
-    X,
     ShieldCheck,
     Building,
-    FileCheck,
     ChevronDown,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import PhoneInputField from "../components/PhoneInputField";
@@ -125,56 +121,9 @@ const Signup = ({ initialType = null }) => {
         gstin: "",
 
         registrationNumber: "",
-        registrationDocData: "",
-        registrationDocName: "",
-        registrationDocMime: "",
-
-        authLetterDocData: "",
-        authLetterDocName: "",
-        authLetterDocMime: "",
 
         retailerTerms: false,
     });
-
-    const handleDocUpload = (fieldPrefix, file) => {
-        if (!file) return;
-        const MAX_SIZE_MB = 10;
-        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-            setError(`File "${file.name}" exceeds the ${MAX_SIZE_MB}MB size limit.`);
-            return;
-        }
-
-        const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-        const validExts = [".pdf", ".jpg", ".jpeg", ".png"];
-        if (!validExts.includes(ext) && !["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
-            setError("Only PDF, JPG, and PNG documents are supported.");
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = () => {
-            setRetailerData((prev) => ({
-                ...prev,
-                [`${fieldPrefix}Data`]: reader.result,
-                [`${fieldPrefix}Name`]: file.name,
-                [`${fieldPrefix}Mime`]: file.type || (ext === ".pdf" ? "application/pdf" : "image/jpeg"),
-            }));
-            setError("");
-        };
-        reader.onerror = () => {
-            setError("Failed to read the selected file.");
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleRemoveDoc = (fieldPrefix) => {
-        setRetailerData((prev) => ({
-            ...prev,
-            [`${fieldPrefix}Data`]: "",
-            [`${fieldPrefix}Name`]: "",
-            [`${fieldPrefix}Mime`]: "",
-        }));
-    };
 
     // ── Packages (live from Supreme Admin Plan collection) ─────────
     const [plans, setPlans] = useState([]);
@@ -182,9 +131,17 @@ const Signup = ({ initialType = null }) => {
     const [plansError, setPlansError] = useState("");
     const [billingCycle, setBillingCycle] = useState("MONTHLY");
 
-    // All available plans are shown under both cycles.
-    // In ANNUAL mode, prices are calculated as 12 months with a 20% discount.
-    const filteredPlans = plans;
+    // In MONTHLY mode, show monthly plans.
+    // In ANNUAL mode, show annual plans if available, or compute annual from monthly.
+    const filteredPlans = useMemo(() => {
+        const isAnnual = billingCycle === "ANNUAL";
+        if (isAnnual) {
+            const explicitAnnual = plans.filter((p) => p.billingInterval === "ANNUAL");
+            if (explicitAnnual.length > 0) return explicitAnnual;
+            return plans.filter((p) => p.billingInterval === "MONTHLY" || !p.billingInterval);
+        }
+        return plans.filter((p) => p.billingInterval === "MONTHLY" || !p.billingInterval);
+    }, [plans, billingCycle]);
 
     // ── Submission outcome ─────────────────────────────────────────
     const [submitted, setSubmitted] = useState(false);
@@ -280,9 +237,6 @@ const Signup = ({ initialType = null }) => {
                     ? "LLPIN (LLP Identification Number) is required."
                     : "CIN (Corporate Identification Number) is required.";
             }
-            if (!d.registrationDocData) {
-                return "Certificate of Incorporation document upload is required.";
-            }
         }
 
         // Conditional GST verification
@@ -292,11 +246,6 @@ const Signup = ({ initialType = null }) => {
             if (!cleanGst || !gstRegex.test(cleanGst)) {
                 return "Please enter a valid 15-character GSTIN (e.g. 22AAAAA0000A1Z5) or uncheck GST.";
             }
-        }
-
-        // Conditional Authorization Letter
-        if (d.applicantRole === "AUTHORIZED_REPRESENTATIVE" && !d.authLetterDocData) {
-            return "Authorization Letter upload is required when applicant is an Authorized Representative.";
         }
 
         if (!d.retailerTerms) return "Please accept the Terms of Service to continue.";
@@ -338,13 +287,6 @@ const Signup = ({ initialType = null }) => {
                 gstin: d.hasGst ? d.gstin.trim().toUpperCase() : "",
 
                 registrationNumber: isCompanyOrLlp ? d.registrationNumber.trim().toUpperCase() : "",
-                registrationDocData: isCompanyOrLlp ? d.registrationDocData : "",
-                registrationDocMime: isCompanyOrLlp ? d.registrationDocMime : "",
-                registrationDocName: isCompanyOrLlp ? d.registrationDocName : "",
-
-                authLetterDocData: d.applicantRole === "AUTHORIZED_REPRESENTATIVE" ? d.authLetterDocData : "",
-                authLetterDocMime: d.applicantRole === "AUTHORIZED_REPRESENTATIVE" ? d.authLetterDocMime : "",
-                authLetterDocName: d.applicantRole === "AUTHORIZED_REPRESENTATIVE" ? d.authLetterDocName : "",
             });
             setSubmitted(true);
         } catch (err) {
@@ -922,9 +864,16 @@ const Signup = ({ initialType = null }) => {
                                             const seatsLabel = isUnlimited
                                                 ? "Unlimited branch admin seats"
                                                 : `${plan.maxAdminSeats} branch admin seat${plan.maxAdminSeats === 1 ? "" : "s"}`;
+                                            const projectsLabel = plan.isUnlimitedProjects || plan.maxProjects >= 999999
+                                                ? "Unlimited projects"
+                                                : `${plan.maxProjects ?? 10} projects max`;
 
-                                            const originalAnnualPrice = Number(plan.price) * 12;
-                                            const discountedAnnualPrice = Math.round(originalAnnualPrice * 0.8);
+                                            const originalAnnualPrice = plan.billingInterval === "ANNUAL"
+                                                ? Math.round(Number(plan.price) / 0.8)
+                                                : Number(plan.price) * 12;
+                                            const discountedAnnualPrice = plan.billingInterval === "ANNUAL"
+                                                ? Number(plan.price)
+                                                : Math.round(originalAnnualPrice * 0.8);
                                             const displayPrice = isAnnual ? discountedAnnualPrice : Number(plan.price);
 
                                             return (
@@ -939,7 +888,7 @@ const Signup = ({ initialType = null }) => {
                                                         <div className="sub-plan-title-row">
                                                             <span className="sub-plan-name">{plan.name}</span>
                                                             <span className="sub-plan-meta">
-                                                                {durationLabel} · {seatsLabel}
+                                                                {durationLabel} · {projectsLabel} · {seatsLabel}
                                                             </span>
                                                         </div>
                                                         <div className="sub-plan-subtext">
@@ -1096,43 +1045,6 @@ const Signup = ({ initialType = null }) => {
                                             />
                                         </div>
                                     </div>
-                                    <div className="form-group">
-                                        <label>
-                                            Certificate of Incorporation<span>*</span>
-                                        </label>
-                                        <div className={`bdoc-upload-box ${retailerData.registrationDocData ? "has-file" : ""}`}>
-                                            {retailerData.registrationDocData ? (
-                                                <div className="bdoc-file-info">
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                        <Check size={16} />
-                                                        <span style={{ wordBreak: "break-all" }}>{retailerData.registrationDocName}</span>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        className="bdoc-remove-btn"
-                                                        onClick={() => handleRemoveDoc("registrationDoc")}
-                                                        title="Remove file"
-                                                    >
-                                                        <X size={15} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <label className="bdoc-custom-btn">
-                                                        <Upload size={14} />
-                                                        <span>Upload Certificate (PDF, JPG, PNG)</span>
-                                                        <input
-                                                            type="file"
-                                                            accept=".pdf,image/png,image/jpeg,image/jpg"
-                                                            style={{ display: "none" }}
-                                                            onChange={(e) => handleDocUpload("registrationDoc", e.target.files[0])}
-                                                        />
-                                                    </label>
-                                                    <span className="bdoc-hint">MCA incorporation certificate (max 10MB)</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
                                 </div>
                             )}
 
@@ -1180,49 +1092,6 @@ const Signup = ({ initialType = null }) => {
                                     </div>
                                 )}
                             </div>
-
-                            {/* Row E: Conditional Authorized Representative Document */}
-                            {retailerData.applicantRole === "AUTHORIZED_REPRESENTATIVE" && (
-                                <div className="form-group" style={{ marginBottom: 14 }}>
-                                    <label>
-                                        Authorization Letter / Board Resolution<span>*</span>
-                                    </label>
-                                    <div className={`bdoc-upload-box ${retailerData.authLetterDocData ? "has-file" : ""}`}>
-                                        {retailerData.authLetterDocData ? (
-                                            <div className="bdoc-file-info">
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                    <Check size={16} />
-                                                    <span style={{ wordBreak: "break-all" }}>{retailerData.authLetterDocName}</span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    className="bdoc-remove-btn"
-                                                    onClick={() => handleRemoveDoc("authLetterDoc")}
-                                                    title="Remove file"
-                                                >
-                                                    <X size={15} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <label className="bdoc-custom-btn">
-                                                    <Upload size={14} />
-                                                    <span>Upload Authorization Letter (PDF, JPG, PNG)</span>
-                                                    <input
-                                                        type="file"
-                                                        accept=".pdf,image/png,image/jpeg,image/jpg"
-                                                        style={{ display: "none" }}
-                                                        onChange={(e) => handleDocUpload("authLetterDoc", e.target.files[0])}
-                                                    />
-                                                </label>
-                                                <span className="bdoc-hint">
-                                                    Signed letter on business letterhead authorizing the applicant (max 10MB)
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
 
                             {/* ── Terms ── */}
                             <label className="terms-row">

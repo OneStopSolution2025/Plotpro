@@ -10,6 +10,36 @@ body {
     overflow-x: hidden;
 }
 
+/* Lenis Recommended Smooth Scroll CSS */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent],
+.lenis.lenis-smooth .modal,
+.lenis.lenis-smooth .sa-modal,
+.lenis.lenis-smooth .sa-modal-content,
+.lenis.lenis-smooth .sa-modal-responsive,
+.lenis.lenis-smooth .sa-modal-responsive-card,
+.lenis.lenis-smooth .sa-modal-body-scroll,
+.lenis.lenis-smooth .modal-content,
+.lenis.lenis-smooth [role="dialog"] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+    pointer-events: none;
+}
+
 body {
     font-family: "Poppins", sans-serif;
 }

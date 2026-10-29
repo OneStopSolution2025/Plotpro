@@ -91,6 +91,7 @@ function ProjectDetails() {
     const matchedProject = findProjectByIdentifier(projects, id);
     const [fetchedProject, setFetchedProject] = useState(null);
     const [isFetchingDirect, setIsFetchingDirect] = useState(false);
+    const lastFetchedPlotsProjectIdRef = useRef(null);
 
     // Fetch authoritative project details directly from backend API
     useEffect(() => {
@@ -118,9 +119,11 @@ function ProjectDetails() {
     const projectIdKey = project?._id || project?.customId || project?.id;
 
     useEffect(() => {
-        if (projectIdKey) {
-            fetchPlotsForProject(projectIdKey);
-        }
+        if (!projectIdKey) return;
+        const normalizedKey = String(projectIdKey);
+        if (lastFetchedPlotsProjectIdRef.current === normalizedKey) return;
+        lastFetchedPlotsProjectIdRef.current = normalizedKey;
+        fetchPlotsForProject(projectIdKey);
     }, [projectIdKey, fetchPlotsForProject]);
 
     const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
@@ -244,123 +247,185 @@ function ProjectDetails() {
         }
     };
 
-    const animatedProjectIdRef = useRef(null);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         if (!project || !projectIdKey) return;
 
-        // Prevent re-running entrance animations on background data syncs for the same project
-        if (animatedProjectIdRef.current === projectIdKey) return;
-        animatedProjectIdRef.current = projectIdKey;
-
-        const ctx = gsap.context(() => {
-            // 1. Gallery and Hero details entrance
-            gsap.from(".project-gallery > *", {
-                opacity: 0,
-                y: 30,
-                duration: 0.8,
-                stagger: 0.15,
-                ease: "power3.out",
-            });
-
-            // 2. Generic section reveals as user scrolls down
-            gsap.utils.toArray(".project-reveal").forEach((section) => {
-                gsap.from(section, {
+        // Use requestAnimationFrame or slight timeout to ensure DOM elements are fully mounted
+        const timer = setTimeout(() => {
+            const ctx = gsap.context(() => {
+                // 1. Gallery and Hero details entrance
+                gsap.from(".project-gallery > *", {
                     opacity: 0,
-                    y: 45,
-                    duration: 0.8,
-                    ease: "power3.out",
-                    scrollTrigger: {
-                        trigger: section,
-                        start: "top 85%",
-                        once: true,
-                    },
+                    y: 18,
+                    duration: 0.45,
+                    stagger: 0.05,
+                    ease: "power2.out",
+                    clearProps: "all",
                 });
-            });
 
-            // 3. Staggered Benefits cards
-            gsap.from(".benefit-card", {
-                opacity: 0,
-                y: 35,
-                duration: 0.6,
-                stagger: 0.1,
-                ease: "power2.out",
-                scrollTrigger: {
-                    trigger: ".benefits",
-                    start: "top 85%",
-                    once: true,
-                },
-            });
+                // 2. Benefits section
+                if (document.querySelector(".benefits")) {
+                    gsap.from(".benefits-header > *", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".benefits-header",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
 
-            // 4. Staggered Amenities cards
-            gsap.from(".amenity-card", {
-                opacity: 0,
-                scale: 0.9,
-                duration: 0.5,
-                stagger: 0.08,
-                ease: "power2.out",
-                scrollTrigger: {
-                    trigger: ".amenities-grid",
-                    start: "top 85%",
-                    once: true,
-                },
-            });
+                    gsap.from(".benefit-card", {
+                        opacity: 0,
+                        y: 20,
+                        duration: 0.45,
+                        stagger: 0.05,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".benefits",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
-            // 5. Location and Connectivity items
-            gsap.from(".location-item", {
-                opacity: 0,
-                x: -25,
-                duration: 0.5,
-                stagger: 0.08,
-                ease: "power2.out",
-                scrollTrigger: {
-                    trigger: ".location-list",
-                    start: "top 85%",
-                    once: true,
-                },
-            });
+                // 3. About Project section & Highlights
+                if (document.querySelector(".about-section")) {
+                    gsap.from(".about-content > *", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".about-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
 
-            // 6. Plots grid cards entrance
-            gsap.from(".plots-grid > *", {
-                opacity: 0,
-                y: 30,
-                duration: 0.6,
-                stagger: 0.12,
-                ease: "power2.out",
-                scrollTrigger: {
-                    trigger: ".plots-grid",
-                    start: "top 85%",
-                    once: true,
-                },
-            });
-        });
+                    gsap.from(".highlights-content > *", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".about-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
 
-        return () => ctx.revert();
-    }, [projectIdKey, project]);
+                    gsap.from(".about-image", {
+                        opacity: 0,
+                        scale: 0.97,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".about-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
-    if (!project) {
-        if (isLoading || isFetchingDirect) {
-            return (
-                <>
-                    <Navbar />
-                    <div className="project-not-found" style={{ textAlign: "center", padding: "80px 20px" }}>
-                        <h2>Loading Project...</h2>
-                    </div>
-                    <Footer />
-                </>
-            );
-        }
-        return (
-            <>
-                <Navbar />
-                <div className="project-not-found">
-                    <h2>Project Not Found</h2>
-                </div>
-                <Footer />
-            </>
-        );
-    }
+                // 4. Amenities Section
+                if (document.querySelector(".amenities-section")) {
+                    gsap.from(".amenities-header > *", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".amenities-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
 
+                    gsap.from(".amenity-card", {
+                        opacity: 0,
+                        scale: 0.95,
+                        duration: 0.4,
+                        stagger: 0.03,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".amenities-grid",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
+
+                // 5. Location and Connectivity items
+                if (document.querySelector(".location-section")) {
+                    gsap.from(".location-list > *", {
+                        opacity: 0,
+                        x: -15,
+                        duration: 0.4,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".location-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+
+                    gsap.from(".map-box", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".location-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+
+                    gsap.from(".contact-card", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".location-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
+
+                ScrollTrigger.refresh();
+            }, containerRef);
+
+            return () => ctx.revert();
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [projectIdKey]);
+
+    // NOTE: Hooks must run unconditionally on every render (Rules of Hooks).
+    // This useMemo lives BEFORE the early returns below — when `project` is
+    // null/loading it safely resolves to [] instead of changing the hook order.
     const projectPlots = useMemo(() => {
         if (!project) return [];
         const seenIds = new Set();
@@ -392,6 +457,29 @@ function ProjectDetails() {
         });
     }, [plots, project]);
 
+    if (!project) {
+        if (isLoading || isFetchingDirect) {
+            return (
+                <>
+                    <Navbar />
+                    <div className="project-not-found" style={{ textAlign: "center", padding: "80px 20px" }}>
+                        <h2>Loading Project...</h2>
+                    </div>
+                    <Footer />
+                </>
+            );
+        }
+        return (
+            <>
+                <Navbar />
+                <div className="project-not-found">
+                    <h2>Project Not Found</h2>
+                </div>
+                <Footer />
+            </>
+        );
+    }
+
     // Project-specific benefits: no silent fallback to generic defaults
     const projectBenefits = Array.isArray(project.benefits) ? project.benefits : [];
 
@@ -409,7 +497,7 @@ function ProjectDetails() {
         <>
 
 
-            <main className="project-details-page">
+            <main className="project-details-page" ref={containerRef}>
                 <Navbar />
 
                 <div className="project-breadcrumb">
@@ -665,7 +753,7 @@ function ProjectDetails() {
                     </>
                 )}
 
-                <section className="about-section project-reveal">
+                <section className="about-section">
 
                     <div className="about-content">
 
@@ -760,7 +848,7 @@ function ProjectDetails() {
                 </section>
 
                 {projectAmenities.length > 0 && (
-                    <section className="amenities-section project-reveal">
+                    <section className="amenities-section">
 
                         <div className="amenities-header">
 
@@ -794,7 +882,7 @@ function ProjectDetails() {
 
                     </section>
                 )}
-                <section className="location-section project-reveal">
+                <section className="location-section">
 
                     <div className="location-list">
 

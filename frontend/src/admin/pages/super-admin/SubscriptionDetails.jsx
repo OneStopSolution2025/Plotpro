@@ -10,6 +10,7 @@ import {
   FaSyncAlt,
   FaBuilding,
   FaInfinity,
+  FaLayerGroup,
   FaEnvelope,
   FaPhoneAlt,
   FaUserCheck,
@@ -61,6 +62,18 @@ const SubscriptionDetails = () => {
   const assignedSeats = subscriptionInfo?.assignedSeats ?? 3;
   const usedSeats = subscriptionInfo?.usedSeats ?? 0;
   const remainingSeats = subscriptionInfo?.remainingSeats ?? Math.max(0, assignedSeats - usedSeats);
+  
+  // Project creation quota
+  const maxProjects = subscriptionInfo?.maxProjects ?? 3;
+  const usedProjects = subscriptionInfo?.usedProjects ?? 0;
+  const remainingProjects = subscriptionInfo?.remainingProjects ?? Math.max(0, maxProjects - usedProjects);
+  const isUnlimitedProjects = Boolean(subscriptionInfo?.isUnlimitedProjects || maxProjects >= 999999);
+  const percentProjectsUsed = isUnlimitedProjects
+    ? 5
+    : maxProjects > 0
+    ? Math.min(100, Math.round((usedProjects / maxProjects) * 100))
+    : 0;
+
   const planName = subscriptionInfo?.planName || (isTrial ? "Trial Workspace Plan" : "Standard Plan");
 
   // Calculate percentage used (if not unlimited)
@@ -364,6 +377,77 @@ const SubscriptionDetails = () => {
             <span style={{ fontSize: "12px", color: "#64748b" }}>Seat Allocation Mode</span>
             <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>
               {subscriptionInfo?.isCustomOverride ? "Custom Override" : "Plan Standard"}
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: Project Creation Quota */}
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "16px",
+            padding: "24px",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "#64748b" }}>
+                Project Creation Quota
+              </span>
+              <FaLayerGroup style={{ color: "#059669", fontSize: "16px" }} />
+            </div>
+
+            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "32px", fontWeight: 800, color: "#0f172a" }}>
+                {usedProjects}
+              </span>
+              <span style={{ fontSize: "14px", fontWeight: 600, color: "#64748b" }}>
+                / {isUnlimitedProjects ? "∞" : maxProjects} Projects Used
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div
+              style={{
+                width: "100%",
+                height: "8px",
+                backgroundColor: "#f1f5f9",
+                borderRadius: "4px",
+                overflow: "hidden",
+                marginBottom: "10px",
+              }}
+            >
+              <div
+                style={{
+                  width: `${percentProjectsUsed}%`,
+                  height: "100%",
+                  backgroundColor: percentProjectsUsed >= 90 ? "#ef4444" : "#059669",
+                  borderRadius: "4px",
+                  transition: "width 0.4s ease",
+                }}
+              />
+            </div>
+
+            <div style={{ fontSize: "12px", color: "#64748b" }}>
+              {isUnlimitedProjects ? (
+                <span style={{ color: "#059669", fontWeight: 600 }}>Unlimited project creation enabled.</span>
+              ) : remainingProjects > 0 ? (
+                <span style={{ color: "#059669", fontWeight: 600 }}>{remainingProjects} projects available to create.</span>
+              ) : (
+                <span style={{ color: "#dc2626", fontWeight: 600 }}>Project creation limit reached.</span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "12px", color: "#64748b" }}>Project Quota Policy</span>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>
+              {isUnlimitedProjects ? "Unlimited" : `${maxProjects} Projects Max`}
             </span>
           </div>
         </div>

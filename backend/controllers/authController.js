@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -7,12 +8,13 @@ import User from "../models/User.js";
 import TrustedDevice from "../models/TrustedDevice.js";
 import SuperAdminRequest from "../models/SuperAdminRequest.js";
 import DeviceApprovalRequest from "../models/DeviceApprovalRequest.js";
+import { supportsTransactions } from "../config/db.js";
 import { generateToken } from "../utils/generateToken.js";
 import {
   sendDeviceEnrollmentOtpEmail,
   sendPasswordResetOtpEmail,
 } from "../utils/smtpEmailService.js";
-import { generateSecureOtp, hashOtp, validateOtpSecretConfig } from "../utils/otpSecurity.js";
+import { generateSecureOtp, hashOtp, verifyOtpHash, validateOtpSecretConfig } from "../utils/otpSecurity.js";
 import {
   generateDeviceSecret,
   hashDeviceSecret,
@@ -21,8 +23,35 @@ import {
   clearDeviceCookie,
 } from "../utils/deviceSecurity.js";
 import { claimGuestDataForUser } from "../utils/guestDataService.js";
+import { getJwtSecret } from "../config/jwtConfig.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dreamcity_super_secret_jwt_key_2026_dev";
+// ─── Password Reset Challenge Constants ──────────────────────────────────────
+const RESET_OTP_TTL_MS = 10 * 60 * 1000;       // OTP valid for 10 minutes
+const RESET_VERIFIED_WINDOW_MS = 15 * 60 * 1000; // 15 min to complete reset after verification
+const RESET_COOLDOWN_MS = 60 * 1000;           // 60s cooldown between reset-code requests
+const RESET_MAX_ATTEMPTS = 5;                  // Max failed verifications per challenge
+
+// ─── Password-Reset Email Dispatcher (Production Default + Test-Only Seam) ───
+// Defaults to the real SMTP/Resend dispatcher. The override below is rejected
+// unless NODE_ENV is exactly "test", so it can never become a production bypass.
+let resetEmailDispatcher = sendPasswordResetOtpEmail;
+
+/**
+ * TEST-ONLY: override the password-reset email dispatcher (e.g. with a mock).
+ * Hard-fails outside a "test" NODE_ENV so production code paths can never be
+ * redirected to a fake dispatcher at runtime.
+ */
+export const setResetEmailDispatcherForTest = (dispatcher) => {
+  if (process.env.NODE_ENV !== "test") {
+    throw new Error(
+      "[SECURITY] Reset email dispatcher override is only permitted when NODE_ENV=test."
+    );
+  }
+  if (typeof dispatcher !== "function") {
+    throw new Error("Reset email dispatcher must be a function.");
+  }
+  resetEmailDispatcher = dispatcher;
+};
 
 const googleClient = new OAuth2Client();
 
@@ -312,7 +341,7 @@ export const handleAdministrativeDeviceLogin = async (req, res, user) => {
           userId: String(user._id),
           purpose: "DEVICE_TRANSFER_POLL",
         },
-        JWT_SECRET,
+        getJwtSecret(),
         { expiresIn: "30m" }
       );
 
@@ -430,6 +459,20 @@ export const handleAdministrativeDeviceLogin = async (req, res, user) => {
   });
 };
 
+// ─── Login Account Lockout (Fix 2) ───────────────────────────────────────────
+// MAX consecutive failed password attempts before a temporary lock engages.
+// There are NO permanent lockouts — every lock auto-expires.
+const MAX_FAILED_LOGINS = 5;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
+
+// Byte-identical generic failure body for EVERY login failure path (unknown
+// email, wrong password, locked account) — prevents account enumeration via
+// induced lockouts.
+const GENERIC_LOGIN_401 = {
+  success: false,
+  message: "Invalid email or password.",
+};
+
 /**
  * @desc    Authenticate user & get token
  * @route   POST /api/auth/login
@@ -448,8 +491,10 @@ export const loginUser = async (req, res, next) => {
 
     const emailNormalized = email.trim().toLowerCase();
 
-    // Find user and explicitly select passwordHash
-    const user = await User.findOne({ email: emailNormalized }).select("+passwordHash");
+    // Find user and explicitly select passwordHash + lockout fields
+    const user = await User.findOne({ email: emailNormalized }).select(
+      "+passwordHash +loginFailedAttempts +loginLockedUntil"
+    );
 
     if (!user) {
       // Friendly feedback for pending / rejected retailer signup requests
@@ -486,19 +531,84 @@ export const loginUser = async (req, res, next) => {
         }
       }
 
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
+      return res.status(401).json(GENERIC_LOGIN_401);
+    }
+
+    // ─── Account Lockout (Fix 2) — all state transitions are atomic DB updates ─
+    const now = new Date();
+
+    // (a) Hard lock active → skip bcrypt entirely. The response body is
+    // byte-identical to a wrong-password failure, so an attacker cannot use
+    // induced lockouts to enumerate registered emails.
+    if (user.loginLockedUntil && new Date(user.loginLockedUntil) > now) {
+      return res.status(401).json(GENERIC_LOGIN_401);
+    }
+
+    // (b) Expired lock → atomically clear it. Conditional on the exact expired
+    // timestamp so a concurrent reset cannot be double-applied.
+    if (user.loginLockedUntil) {
+      await User.updateOne(
+        { _id: user._id, loginLockedUntil: user.loginLockedUntil },
+        { $set: { loginFailedAttempts: 0, loginLockedUntil: null } }
+      );
+      user.loginFailedAttempts = 0;
+      user.loginLockedUntil = null;
     }
 
     const isMatch = await user.matchPassword(password);
+
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
+      // (c) Failure: ONE atomic update both increments the attempt counter and
+      // engages the lock the instant the threshold is crossed. The filter
+      // refuses the update if another request has already locked the account,
+      // so a stale read can never bypass the lock. Pipeline stages run
+      // sequentially — stage 2 sees the counter value set by stage 1.
+      const lockUntil = new Date(now.getTime() + LOGIN_LOCK_MS);
+
+      await User.findOneAndUpdate(
+        {
+          _id: user._id,
+          $or: [{ loginLockedUntil: null }, { loginLockedUntil: { $lte: now } }],
+        },
+        [
+          {
+            $set: {
+              // An expired prior lock starts a fresh failure window.
+              loginFailedAttempts: {
+                $cond: [
+                  { $gt: [{ $ifNull: ["$loginLockedUntil", null] }, null] },
+                  1,
+                  { $add: [{ $ifNull: ["$loginFailedAttempts", 0] }, 1] },
+                ],
+              },
+            },
+          },
+          {
+            $set: {
+              loginLockedUntil: {
+                $cond: [
+                  { $gte: ["$loginFailedAttempts", MAX_FAILED_LOGINS] },
+                  lockUntil,
+                  null,
+                ],
+              },
+            },
+          },
+        ],
+        { updatePipeline: true }
+      );
+
+      // Whether the update matched (we counted the failure) or not (the account
+      // was locked concurrently), the client gets the identical generic 401.
+      return res.status(401).json(GENERIC_LOGIN_401);
     }
+
+    // (d) Successful password match → atomically reset the failure counter
+    // (unconditional so counter state is always clean after a real login).
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { loginFailedAttempts: 0, loginLockedUntil: null } }
+    );
 
     if (user.status === "INACTIVE") {
       return res.status(403).json({
@@ -566,33 +676,59 @@ export const logoutUser = async (req, res, next) => {
  * @desc    Request OTP for password reset (step 1)
  * @route   POST /api/auth/forgot-password
  * @access  Public
+ *
+ * Security properties:
+ * - OTP generated with crypto-secure randomInt (never Math.random)
+ * - Persisted only as HMAC-SHA256 hash bound to a unique challenge ID
+ * - 60s DB-backed cooldown suppresses repeat/email-bombing requests silently
+ * - Identical generic response for known and unknown emails (no enumeration)
  */
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    if (!email) {
+    if (!email || typeof email !== "string") {
       return res.status(400).json({ success: false, message: "Email is required." });
     }
 
-    const user = await User.findOne({ email: email.trim().toLowerCase() }).select("+resetOtp +resetOtpExpiry");
+    // Single generic response — identical shape/message for every outcome so
+    // the endpoint never reveals whether an address is registered.
+    const GENERIC_SUCCESS = {
+      success: true,
+      message: "If this email is registered, you will receive a reset code shortly.",
+    };
+
+    const emailNormalized = email.trim().toLowerCase();
+    const user = await User.findOne({ email: emailNormalized }).select(
+      "+resetOtpCooldownUntil"
+    );
+
     if (!user) {
-      // Don't reveal whether email exists — return generic success
-      return res.status(200).json({
-        success: true,
-        message: "If this email is registered, you will receive a reset code shortly.",
-      });
+      return res.status(200).json(GENERIC_SUCCESS);
     }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Cooldown active → silently swallow the request (no email, no 429 that
+    // would reveal account existence). Same generic response.
+    if (user.resetOtpCooldownUntil && new Date() < new Date(user.resetOtpCooldownUntil)) {
+      return res.status(200).json(GENERIC_SUCCESS);
+    }
 
-    user.resetOtp = otp;
-    user.resetOtpExpiry = expiry;
-    await user.save();
+    const challengeId = crypto.randomUUID();
+    const otp = generateSecureOtp();
+    const otpHash = hashOtp(otp, challengeId);
 
-    // Send password reset email via PlotPro Gmail SMTP service
-    const emailResult = await sendPasswordResetOtpEmail({
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        resetOtpHash: otpHash,
+        resetOtpChallengeId: challengeId,
+        resetOtpVerified: false,
+        resetOtpAttempts: 0,
+        resetOtpExpiry: new Date(Date.now() + RESET_OTP_TTL_MS),
+        resetOtpCooldownUntil: new Date(Date.now() + RESET_COOLDOWN_MS),
+      },
+    });
+
+    // Send password reset email via the active dispatcher (SMTP/Resend in production)
+    const emailResult = await resetEmailDispatcher({
       to: user.email,
       otp,
       expiryMinutes: 10,
@@ -600,53 +736,137 @@ export const forgotPassword = async (req, res, next) => {
 
     if (!emailResult.success) {
       console.error("[SMTP] Failed to send password reset email:", emailResult.error);
+      // Roll back cooldown so a failed dispatch doesn't lock the user out
+      await User.findByIdAndUpdate(user._id, {
+        $set: { resetOtpCooldownUntil: null },
+      });
       return res.status(500).json({ success: false, message: "Failed to send reset code. Please try again." });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Password reset OTP sent to your email address.",
-    });
+    return res.status(200).json(GENERIC_SUCCESS);
   } catch (error) {
     next(error);
   }
 };
 
 /**
+ * Clears the active password-reset challenge (invalidates the OTP completely).
+ */
+const clearResetChallenge = (userId) =>
+  User.findByIdAndUpdate(userId, {
+    $set: {
+      resetOtpHash: null,
+      resetOtpChallengeId: null,
+      resetOtpVerified: false,
+      resetOtpAttempts: 0,
+      resetOtpExpiry: null,
+    },
+  });
+
+/**
  * @desc    Verify OTP (step 2)
  * @route   POST /api/auth/verify-otp
  * @access  Public
+ *
+ * Security properties:
+ * - Atomic attempt guard (max 5 failed verifications, then challenge invalidated)
+ * - Constant-time HMAC verification bound to the challenge ID
+ * - Single-use consume via compare-and-swap: concurrent verifications cannot
+ *   both succeed; the OTP cannot be verified twice
  */
 export const verifyOtp = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) {
+    if (!email || !otp || typeof email !== "string" || typeof otp !== "string") {
       return res.status(400).json({ success: false, message: "Email and OTP are required." });
     }
 
-    const user = await User.findOne({ email: email.trim().toLowerCase() }).select("+resetOtp +resetOtpExpiry");
-    if (!user || !user.resetOtp) {
-      return res.status(400).json({ success: false, message: "OTP expired or not requested. Please try again." });
+    const emailNormalized = email.trim().toLowerCase();
+    const now = new Date();
+
+    // ─── Atomic attempt guard ───
+    // Only increments while the challenge is live, unverified, and under the cap.
+    // Two concurrent requests can never push attempts beyond RESET_MAX_ATTEMPTS.
+    const claimed = await User.findOneAndUpdate(
+      {
+        email: emailNormalized,
+        resetOtpChallengeId: { $exists: true, $ne: null },
+        resetOtpHash: { $exists: true, $ne: null },
+        resetOtpVerified: { $ne: true },
+        resetOtpExpiry: { $gt: now },
+        resetOtpAttempts: { $lt: RESET_MAX_ATTEMPTS },
+      },
+      { $inc: { resetOtpAttempts: 1 } },
+      { new: true }
+    ).select("+resetOtpHash +resetOtpChallengeId +resetOtpAttempts +resetOtpVerified +resetOtpExpiry");
+
+    if (!claimed) {
+      // Distinguish "attempts exhausted" from "no/expired challenge" for accurate UX
+      const stale = await User.findOne({ email: emailNormalized }).select(
+        "+resetOtpAttempts +resetOtpChallengeId +resetOtpVerified"
+      );
+      if (
+        stale &&
+        stale.resetOtpChallengeId &&
+        !stale.resetOtpVerified &&
+        (stale.resetOtpAttempts || 0) >= RESET_MAX_ATTEMPTS
+      ) {
+        // Invalidate the challenge entirely — restart of the flow is required
+        await clearResetChallenge(stale._id);
+        return res.status(429).json({
+          success: false,
+          message: "Maximum verification attempts exceeded. Please request a new reset code.",
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired or not requested. Please try again.",
+      });
     }
 
-    if (new Date() > user.resetOtpExpiry) {
-      user.resetOtp = null;
-      user.resetOtpExpiry = null;
-      await user.save();
-      return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+    // ─── Constant-time verification against the HMAC (bound to challengeId) ───
+    if (!verifyOtpHash(otp.trim(), claimed.resetOtpHash, claimed.resetOtpChallengeId)) {
+      if ((claimed.resetOtpAttempts || 0) >= RESET_MAX_ATTEMPTS) {
+        await clearResetChallenge(claimed._id);
+        return res.status(429).json({
+          success: false,
+          message: "Maximum verification attempts exceeded. Please request a new reset code.",
+        });
+      }
+      const remaining = RESET_MAX_ATTEMPTS - (claimed.resetOtpAttempts || 0);
+      return res.status(400).json({
+        success: false,
+        message: `Incorrect OTP. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`,
+      });
     }
 
-    if (user.resetOtp !== otp.trim()) {
-      return res.status(400).json({ success: false, message: "Incorrect OTP. Please check and try again." });
+    // ─── CAS consume: only the FIRST concurrent success flips the verified flag ───
+    const verified = await User.findOneAndUpdate(
+      {
+        _id: claimed._id,
+        resetOtpChallengeId: claimed.resetOtpChallengeId,
+        resetOtpHash: claimed.resetOtpHash,
+        resetOtpVerified: { $ne: true },
+        resetOtpExpiry: claimed.resetOtpExpiry,
+      },
+      {
+        $set: {
+          resetOtpVerified: true,
+          resetOtpExpiry: new Date(Date.now() + RESET_VERIFIED_WINDOW_MS),
+        },
+      },
+      { new: true }
+    );
+
+    if (!verified) {
+      // Another concurrent request consumed this exact challenge first
+      return res.status(409).json({
+        success: false,
+        message: "This code was just used in another request. Please restart the reset process.",
+      });
     }
 
-    // OTP valid — issue a short-lived reset token (reuse resetOtp field as verification flag)
-    // We mark the OTP as "verified" by prepending "VERIFIED:" so reset-password endpoint can trust it
-    user.resetOtp = `VERIFIED:${otp}`;
-    user.resetOtpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min to complete reset
-    await user.save();
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "OTP verified successfully. You may now set a new password.",
     });
@@ -659,11 +879,21 @@ export const verifyOtp = async (req, res, next) => {
  * @desc    Reset password after OTP verified (step 3)
  * @route   POST /api/auth/reset-password
  * @access  Public
+ *
+ * Security properties:
+ * - Requires a verified, unexpired, live challenge (server-side state)
+ * - Re-verifies the OTP against the stored HMAC before consumption
+ * - Single-use consumption via compare-and-swap: the password hash and the
+ *   entire challenge are cleared atomically, so the same verified session can
+ *   never reset the password twice — even under concurrent requests
  */
 export const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
-    if (!email || !otp || !newPassword) {
+    if (
+      !email || !otp || !newPassword ||
+      typeof email !== "string" || typeof otp !== "string" || typeof newPassword !== "string"
+    ) {
       return res.status(400).json({ success: false, message: "Email, OTP, and new password are required." });
     }
 
@@ -671,36 +901,68 @@ export const resetPassword = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
     }
 
-    const user = await User.findOne({ email: email.trim().toLowerCase() }).select("+resetOtp +resetOtpExpiry +passwordHash");
-    if (!user || !user.resetOtp) {
+    const emailNormalized = email.trim().toLowerCase();
+    const now = new Date();
+
+    const candidate = await User.findOne({ email: emailNormalized }).select(
+      "+resetOtpHash +resetOtpChallengeId +resetOtpVerified +resetOtpExpiry +passwordHash"
+    );
+
+    if (
+      !candidate ||
+      !candidate.resetOtpHash ||
+      !candidate.resetOtpChallengeId ||
+      !candidate.resetOtpVerified
+    ) {
       return res.status(400).json({ success: false, message: "Session expired. Please start the reset process again." });
     }
 
-    if (new Date() > user.resetOtpExpiry) {
-      user.resetOtp = null;
-      user.resetOtpExpiry = null;
-      await user.save();
+    if (new Date(candidate.resetOtpExpiry) <= now) {
+      await clearResetChallenge(candidate._id);
       return res.status(400).json({ success: false, message: "Session expired. Please start the reset process again." });
     }
 
-    // Must have been verified
-    if (!user.resetOtp.startsWith("VERIFIED:")) {
-      return res.status(400).json({ success: false, message: "OTP not verified. Please verify your OTP first." });
-    }
-
-    const storedOtp = user.resetOtp.replace("VERIFIED:", "");
-    if (storedOtp !== otp.trim()) {
+    // Re-verify possession of the OTP against the stored HMAC
+    if (!verifyOtpHash(otp.trim(), candidate.resetOtpHash, candidate.resetOtpChallengeId)) {
       return res.status(400).json({ success: false, message: "Invalid session. Please restart the process." });
     }
 
-    // Hash and save new password
+    // Hash the new password BEFORE the atomic consumption
     const salt = await bcrypt.genSalt(10);
-    user.passwordHash = await bcrypt.hash(newPassword, salt);
-    user.resetOtp = null;
-    user.resetOtpExpiry = null;
-    await user.save();
+    const passwordHash = await bcrypt.hash(newPassword, salt);
 
-    res.status(200).json({
+    // ─── CAS single-use consume: password + challenge cleared together ───
+    // If another concurrent request already consumed this session, the update
+    // matches nothing and we reject the duplicate.
+    const consumed = await User.findOneAndUpdate(
+      {
+        _id: candidate._id,
+        resetOtpChallengeId: candidate.resetOtpChallengeId,
+        resetOtpHash: candidate.resetOtpHash,
+        resetOtpVerified: true,
+        resetOtpExpiry: candidate.resetOtpExpiry,
+      },
+      {
+        $set: {
+          passwordHash,
+          resetOtpHash: null,
+          resetOtpChallengeId: null,
+          resetOtpVerified: false,
+          resetOtpAttempts: 0,
+          resetOtpExpiry: null,
+        },
+      },
+      { new: true }
+    );
+
+    if (!consumed) {
+      return res.status(409).json({
+        success: false,
+        message: "This reset session was already used or expired. Please start the reset process again.",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Password reset successful. You can now log in with your new password.",
     });

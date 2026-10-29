@@ -54,16 +54,15 @@ export const AdminProfileProvider = ({ children }) => {
       const res = await adminApi.getProfile();
       if (res?.success && res.data) {
         setIsSubscriptionExpired(Boolean(res.data.isSubscriptionExpired));
-        if (res.data.name) {
-          setProfile((prev) => ({
-            ...prev,
-            name: res.data.name || prev.name,
-            email: res.data.email || prev.email,
-            mobile: res.data.phone || prev.mobile,
-            // Branch context for Branch Admin accounts (null for legacy admins)
-            branch: res.data.branch || null,
-          }));
-        }
+        setProfile((prev) => ({
+          ...prev,
+          name: res.data.name || prev.name,
+          email: res.data.email || prev.email,
+          mobile: res.data.phone || prev.mobile,
+          // Branch context for Branch Admin accounts (null for legacy admins)
+          branch: res.data.branch || null,
+          projectQuota: res.data.projectQuota || null,
+        }));
       }
     } catch (e) {
       console.warn("[AdminProfileContext] Failed to load profile status:", e.message);

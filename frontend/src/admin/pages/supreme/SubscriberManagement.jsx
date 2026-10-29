@@ -508,9 +508,9 @@ const SubscriberManagement = () => {
                   <th style={{ width: "24%", padding: "14px 16px" }}>Subscriber / Company</th>
                   <th style={{ width: "10%" }}>Status</th>
                   <th style={{ width: "18%" }}>Subscription</th>
-                  <th style={{ width: "14%" }}>Branch Admin Seats</th>
-                  <th style={{ width: "8%", textAlign: "center" }}>Projects</th>
-                  <th style={{ width: "26%", textAlign: "right", paddingRight: "16px" }}>Actions</th>
+                  <th style={{ width: "13%" }}>Branch Admin Seats</th>
+                  <th style={{ width: "13%" }}>Project Limit</th>
+                  <th style={{ width: "24%", textAlign: "right", paddingRight: "16px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -625,8 +625,22 @@ const SubscriberManagement = () => {
                           <span className="text-muted">{sub.activeAdminCount} created</span>
                         )}
                       </td>
-                      <td style={{ textAlign: "center" }}>
-                        <span className="badge bg-light text-dark border">{sub.projectCount || 0}</span>
+                      <td>
+                        {sub.subscription ? (
+                          <span>
+                            <strong>{sub.projectCount || 0}</strong> /{" "}
+                            {sub.subscription.assignedProjects >= 999999
+                              ? "∞"
+                              : `${sub.subscription.assignedProjects ?? 0} projects`}
+                            {sub.subscription.assignedProjects > 0 && sub.subscription.assignedProjects < 999999 && (
+                              <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "4px" }}>
+                                ({Math.max(0, sub.subscription.assignedProjects - (sub.projectCount || 0))} left)
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted">{sub.projectCount || 0} created</span>
+                        )}
                       </td>
                       <td style={{ textAlign: "right", paddingRight: "16px", whiteSpace: "nowrap" }}>
                         <button
@@ -779,6 +793,38 @@ const SubscriberManagement = () => {
                     </div>
                     <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
                       Active branch admins: <strong>{assignTarget.activeAdminCount || 0}</strong>
+                    </div>
+                  </div>
+
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label" style={{ fontWeight: 600, fontSize: "13px" }}>
+                      Project Creation Limit
+                    </label>
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        backgroundColor: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        minHeight: "42px",
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, color: "#1e293b", fontSize: "14px" }}>
+                        {(() => {
+                          const plan = plans.find((p) => String(p._id) === String(assignForm.planId));
+                          const limit = plan?.maxProjects ?? 3;
+                          return limit >= 999999 ? "Unlimited" : `${limit} Projects`;
+                        })()}
+                      </span>
+                      <span className="badge bg-secondary" style={{ fontSize: "11px", fontWeight: 600 }}>
+                        Package Defined
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
+                      Current active projects: <strong>{assignTarget.projectCount || 0}</strong>
                     </div>
                   </div>
                   <div className="col-12 col-sm-6">

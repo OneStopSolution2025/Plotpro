@@ -56,6 +56,8 @@ function PlotDetails() {
     const [fetchedProject, setFetchedProject] = useState(null);
     const [fetchedPlot, setFetchedPlot] = useState(null);
     const [isFetchingDirectPlot, setIsFetchingDirectPlot] = useState(false);
+    const lastFetchedProjectSlugRef = useRef(null);
+    const lastFetchedPlotsTargetIdRef = useRef(null);
 
     // Direct plot fetch for legacy / direct /plot-details/:id
     useEffect(() => {
@@ -91,6 +93,8 @@ function PlotDetails() {
     // Fallback if not found in local memory
     useEffect(() => {
         if (!matchedProject && projectName) {
+            if (lastFetchedProjectSlugRef.current === projectName) return;
+            lastFetchedProjectSlugRef.current = projectName;
             let isMounted = true;
             publicApi.getProjectById(projectName)
                 .then((res) => {
@@ -100,8 +104,6 @@ function PlotDetails() {
                 })
                 .catch(() => {});
             return () => { isMounted = false; };
-        } else if (matchedProject) {
-            setFetchedProject(null);
         }
     }, [matchedProject, projectName]);
 
@@ -122,18 +124,22 @@ function PlotDetails() {
     }
 
     // 2. Fetch plots for resolved project
+    const targetProjectId = project?.customId || project?.id || project?._id;
     useEffect(() => {
-        const targetId = project?.customId || project?.id || project?._id;
-        if (!targetId) return;
+        if (!targetProjectId) return;
+        const normalizedTarget = String(targetProjectId);
+        if (lastFetchedPlotsTargetIdRef.current === normalizedTarget) return;
+        lastFetchedPlotsTargetIdRef.current = normalizedTarget;
+
         let isMounted = true;
         setIsFetchingPlots(true);
-        fetchPlotsForProject(targetId).finally(() => {
+        fetchPlotsForProject(targetProjectId).finally(() => {
             if (isMounted) setIsFetchingPlots(false);
         });
         return () => {
             isMounted = false;
         };
-    }, [project?.customId, project?.id, project?._id, fetchPlotsForProject]);
+    }, [targetProjectId, fetchPlotsForProject]);
 
     // 3. Resolve plot
     let plot = null;
@@ -298,78 +304,135 @@ function PlotDetails() {
         }
     };
 
-    const animatedPlotIdRef = useRef(null);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         if (!plot || !plotIdKey) return;
 
-        // Prevent re-running entrance animations on background data syncs for the same plot
-        if (animatedPlotIdRef.current === plotIdKey) return;
-        animatedPlotIdRef.current = plotIdKey;
+        const timer = setTimeout(() => {
+            const ctx = gsap.context(() => {
 
-        const ctx = gsap.context(() => {
-
-            gsap.from(".plot-hero > *", {
-                opacity: 0,
-                y: 30,
-                duration: 0.8,
-                stagger: 0.12,
-                ease: "power3.out",
-            });
-
-
-            gsap.utils.toArray(".plot-reveal").forEach((section) => {
-
-                gsap.from(section, {
+                gsap.from(".plot-hero > *", {
                     opacity: 0,
-                    y: 45,
-                    duration: 0.8,
-                    ease: "power3.out",
-
-                    scrollTrigger: {
-                        trigger: section,
-                        start: "top 85%",
-                        once: true,
-                    },
+                    y: 18,
+                    duration: 0.45,
+                    stagger: 0.05,
+                    ease: "power2.out",
+                    clearProps: "all",
                 });
 
-            });
+                if (document.querySelector(".location-card")) {
+                    gsap.from(".location-card", {
+                        opacity: 0,
+                        x: -18,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".plot-two-column",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
+                if (document.querySelector(".specifications-card")) {
+                    gsap.from(".specifications-card", {
+                        opacity: 0,
+                        x: 18,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".plot-two-column",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
 
-            gsap.from(".spec-row", {
-                opacity: 0,
-                x: -20,
-                duration: 0.5,
-                stagger: 0.07,
-                ease: "power2.out",
+                    gsap.from(".spec-row", {
+                        opacity: 0,
+                        x: 12,
+                        duration: 0.35,
+                        stagger: 0.03,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".specifications-card",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
-                scrollTrigger: {
-                    trigger: ".specifications-card",
-                    start: "top 80%",
-                    once: true,
-                },
-            });
+                if (document.querySelector(".landmarks-grid")) {
+                    gsap.from(".landmarks-header > *", {
+                        opacity: 0,
+                        y: 18,
+                        duration: 0.45,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".landmarks-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
 
+                    gsap.from(".landmark-card", {
+                        opacity: 0,
+                        y: 20,
+                        duration: 0.4,
+                        stagger: 0.04,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".landmarks-grid",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
-            gsap.from(".landmark-card", {
-                opacity: 0,
-                y: 25,
-                duration: 0.5,
-                stagger: 0.08,
-                ease: "power2.out",
+                if (document.querySelector(".about-plot-card")) {
+                    gsap.from(".about-plot-card", {
+                        opacity: 0,
+                        y: 20,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".plot-about-section",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
-                scrollTrigger: {
-                    trigger: ".landmarks-grid",
-                    start: "top 85%",
-                    once: true,
-                },
-            });
+                if (document.querySelector(".plot-cta-card")) {
+                    gsap.from(".plot-cta-card", {
+                        opacity: 0,
+                        scale: 0.96,
+                        duration: 0.45,
+                        ease: "power2.out",
+                        clearProps: "all",
+                        scrollTrigger: {
+                            trigger: ".plot-cta-card",
+                            start: "top 95%",
+                            once: true,
+                        },
+                    });
+                }
 
-        });
+                ScrollTrigger.refresh();
+            }, containerRef);
 
-        return () => ctx.revert();
+            return () => ctx.revert();
+        }, 100);
 
-    }, [plotIdKey, plot]);
+        return () => clearTimeout(timer);
+    }, [plotIdKey]);
 
     if (!plot || !project) {
         if (isLoadingProjects || isFetchingPlots || isFetchingDirectPlot) {
@@ -398,7 +461,7 @@ function PlotDetails() {
 
 
     return (
-        <main className="plot-details-page">
+        <main className="plot-details-page" ref={containerRef}>
 
             <Navbar />
 
@@ -426,7 +489,7 @@ function PlotDetails() {
                 HERO
             ================================================= */}
 
-            <section className="plot-hero plot-reveal">
+            <section className="plot-hero">
 
                 {/* Gallery */}
 
@@ -711,7 +774,7 @@ function PlotDetails() {
                 const projectTitle = project?.title?.trim() || "Plot";
 
                 return (
-                    <section className="plot-two-column plot-reveal">
+                    <section className="plot-two-column">
 
                         {/* Location */}
 
@@ -949,7 +1012,7 @@ function PlotDetails() {
                 NEARBY LANDMARKS
             ================================================= */}
 
-            <section className="landmarks-section plot-reveal">
+            <section className="landmarks-section">
 
                 <div className="landmarks-heading">
 
@@ -1120,7 +1183,7 @@ function PlotDetails() {
                 ABOUT + CTA
             ================================================= */}
 
-            <section className="plot-about-section plot-reveal">
+            <section className="plot-about-section">
 
                 <div className="about-plot-card">
 

@@ -7,6 +7,10 @@ import {
 } from "../controllers/publicController.js";
 import { submitPublicEnquiry } from "../controllers/enquiryController.js";
 import { submitPublicSiteVisit } from "../controllers/siteVisitController.js";
+import {
+  enquiryLimiter,
+  siteVisitLimiter,
+} from "../middleware/rateLimitMiddleware.js";
 
 const router = express.Router();
 
@@ -16,9 +20,10 @@ router.get("/projects/:id", getPublicProjectById);
 router.get("/projects/:id/plots", getPublicProjectPlots);
 router.get("/plots/:id", getPublicPlotById);
 
-// Public Lead Submissions
-router.post("/enquiries", submitPublicEnquiry);
-router.post("/site-visits", submitPublicSiteVisit);
+// Public Lead Submissions — SEPARATE limiter buckets per form so a burst of
+// enquiries can never starve site-visit bookings (or vice versa).
+router.post("/enquiries", enquiryLimiter, submitPublicEnquiry);
+router.post("/site-visits", siteVisitLimiter, submitPublicSiteVisit);
 
 export default router;
 

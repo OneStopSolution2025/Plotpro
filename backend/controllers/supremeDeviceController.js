@@ -197,15 +197,12 @@ export const rejectDeviceRequest = async (req, res, next) => {
       });
     }
 
-    requestDoc.status = "REJECTED";
-    requestDoc.reviewedAt = new Date();
-    requestDoc.reviewedBy = req.user._id;
-    requestDoc.reviewNotes = reviewNotes ? reviewNotes.trim() : "Rejected by Supreme Administrator";
-    await requestDoc.save();
+    // Permanently remove the rejected device request from DB to keep storage clean
+    await DeviceApprovalRequest.findByIdAndDelete(requestId);
 
     res.status(200).json({
       success: true,
-      message: "Device request was rejected.",
+      message: "Device request was rejected and permanently removed from database.",
     });
   } catch (error) {
     next(error);
@@ -220,29 +217,18 @@ export const rejectDeviceRequest = async (req, res, next) => {
 export const revokeTrustedDevice = async (req, res, next) => {
   try {
     const { deviceId } = req.params;
-    const { reason } = req.body;
 
     const device = await TrustedDevice.findById(deviceId);
     if (!device) {
       return res.status(404).json({ success: false, message: "Device not found." });
     }
 
-    if (device.status !== "APPROVED") {
-      return res.status(400).json({
-        success: false,
-        message: `Device is not active (current status: '${device.status}').`,
-      });
-    }
-
-    device.status = "REVOKED";
-    device.revokedAt = new Date();
-    device.revokedBy = req.user._id;
-    device.revocationReason = reason ? reason.trim() : "Revoked by Supreme Administrator";
-    await device.save();
+    // Permanently delete revoked device so only approved active devices stay in DB
+    await TrustedDevice.findByIdAndDelete(deviceId);
 
     res.status(200).json({
       success: true,
-      message: "Trusted device has been revoked. All active sessions from this device are terminated.",
+      message: "Trusted device has been revoked and removed from database. All active sessions from this device are terminated.",
     });
   } catch (error) {
     next(error);
@@ -299,28 +285,13 @@ export const emergencyDeviceReset = async (req, res, next) => {
       });
     }
 
-    // Revoke all existing approved devices for target user
-    await TrustedDevice.updateMany(
-      { userId: targetUser._id, status: "APPROVED" },
-      {
-        status: "REVOKED",
-        revokedAt: new Date(),
-        revokedBy: req.user._id,
-        revocationReason: `Emergency Reset: ${justificationReason.trim()}`,
-      }
-    );
-
-    // Cancel all pending approval requests
-    await DeviceApprovalRequest.updateMany(
-      { userId: targetUser._id, status: "PENDING_APPROVAL" },
-      { status: "CANCELLED" }
-    );
-
-    // Record immutable audit entry
+    // Permanently delete all existing devices and pending requests for target user to keep storage completely clean
+    await TrustedDevice.deleteMany({ userId: targetUser._id });
+    await DeviceApprovalRequest.deleteMany({ userId: targetUser._id });
 
     res.status(200).json({
       success: true,
-      message: `Emergency reset completed for ${targetUser.name}. All existing devices have been revoked and the user can now register a fresh device.`,
+      message: `Emergency reset completed for ${targetUser.name}. All existing device records have been cleaned and the user can now register a fresh device.`,
     });
   } catch (error) {
     next(error);

@@ -3,6 +3,8 @@ import { useProjects, getProjectRouteSlug } from "../../context/ProjectContext";
 import { usePlots } from "../../context/PlotContext";
 import { useAdminProfile } from "../context/AdminProfileContext";
 import { useNotifications } from "../context/NotificationContext";
+import { useAdmins } from "../context/AdminContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import CustomDropdown from "../components/CustomDropdown";
 import { resolveImageUrl } from "../../utils/imageUrl";
@@ -98,8 +100,35 @@ const Projects = () => {
   const { projects, setProjects, updateProject, deleteProject, parsePriceLakhs, isValidPlotPrice } = useProjects();
   const { plots, setPlots } = usePlots();
   const { profile, isSubscriptionExpired } = useAdminProfile();
+  const { isSuperAdmin } = useAuth();
+  const { subscriptionInfo } = useAdmins();
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
+
+  // Authoritative project quota calculation
+  const projectQuota = useMemo(() => {
+    if (isSuperAdmin && subscriptionInfo) {
+      return {
+        usedProjects: subscriptionInfo.usedProjects ?? projects.filter(p => !p.isArchived).length,
+        maxProjects: subscriptionInfo.maxProjects ?? 3,
+        remainingProjects: subscriptionInfo.remainingProjects ?? Math.max(0, (subscriptionInfo.maxProjects || 3) - projects.filter(p => !p.isArchived).length),
+        isLimitReached: Boolean(subscriptionInfo.isProjectLimitReached),
+        isUnlimited: Boolean(subscriptionInfo.isUnlimitedProjects),
+      };
+    }
+    if (profile?.projectQuota) {
+      return {
+        usedProjects: profile.projectQuota.usedProjects ?? projects.filter(p => !p.isArchived).length,
+        maxProjects: profile.projectQuota.maxProjects ?? 3,
+        remainingProjects: profile.projectQuota.remainingProjects ?? 0,
+        isLimitReached: Boolean(profile.projectQuota.isLimitReached),
+        isUnlimited: Boolean(profile.projectQuota.isUnlimitedProjects),
+      };
+    }
+    return null;
+  }, [isSuperAdmin, subscriptionInfo, profile?.projectQuota, projects]);
+
+  const isProjectCreationDisabled = isSubscriptionExpired || Boolean(projectQuota?.isLimitReached);
   const [viewMode, setViewMode] = useState("grid");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All Projects");
@@ -545,19 +574,60 @@ const Projects = () => {
               Projects
             </h1>
 
+            {projectQuota && (
+              <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: "16px",
+                    backgroundColor: projectQuota.isLimitReached ? "#fee2e2" : "#f1f5f9",
+                    color: projectQuota.isLimitReached ? "#b91c1c" : "#334155",
+                    border: `1px solid ${projectQuota.isLimitReached ? "#fca5a5" : "#e2e8f0"}`,
+                  }}
+                >
+                  Quota: {projectQuota.usedProjects} / {projectQuota.isUnlimited ? "∞" : projectQuota.maxProjects} Projects
+                  {!projectQuota.isUnlimited && (
+                    <span style={{ marginLeft: "4px", fontWeight: 600, color: projectQuota.isLimitReached ? "#dc2626" : "#64748b" }}>
+                      ({projectQuota.remainingProjects} left)
+                    </span>
+                  )}
+                </span>
+                {projectQuota.isLimitReached && (
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#dc2626" }}>
+                    Limit Reached • Upgrade subscription plan to add more projects
+                  </span>
+                )}
+              </div>
+            )}
+
           </div>
 
           <button
             className="projects-add-btn"
-            disabled={isSubscriptionExpired}
-            title={isSubscriptionExpired ? "Workspace subscription has expired. Adding projects is disabled." : "Add Project"}
-            style={isSubscriptionExpired ? { opacity: 0.6, cursor: "not-allowed", filter: "grayscale(0.6)" } : {}}
+            disabled={isProjectCreationDisabled}
+            title={
+              isSubscriptionExpired
+                ? "Workspace subscription has expired. Adding projects is disabled."
+                : projectQuota?.isLimitReached
+                ? `Project limit reached (${projectQuota.maxProjects} max). Please upgrade your subscription plan.`
+                : "Add Project"
+            }
+            style={isProjectCreationDisabled ? { opacity: 0.55, cursor: "not-allowed", filter: "grayscale(0.6)" } : {}}
             onClick={() => {
               if (isSubscriptionExpired) {
                 alert("Your organization's workspace subscription has expired. Creating new projects is locked. Please contact your Super Administrator.");
                 return;
               }
-              navigate("/admin/projects/new");
+              if (projectQuota?.isLimitReached) {
+                alert(`Project limit reached (${projectQuota.maxProjects} max). Your workspace subscription allows up to ${projectQuota.maxProjects} active projects. Please upgrade your subscription plan to create additional projects.`);
+                if (isSuperAdmin) {
+                  navigate("/super-admin/subscription");
+                }
+                return;
+              }
+              navigate(isSuperAdmin ? "/super-admin/projects/new" : "/admin/projects/new");
             }}
           >
             <FaPlus />

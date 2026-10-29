@@ -6,6 +6,14 @@ import User from "../models/User.js";
 import Plan from "../models/Plan.js";
 import Subscription from "../models/Subscription.js";
 import SuperAdminRequest from "../models/SuperAdminRequest.js";
+import Project from "../models/Project.js";
+import Plot from "../models/Plot.js";
+import Branch from "../models/Branch.js";
+import Enquiry from "../models/Enquiry.js";
+import SiteVisit from "../models/SiteVisit.js";
+import Notification from "../models/Notification.js";
+import TrustedDevice from "../models/TrustedDevice.js";
+import DeviceApprovalRequest from "../models/DeviceApprovalRequest.js";
 import { storageService } from "../services/storageService.js";
 import { createNotification } from "./notificationController.js";
 import { sendCustomEmail } from "../utils/smtpEmailService.js";
@@ -49,12 +57,34 @@ const maskPan = (pan) => {
   return clean;
 };
 
+// ─── Transactional Email Dispatcher (Production Default + Test-Only Seam) ────
+// Defaults to the real SMTP/Resend dispatcher. The override below is rejected
+// unless NODE_ENV is exactly "test", so it can never become a production bypass.
+let retailerRequestEmailDispatcher = sendCustomEmail;
+
+/**
+ * TEST-ONLY: override the retailer-request transactional email dispatcher
+ * (e.g. with a mock). Hard-fails outside a "test" NODE_ENV so production code
+ * paths can never be redirected to a fake dispatcher at runtime.
+ */
+export const setRetailerRequestEmailDispatcherForTest = (dispatcher) => {
+  if (process.env.NODE_ENV !== "test") {
+    throw new Error(
+      "[SECURITY] Retailer-request email dispatcher override is only permitted when NODE_ENV=test."
+    );
+  }
+  if (typeof dispatcher !== "function") {
+    throw new Error("Retailer-request email dispatcher must be a function.");
+  }
+  retailerRequestEmailDispatcher = dispatcher;
+};
+
 /**
  * Send transactional email via configured SMTP (with fallback if applicable) — non-blocking.
  */
 const sendEmail = async ({ to, subject, html, text }) => {
   try {
-    const res = await sendCustomEmail({ to, subject, html, text });
+    const res = await retailerRequestEmailDispatcher({ to, subject, html, text });
     if (!res?.success) {
       console.warn("[RetailerRequest] Email delivery failed:", res?.error || "Unknown error");
       return false;
@@ -114,6 +144,8 @@ const toPublicRequest = (doc, plan) => {
       durationDays: resolvedDurationDays,
       maxAdminSeats: snapshot.maxAdminSeats !== undefined ? snapshot.maxAdminSeats : (plan?.maxAdminSeats ?? 0),
       isUnlimitedSeats: snapshot.isUnlimitedSeats !== undefined ? snapshot.isUnlimitedSeats : Boolean(plan?.isUnlimitedSeats),
+      maxProjects: snapshot.maxProjects !== undefined ? snapshot.maxProjects : (plan?.maxProjects ?? 10),
+      isUnlimitedProjects: snapshot.isUnlimitedProjects !== undefined ? snapshot.isUnlimitedProjects : Boolean(plan?.isUnlimitedProjects),
       features: snapshot.features && snapshot.features.length ? snapshot.features : (plan?.features || []),
       isActive: plan?.isActive !== undefined ? plan.isActive : true,
     },
@@ -173,7 +205,7 @@ const resolvePlanForRequest = async (request, overridePlanId) => {
 export const getPublicActivePlans = async (req, res, next) => {
   try {
     const plans = await Plan.find({ isActive: true })
-      .select("name description price currency billingInterval durationDays maxAdminSeats isUnlimitedSeats features")
+      .select("name description price currency billingInterval durationDays maxAdminSeats isUnlimitedSeats maxProjects isUnlimitedProjects features")
       .sort({ price: 1, createdAt: 1 });
 
     res.status(200).json({
@@ -189,8 +221,10 @@ export const getPublicActivePlans = async (req, res, next) => {
 /**
  * @desc    Submit a Super Admin (retailer) account creation request.
  *          Creates NO user — the account becomes usable only after
- *          Supreme Admin approval. Payment proof is stored as evidence
- *          only; payment is never auto-marked as verified.
+ *          Supreme Admin approval. Verification relies on declared ID
+ *          numbers (PAN / GSTIN / CIN / LLPIN) only — document uploads
+ *          (payment proof, incorporation certificate, authorization letter)
+ *          are retired and any such payload fields are ignored.
  * @route   POST /api/auth/retailer/request
  * @access  Public
  */
@@ -208,36 +242,19 @@ export const submitRetailerRequest = async (req, res, next) => {
     paidAmount,
     paidOn,
     paymentNotes,
-    paymentProofData,
-    paymentProofMime,
 
     // ── Business Verification Fields ─────────────────────────
     businessType,
     applicantRole,
     applicantLegalName,
     panNumber,
-    panDocData,
-    panDocMime,
-    panDocName,
 
     hasGst,
     gstin,
-    gstDocData,
-    gstDocMime,
-    gstDocName,
 
     registrationNumber,
-    registrationDocData,
-    registrationDocMime,
-    registrationDocName,
-
-    authLetterDocData,
-    authLetterDocMime,
-    authLetterDocName,
   } = req.body;
 
-  let proofUrl = "";
-  let proofPublicId = "";
   let request = null;
 
   try {
@@ -302,12 +319,6 @@ export const submitRetailerRequest = async (req, res, next) => {
               : "CIN (Corporate Identification Number) is required for incorporated companies.",
         });
       }
-      if (!registrationDocData) {
-        return res.status(400).json({
-          success: false,
-          message: "Certificate of Incorporation is required for Companies and LLPs.",
-        });
-      }
     }
 
     // Conditional GST validation if applicant declared GST registration
@@ -324,21 +335,11 @@ export const submitRetailerRequest = async (req, res, next) => {
       }
     }
 
-    // Conditional Authorization Letter when applicant is an Authorized Representative
-    if (applicantRole === "AUTHORIZED_REPRESENTATIVE" && !authLetterDocData) {
-      return res.status(400).json({
-        success: false,
-        message: "Authorization Letter is required when applicant is an Authorized Representative.",
-      });
-    }
-
     // Payment details are OPTIONAL at submission — they will normally be
     // captured by the payment gateway integration. When the applicant has
     // declared manual payment details, validate their structure.
     const validMethods = Object.keys(PAYMENT_METHOD_LABELS);
-    const declaredPayment = Boolean(
-      paymentMethod || transactionId || paymentNotes || paymentProofData
-    );
+    const declaredPayment = Boolean(paymentMethod || transactionId || paymentNotes);
     if (declaredPayment) {
       if (!paymentMethod || !validMethods.includes(paymentMethod)) {
         return res.status(400).json({
@@ -421,64 +422,11 @@ export const submitRetailerRequest = async (req, res, next) => {
     const authoritativeDuration = isAnnualCycle ? 365 : (plan.durationDays || 30);
     const authoritativeInterval = isAnnualCycle ? "ANNUAL" : (plan.billingInterval || "MONTHLY");
 
-    // ── Optional payment proof upload (evidence only) ──────────────
-    if (paymentProofData) {
-      const mime = paymentProofMime || "image/png";
-      // ~5 MB raw file cap (base64 inflates by ~4/3)
-      if (paymentProofData.length > 7_000_000) {
-        return res.status(400).json({
-          success: false,
-          message: "Payment proof image is too large. Maximum size is 5 MB.",
-        });
-      }
-      const upload = await storageService.uploadRequestProof({
-        fileData: paymentProofData,
-        mimeType: mime,
-        requestId: "pending",
-      });
-      proofUrl = upload.imageUrl;
-      proofPublicId = upload.publicId;
-    }
-
-    const detectMime = (data, explicitMime, fallback = "application/pdf") => {
-      if (explicitMime) return explicitMime;
-      if (typeof data === "string") {
-        const m = data.match(/^data:([^;]+);base64,/);
-        if (m && m[1]) return m[1];
-      }
-      return fallback;
-    };
-
-    // ── Secure Private Upload of Required Entity Documents ───────────
-    // 1. Certificate of Incorporation (Conditional for Company / LLP)
-    let regDocKey = "";
-    let regDocStoredName = "";
-    if (isCompanyOrLlp && registrationDocData) {
-      const regUpload = await storageService.uploadBusinessDoc({
-        fileData: registrationDocData,
-        mimeType: detectMime(registrationDocData, registrationDocMime, "application/pdf"),
-        requestId: "pending",
-        docCategory: "cin",
-      });
-      regDocKey = regUpload.fileKey;
-      regDocStoredName = registrationDocName || regUpload.fileName;
-    }
-
-    // 2. Authorization Letter (Conditional for Authorized Representative)
-    let authLetterKey = "";
-    let authLetterStoredName = "";
-    if (applicantRole === "AUTHORIZED_REPRESENTATIVE" && authLetterDocData) {
-      const authUpload = await storageService.uploadBusinessDoc({
-        fileData: authLetterDocData,
-        mimeType: detectMime(authLetterDocData, authLetterDocMime, "application/pdf"),
-        requestId: "pending",
-        docCategory: "auth",
-      });
-      authLetterKey = authUpload.fileKey;
-      authLetterStoredName = authLetterDocName || authUpload.fileName;
-    }
-
     // ── Hash password & persist request ────────────────────────────
+    // NOTE: Document uploads (payment proof, Certificate of Incorporation,
+    // Authorization Letter) were retired by design. Verification relies on the
+    // declared ID numbers (PAN / GSTIN / CIN / LLPIN) only. Legacy doc fields
+    // in the model are kept solely for previously submitted records.
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
@@ -497,6 +445,8 @@ export const submitRetailerRequest = async (req, res, next) => {
         durationDays: authoritativeDuration,
         maxAdminSeats: plan.maxAdminSeats,
         isUnlimitedSeats: Boolean(plan.isUnlimitedSeats),
+        maxProjects: plan.maxProjects !== undefined ? plan.maxProjects : 10,
+        isUnlimitedProjects: Boolean(plan.isUnlimitedProjects),
         features: Array.isArray(plan.features) ? plan.features : [],
       },
       payment: declaredPayment
@@ -507,8 +457,6 @@ export const submitRetailerRequest = async (req, res, next) => {
             amount: declaredAmount !== null ? declaredAmount : authoritativePrice,
             currency: plan.currency || "INR",
             paidOn: parsedPaidOn,
-            proofUrl,
-            proofPublicId,
             notes: paymentNotes ? String(paymentNotes).trim() : "",
             // Explicitly NOT verified — Supreme Admin must verify manually.
             verified: false,
@@ -526,10 +474,6 @@ export const submitRetailerRequest = async (req, res, next) => {
         hasGst: isGstRegistered,
         gstin: isGstRegistered ? String(gstin || "").trim().toUpperCase() : "",
         registrationNumber: isCompanyOrLlp ? String(registrationNumber || "").trim().toUpperCase() : "",
-        registrationDocKey: regDocKey,
-        registrationDocName: regDocStoredName,
-        authLetterDocKey: authLetterKey,
-        authLetterDocName: authLetterStoredName,
       },
       status: "PENDING_REVIEW",
       auditHistory: [
@@ -542,26 +486,6 @@ export const submitRetailerRequest = async (req, res, next) => {
       ],
     });
 
-    // The proof upload was staged in a "pending" folder; move it under the
-    // real request id folder so assets stay organized per request.
-    if (proofUrl) {
-      try {
-        const moved = await storageService.uploadRequestProof({
-          fileData: paymentProofData,
-          mimeType: paymentProofMime || "image/png",
-          requestId: request._id,
-        });
-        proofUrl = moved.imageUrl;
-        proofPublicId = moved.publicId;
-        request.payment.proofUrl = proofUrl;
-        request.payment.proofPublicId = proofPublicId;
-        await request.save();
-      } catch (moveError) {
-        // Ignore the move failure — staged folder copy is already stored
-        console.warn("[RetailerRequest] Proof re-scope failed, keeping staged copy:", moveError.message);
-      }
-    }
-
     // ── Notify Supreme Admins (in-app) ─────────────────────────────
     const supremeAdmins = await User.find({ role: "SUPREME_ADMIN", status: "ACTIVE" }).select("_id");
     await Promise.all(
@@ -572,7 +496,7 @@ export const submitRetailerRequest = async (req, res, next) => {
           senderName: "Signup System",
           type: "RETAILER_SIGNUP_REQUEST",
           title: "New Super Admin Account Request",
-          message: `"${request.businessName}" (${request.email}) requested a Super Admin (Retailer) account on the "${plan.name}" package. Package and ID details are awaiting your review.`,
+          message: `"${request.businessName}" (${request.email}) requested a Super Admin (Retailer) account on the "${plan.name}" package (${plan.maxProjects || 50} projects max, ${plan.isUnlimitedSeats ? "Unlimited" : plan.maxAdminSeats} staff seats). Package and ID details are awaiting your review.`,
           metadata: {
             requestId: String(request._id),
             applicantEmail: request.email,
@@ -589,12 +513,20 @@ export const submitRetailerRequest = async (req, res, next) => {
         "Request received",
         `
         <h3 style="margin:0 0 8px;color:#121d31;font-size:18px;">Request received</h3>
-        <p style="margin:0 0 24px;color:#4a5568;font-size:14px;line-height:1.6;">
+        <p style="margin:0 0 20px;color:#4a5568;font-size:14px;line-height:1.6;">
           Hello ${request.name},<br/><br/>
           We have received your Super Admin (Retailer) account request for
           <strong>${request.businessName}</strong> on the
           <strong>${plan.name}</strong> package (${plan.currency} ${authoritativePrice} / ${isAnnualCycle ? "year" : "month"}).
-          <br/><br/>
+        </p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #a63d2f;border-radius:8px;padding:14px 18px;margin:0 0 24px;">
+          <p style="margin:0;color:#1e293b;font-size:13.5px;line-height:1.7;">
+            <strong>Package:</strong> ${plan.name} (${isAnnualCycle ? "Annual" : "Monthly"})<br/>
+            <strong>Project Creation Limit:</strong> ${plan.isUnlimitedProjects ? "Unlimited Projects" : `${plan.maxProjects || 50} Projects Max`}<br/>
+            <strong>Staff Admin Seats:</strong> ${plan.isUnlimitedSeats ? "Unlimited Seats" : `${plan.maxAdminSeats} Seats`}
+          </p>
+        </div>
+        <p style="margin:0 0 24px;color:#4a5568;font-size:14px;line-height:1.6;">
           Your request is now <strong>pending approval</strong> by the PlotPro platform administrator.
           You will receive an email as soon as your account is reviewed. You cannot log in until it is approved.
         </p>
@@ -615,14 +547,6 @@ export const submitRetailerRequest = async (req, res, next) => {
       },
     });
   } catch (error) {
-    // Clean up orphan proof upload if the request creation failed after upload
-    if (proofPublicId && !request) {
-      try {
-        await storageService.deleteLayoutImage(proofPublicId);
-      } catch {
-        /* non-blocking cleanup */
-      }
-    }
     if (error.statusCode) {
       return res.status(error.statusCode).json({
         success: false,
@@ -791,12 +715,20 @@ export const approveRetailerRequest = async (req, res, next) => {
       const existingSub = existingUser
         ? await Subscription.findOne({ subscriberId: existingUser._id }).sort({ createdAt: -1 })
         : null;
-      return res.status(200).json({
-        success: true,
-        alreadyApproved: true,
-        message: "This request was already approved. No changes were made.",
-        data: { userId: existingUser?._id, subscriptionId: existingSub?._id },
-      });
+
+      // If both user and subscription exist, return idempotency response
+      if (existingUser && existingSub) {
+        return res.status(200).json({
+          success: true,
+          alreadyApproved: true,
+          message: "This request was already approved and provisioned.",
+          data: { userId: existingUser._id, subscriptionId: existingSub._id },
+        });
+      }
+
+      // If user or subscription is missing (e.g. deleted or partially failed previously),
+      // allow approval execution to proceed below and re-provision missing entities.
+      console.log(`[RetailerRequest] Request ${request._id} was marked APPROVED but User or Subscription is missing. Re-provisioning...`);
     }
 
     if (request.status === "REJECTED") {
@@ -924,6 +856,7 @@ export const approveRetailerRequest = async (req, res, next) => {
       subscription.startDate = startDate;
       subscription.expiryDate = expiryDate;
       subscription.assignedSeats = effectiveSeats;
+      subscription.assignedProjects = plan.maxProjects || 3;
       subscription.usedSeats = currentActiveAdmins;
       subscription.isCustomOverride = overrideFlag;
       subscription.customOverrideReason = overrideReasonText;
@@ -936,6 +869,7 @@ export const approveRetailerRequest = async (req, res, next) => {
         startDate,
         expiryDate,
         assignedSeats: effectiveSeats,
+        assignedProjects: plan.maxProjects || 3,
         usedSeats: currentActiveAdmins,
         isCustomOverride: overrideFlag,
         customOverrideReason: overrideReasonText,
@@ -981,6 +915,7 @@ export const approveRetailerRequest = async (req, res, next) => {
             <strong>Package:</strong> ${plan.name} (${request.planSnapshot?.billingInterval === "ANNUAL" ? "Annual" : "Monthly"} - ${plan.currency} ${request.planSnapshot?.price !== undefined ? request.planSnapshot.price : plan.price})<br/>
             <strong>Duration:</strong> ${effectiveDays} days<br/>
             <strong>Valid till:</strong> ${expiryDate.toDateString()}<br/>
+            <strong>Project Creation Limit:</strong> ${plan.isUnlimitedProjects ? "Unlimited Projects" : `${plan.maxProjects || 50} Projects Max`}<br/>
             <strong>Staff admin seats:</strong> ${plan.isUnlimitedSeats ? "Unlimited" : effectiveSeats}
           </p>
         </div>
@@ -1220,8 +1155,14 @@ export const downloadBusinessDoc = async (req, res, next) => {
     const bv = request.businessVerification || {};
     let fileKey = "";
     let downloadFileName = "document.pdf";
+    let useProofStorage = false;
 
-    if (docType === "pan") {
+    if (docType === "paymentProof") {
+      // Legacy records only — new requests never carry a payment proof upload.
+      fileKey = request.payment?.proofPublicId || "";
+      downloadFileName = fileKey || "Payment_Proof.pdf";
+      useProofStorage = true;
+    } else if (docType === "pan") {
       fileKey = bv.panDocKey;
       downloadFileName = bv.panDocName || `PAN_${bv.panNumber || "doc"}.pdf`;
     } else if (docType === "gst") {
@@ -1239,7 +1180,9 @@ export const downloadBusinessDoc = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Requested document was not uploaded." });
     }
 
-    const filePath = storageService.getBusinessDocPath(fileKey);
+    const filePath = useProofStorage
+      ? storageService.getProofPath(fileKey)
+      : storageService.getBusinessDocPath(fileKey);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: "Document file not found in storage." });
     }
@@ -1266,8 +1209,11 @@ export const downloadBusinessDoc = async (req, res, next) => {
 };
 
 /**
- * @desc    Permanently delete a rejected retailer request.
- *          Frees the email address so the applicant can apply again.
+ * @desc    Permanently delete a retailer request (REJECTED or APPROVED).
+ *          If APPROVED, safely cleans up the provisioned Super Admin account,
+ *          their subscription, branch staff admins, branches, projects, plots,
+ *          and workspace assets.
+ *          Frees the email address completely so fresh applications or accounts can be created.
  * @route   DELETE /api/supreme-admin/retailer-requests/:id
  * @access  Private (Supreme Admin)
  */
@@ -1278,11 +1224,87 @@ export const deleteRetailerRequest = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Retailer request not found." });
     }
 
-    if (request.status !== "REJECTED") {
+    if (!["REJECTED", "APPROVED"].includes(request.status)) {
       return res.status(400).json({
         success: false,
-        message: "Only rejected requests can be deleted. Pending or approved requests cannot be removed.",
+        message: "Only rejected or approved requests can be deleted. Pending requests awaiting review cannot be removed directly.",
       });
+    }
+
+    const applicantEmail = request.email;
+    const applicantBusiness = request.businessName;
+    const isApproved = request.status === "APPROVED";
+
+    // ── If APPROVED, cascade-delete the provisioned Super Admin and workspace ──
+    if (isApproved) {
+      const subscriber = request.provisionedUserId
+        ? await User.findById(request.provisionedUserId)
+        : await User.findOne({ email: applicantEmail, role: "SUPER_ADMIN" });
+
+      if (subscriber) {
+        // 1. Find all staff Branch Admins under this subscriber
+        const branchAdmins = await User.find({ tenantId: subscriber._id, role: "ADMIN" }).select("_id");
+        const adminIds = branchAdmins.map((a) => a._id);
+        const allTenantUserIds = [subscriber._id, ...adminIds];
+
+        // 2. Find all branches belonging to this tenant
+        const branches = await Branch.find({ tenantId: subscriber._id }).select("_id");
+        const branchIds = branches.map((b) => b._id);
+
+        // 3. Find and delete all projects and their associated plots
+        const tenantProjects = await Project.find({
+          $or: [
+            { branchId: { $in: branchIds } },
+            { adminId: { $in: allTenantUserIds } },
+            { approvedBy: subscriber._id },
+          ],
+        }).select("_id");
+        const tenantProjectIds = tenantProjects.map((p) => p._id);
+
+        if (tenantProjectIds.length > 0) {
+          await Plot.deleteMany({ projectId: { $in: tenantProjectIds } });
+          await Project.deleteMany({ _id: { $in: tenantProjectIds } });
+        }
+
+        // 4. Delete customer enquiries and site visits belonging to this tenant
+        await Enquiry.deleteMany({
+          $or: [
+            { tenantId: subscriber._id },
+            { branchId: { $in: branchIds } },
+            { assignedAdminId: { $in: adminIds } },
+          ],
+        });
+        await SiteVisit.deleteMany({
+          $or: [
+            { tenantId: subscriber._id },
+            { branchId: { $in: branchIds } },
+            { assignedAdminId: { $in: adminIds } },
+          ],
+        });
+
+        // 5. Delete all branches belonging to this tenant
+        await Branch.deleteMany({ tenantId: subscriber._id });
+
+        // 6. Delete all staff Branch Admin users
+        await User.deleteMany({ tenantId: subscriber._id, role: "ADMIN" });
+
+        // 7. Delete subscriptions
+        await Subscription.deleteMany({ subscriberId: subscriber._id });
+
+        // 8. Delete trusted devices & device requests belonging to this tenant
+        await TrustedDevice.deleteMany({
+          $or: [{ tenantId: subscriber._id }, { userId: { $in: allTenantUserIds } }],
+        });
+        await DeviceApprovalRequest.deleteMany({
+          $or: [{ tenantId: subscriber._id }, { userId: { $in: allTenantUserIds } }],
+        });
+
+        // 9. Delete notifications for this subscriber and their admins
+        await Notification.deleteMany({ recipient: { $in: allTenantUserIds } });
+
+        // 10. Delete the Super Admin user account
+        await User.findByIdAndDelete(subscriber._id);
+      }
     }
 
     // Clean up any uploaded business verification documents
@@ -1309,15 +1331,15 @@ export const deleteRetailerRequest = async (req, res, next) => {
       await storageService.deleteLayoutImage(request.payment.proofPublicId).catch(() => {});
     }
 
-    const applicantEmail = request.email;
-    const applicantBusiness = request.businessName;
-
+    // Delete the SuperAdminRequest itself
     await SuperAdminRequest.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
-      message: `Rejected request for "${applicantBusiness}" (${applicantEmail}) has been deleted. The applicant may now apply again with this email.`,
-      data: { id: req.params.id, email: applicantEmail },
+      message: isApproved
+        ? `Approved Super Admin "${applicantBusiness}" (${applicantEmail}) and all associated workspace data have been permanently deleted.`
+        : `Rejected request for "${applicantBusiness}" (${applicantEmail}) has been deleted. The applicant may now apply again with this email.`,
+      data: { id: req.params.id, email: applicantEmail, status: request.status },
     });
   } catch (error) {
     next(error);
