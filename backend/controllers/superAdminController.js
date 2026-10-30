@@ -1268,76 +1268,98 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       }
     }
 
-    // ── Branch assignment (server-validated; strictly required for all new projects) ──
-    if (!requestedBranchId) {
-      return res.status(400).json({
-        success: false,
-        message: "Branch & Branch Admin assignment is required. Every project must be assigned to an active branch office.",
-      });
-    }
+    // ── Branch assignment ──────────────────────────────────────────────
+    // If the tenant's plan has allocated Branch Admin seats (> 0), branch & admin assignment is required.
+    // If the tenant is on a basic plan with 0 branch seats, branch assignment is optional and the project
+    // is owned directly by the Super Admin workspace.
+    const subForBranchCheck = await Subscription.findOne({ subscriberId: req.user._id });
+    const allocatedSeats = subForBranchCheck ? subForBranchCheck.getEffectiveSeats() : 0;
+    const isBranchFeatureEnabled = allocatedSeats > 0;
 
-    let assignedBranch = await Branch.findOne({
-      _id: requestedBranchId,
-      tenantId: req.user._id,
-      status: "ACTIVE",
-    });
-    if (!assignedBranch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or inactive branch selected. Please assign the project to an active branch office.",
-      });
-    }
+    let assignedBranch = null;
 
-    // Resolve branch admin if not explicitly passed
-    if (!assignedAdmin && assignedBranch.branchAdmin) {
-      assignedAdmin = await User.findById(assignedBranch.branchAdmin);
-    }
-    if (!assignedAdmin) {
-      const activeBranchAdmin = await User.findOne({
-        role: "ADMIN",
-        tenantId: req.user._id,
-        branchId: assignedBranch._id,
-        status: "ACTIVE",
-      });
-      if (activeBranchAdmin) {
-        assignedAdmin = activeBranchAdmin;
-        assignedBranch.branchAdmin = activeBranchAdmin._id;
-        await assignedBranch.save();
-      }
-    }
-
-    if (assignedAdmin) {
-      const adminBranchId = assignedAdmin.branchId
-        ? String(assignedAdmin.branchId)
-        : null;
-
-      if (requestedBranchId && !adminBranchId) {
+    if (isBranchFeatureEnabled) {
+      if (!requestedBranchId) {
         return res.status(400).json({
           success: false,
           message:
-            "This admin account has no branch assignment. Branch-scoped projects require a Branch Admin account.",
+            "Branch & Branch Admin assignment is required. Every project must be assigned to an active branch office.",
         });
       }
-      if (assignedAdmin.branchId) {
-        // Verify the admin's branch is real & in-tenant
-        const adminBranch = await Branch.findOne({
-          _id: assignedAdmin.branchId,
-          tenantId: req.user._id,
+
+      assignedBranch = await Branch.findOne({
+        _id: requestedBranchId,
+        tenantId: req.user._id,
+        status: "ACTIVE",
+      });
+      if (!assignedBranch) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid or inactive branch selected. Please assign the project to an active branch office.",
         });
-        if (!adminBranch) {
+      }
+
+      // Resolve branch admin if not explicitly passed
+      if (!assignedAdmin && assignedBranch.branchAdmin) {
+        assignedAdmin = await User.findById(assignedBranch.branchAdmin);
+      }
+      if (!assignedAdmin) {
+        const activeBranchAdmin = await User.findOne({
+          role: "ADMIN",
+          tenantId: req.user._id,
+          branchId: assignedBranch._id,
+          status: "ACTIVE",
+        });
+        if (activeBranchAdmin) {
+          assignedAdmin = activeBranchAdmin;
+          assignedBranch.branchAdmin = activeBranchAdmin._id;
+          await assignedBranch.save();
+        }
+      }
+
+      if (assignedAdmin) {
+        const adminBranchId = assignedAdmin.branchId
+          ? String(assignedAdmin.branchId)
+          : null;
+
+        if (requestedBranchId && !adminBranchId) {
           return res.status(400).json({
             success: false,
             message:
-              "Invalid admin assignment. The selected admin's branch no longer exists in your organization.",
+              "This admin account has no branch assignment. Branch-scoped projects require a Branch Admin account.",
           });
         }
-        if (assignedBranch && String(adminBranch._id) !== String(assignedBranch._id)) {
-          return res.status(400).json({
-            success: false,
-            message: "The selected admin belongs to a different branch.",
+        if (assignedAdmin.branchId) {
+          // Verify the admin's branch is real & in-tenant
+          const adminBranch = await Branch.findOne({
+            _id: assignedAdmin.branchId,
+            tenantId: req.user._id,
           });
+          if (!adminBranch) {
+            return res.status(400).json({
+              success: false,
+              message:
+                "Invalid admin assignment. The selected admin's branch no longer exists in your organization.",
+            });
+          }
+          if (assignedBranch && String(adminBranch._id) !== String(assignedBranch._id)) {
+            return res.status(400).json({
+              success: false,
+              message: "The selected admin belongs to a different branch.",
+            });
+          }
+          assignedBranch = adminBranch;
         }
-        assignedBranch = adminBranch;
+      }
+    } else {
+      // Basic plan with 0 branch admin seats: if a branch was optionally provided, validate it; otherwise leave null
+      if (requestedBranchId) {
+        assignedBranch = await Branch.findOne({
+          _id: requestedBranchId,
+          tenantId: req.user._id,
+          status: "ACTIVE",
+        });
       }
     }
 

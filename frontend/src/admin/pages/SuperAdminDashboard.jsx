@@ -21,6 +21,9 @@ const SuperAdminDashboard = () => {
   const { plots } = usePlots();
   const navigate = useNavigate();
 
+  const allocatedSeats = subscriptionInfo?.assignedSeats ?? 0;
+  const isBranchFeatureEnabled = allocatedSeats > 0;
+
   const adminPerformance = useMemo(
     () => buildAdminPerformance(admins, projects, plots),
     [admins, projects, plots]
@@ -199,7 +202,9 @@ const SuperAdminDashboard = () => {
                 Welcome to your PlotPro Workspace!
               </h3>
               <p style={{ margin: 0, fontSize: "14px", color: "#64748b", lineHeight: "1.5" }}>
-                Your business tenant workspace is configured and ready. You can now launch your first real estate project or invite branch administrators to start managing your plot portfolio.
+                {isBranchFeatureEnabled
+                  ? "Your business tenant workspace is configured and ready. You can now launch your first real estate project or invite branch administrators to start managing your plot portfolio."
+                  : "Your business tenant workspace is configured and ready. You can now launch your first real estate project and manage your plot portfolio."}
               </p>
             </div>
           </div>
@@ -212,14 +217,16 @@ const SuperAdminDashboard = () => {
             >
               <FaPlus /> Create First Project
             </button>
-            <button
-              type="button"
-              className="sa-btn-outline"
-              onClick={() => navigate("/super-admin/branches")}
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 18px", fontSize: "13px" }}
-            >
-              <FaUserPlus /> Create Branch & Admin
-            </button>
+            {isBranchFeatureEnabled && (
+              <button
+                type="button"
+                className="sa-btn-outline"
+                onClick={() => navigate("/super-admin/branches")}
+                style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 18px", fontSize: "13px" }}
+              >
+                <FaUserPlus /> Create Branch & Admin
+              </button>
+            )}
           </div>
         </div>
       )}

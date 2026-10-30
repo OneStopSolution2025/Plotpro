@@ -808,6 +808,17 @@ export const approveRetailerRequest = async (req, res, next) => {
           (request.provisionedUserId || !existingByEmail.tenantId)
         ) {
           user = existingByEmail; // adopt (retry after partial failure)
+        } else if (existingByEmail.role === "USER") {
+          // Promote existing regular USER to SUPER_ADMIN subscriber
+          existingByEmail.role = "SUPER_ADMIN";
+          existingByEmail.status = "ACTIVE";
+          existingByEmail.tenantId = null;
+          if (request.name) existingByEmail.name = request.name;
+          if (request.businessName) existingByEmail.businessName = request.businessName;
+          if (request.phone) existingByEmail.phone = request.phone;
+          if (request.passwordHash) existingByEmail.passwordHash = request.passwordHash;
+          await existingByEmail.save();
+          user = existingByEmail;
         } else {
           return res.status(409).json({
             success: false,

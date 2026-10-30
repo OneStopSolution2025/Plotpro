@@ -31,6 +31,19 @@ const SuperAdminLayout = () => {
   }, [fetchSubscriptionInfo]);
 
   const isExpired = Boolean(subscriptionInfo && subscriptionInfo.isExpired);
+  const allocatedSeats = subscriptionInfo?.assignedSeats ?? 0;
+  const isBranchFeatureEnabled = allocatedSeats > 0;
+
+  // Filter navigation groups based on plan features
+  const filteredNavGroups = superAdminNavGroups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => {
+      if (item.path === "/super-admin/branches" && !isBranchFeatureEnabled) {
+        return false;
+      }
+      return true;
+    }),
+  }));
 
   // Renewal Alert Modal (When remainingDays <= 3) — Hooks MUST be unconditional!
   const remainingDays = typeof subscriptionInfo?.remainingDays === "number" ? subscriptionInfo.remainingDays : null;
@@ -272,7 +285,7 @@ const SuperAdminLayout = () => {
   return (
     <>
       <AdminLayout
-        navGroups={superAdminNavGroups}
+        navGroups={filteredNavGroups}
         user={profile}
         profilePath="/super-admin/profile"
       />

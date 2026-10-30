@@ -117,6 +117,8 @@ const SuperAdminProjectForm = () => {
     }
   }, [fetchSubscriptionInfo]);
 
+  const allocatedSeats = subscriptionInfo?.assignedSeats ?? 0;
+  const isBranchFeatureEnabled = allocatedSeats > 0;
   const maxProjects = subscriptionInfo?.maxProjects ?? 10;
   const usedProjects = subscriptionInfo?.usedProjects ?? (projects ? projects.filter((p) => !p.isArchived).length : 0);
   const remainingProjects = subscriptionInfo?.remainingProjects ?? Math.max(0, maxProjects - usedProjects);
@@ -459,7 +461,9 @@ const SuperAdminProjectForm = () => {
     e.preventDefault();
 
     const errors = [];
-    if (!selectedBranchId) errors.push("Branch & Branch Admin assignment is required. Every project must be assigned to an active branch office.");
+    if (isBranchFeatureEnabled && !selectedBranchId) {
+      errors.push("Branch & Branch Admin assignment is required. Every project must be assigned to an active branch office.");
+    }
     if (!form.title.trim()) errors.push("Project Title is required.");
     if (!form.location.trim()) errors.push("Location is required.");
     if (!form.plotPrice.trim()) errors.push("Plot Price is required.");
@@ -660,77 +664,79 @@ const SuperAdminProjectForm = () => {
         {/* ==============================
             BRANCH & ADMIN ASSIGNMENT
         ============================== */}
-        <section className="form-section" style={{ border: "2px solid #e2e8f0", background: "#f8fafc" }}>
-          <h2 style={{ color: "#a63d2f", display: "flex", alignItems: "center", gap: 8 }}>
-            <FaBuilding /> Branch &amp; Admin Assignment *
-          </h2>
-          <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
-            Every project must be assigned to an active branch office and managed by a Branch Admin. Selecting a branch locks the project&apos;s location &amp; city to that Branch Admin&apos;s operational territory.
-          </p>
+        {isBranchFeatureEnabled && (
+          <section className="form-section" style={{ border: "2px solid #e2e8f0", background: "#f8fafc" }}>
+            <h2 style={{ color: "#a63d2f", display: "flex", alignItems: "center", gap: 8 }}>
+              <FaBuilding /> Branch &amp; Admin Assignment *
+            </h2>
+            <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#64748b" }}>
+              Every project must be assigned to an active branch office and managed by a Branch Admin. Selecting a branch locks the project&apos;s location &amp; city to that Branch Admin&apos;s operational territory.
+            </p>
 
-          {activeBranches.length === 0 && !branchesLoading ? (
-            <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, marginBottom: 12 }}>
-              <p style={{ margin: 0, color: "#991b1b", fontSize: "0.88rem", fontWeight: 600 }}>
-                <FaExclamationCircle style={{ marginRight: 6 }} />
-                No active branches found. You must create at least one Branch with an active Branch Admin before publishing a project.
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate("/super-admin/branches")}
-                style={{
-                  marginTop: 8,
-                  padding: "6px 12px",
-                  background: "#a63d2f",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  fontSize: "0.82rem",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                Go to Branch Management
-              </button>
-            </div>
-          ) : (
-            <div className="form-grid">
-              <label className="full-width">
-                Select Branch &amp; Branch Admin *
-                <CustomDropdown
-                  value={selectedBranchId}
-                  onChange={(e) => setSelectedBranchId(e.target.value)}
-                  placeholder="-- Select Branch & Branch Admin (Required) --"
-                  required
+            {activeBranches.length === 0 && !branchesLoading ? (
+              <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, marginBottom: 12 }}>
+                <p style={{ margin: 0, color: "#991b1b", fontSize: "0.88rem", fontWeight: 600 }}>
+                  <FaExclamationCircle style={{ marginRight: 6 }} />
+                  No active branches found. You must create at least one Branch with an active Branch Admin before publishing a project.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/super-admin/branches")}
+                  style={{
+                    marginTop: 8,
+                    padding: "6px 12px",
+                    background: "#a63d2f",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: "0.82rem",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
                 >
-                  <option value="" disabled>-- Select Branch &amp; Branch Admin (Required) --</option>
-                  {activeBranches.map((branch) => {
-                    const adminName = branch.branchAdmin?.name || branch.branchAdmin?.email || "No Admin Assigned";
-                    const regionText = branch.region ? `, ${branch.region}` : "";
-                    return (
-                      <option key={branch.id || branch._id} value={branch.id || branch._id}>
-                        {branch.name} — Admin: {adminName} ({branch.city}{regionText})
-                      </option>
-                    );
-                  })}
-                </CustomDropdown>
+                  Go to Branch Management
+                </button>
+              </div>
+            ) : (
+              <div className="form-grid">
+                <label className="full-width">
+                  Select Branch &amp; Branch Admin *
+                  <CustomDropdown
+                    value={selectedBranchId}
+                    onChange={(e) => setSelectedBranchId(e.target.value)}
+                    placeholder="-- Select Branch & Branch Admin (Required) --"
+                    required
+                  >
+                    <option value="" disabled>-- Select Branch &amp; Branch Admin (Required) --</option>
+                    {activeBranches.map((branch) => {
+                      const adminName = branch.branchAdmin?.name || branch.branchAdmin?.email || "No Admin Assigned";
+                      const regionText = branch.region ? `, ${branch.region}` : "";
+                      return (
+                        <option key={branch.id || branch._id} value={branch.id || branch._id}>
+                          {branch.name} — Admin: {adminName} ({branch.city}{regionText})
+                        </option>
+                      );
+                    })}
+                  </CustomDropdown>
 
-                {selectedBranch ? (
-                  <div style={{ marginTop: 8, padding: "8px 12px", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
-                    <small style={{ color: "#065f46", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                      <FaLock size={12} />
-                      Auto-locked to territory: {selectedBranch.name} ({selectedBranch.city}{selectedBranch.region ? `, ${selectedBranch.region}` : ""}).
-                      Branch Admin: {selectedBranch.branchAdmin?.name || "Pending"}.
+                  {selectedBranch ? (
+                    <div style={{ marginTop: 8, padding: "8px 12px", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
+                      <small style={{ color: "#065f46", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                        <FaLock size={12} />
+                        Auto-locked to territory: {selectedBranch.name} ({selectedBranch.city}{selectedBranch.region ? `, ${selectedBranch.region}` : ""}).
+                        Branch Admin: {selectedBranch.branchAdmin?.name || "Pending"}.
+                      </small>
+                    </div>
+                  ) : (
+                    <small style={{ color: "#dc2626", fontWeight: 600, display: "block", marginTop: 4 }}>
+                      * Branch assignment is mandatory. Please select an active branch office above.
                     </small>
-                  </div>
-                ) : (
-                  <small style={{ color: "#dc2626", fontWeight: 600, display: "block", marginTop: 4 }}>
-                    * Branch assignment is mandatory. Please select an active branch office above.
-                  </small>
-                )}
-              </label>
-            </div>
-          )}
-        </section>
+                  )}
+                </label>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ==============================
             BASIC INFORMATION
@@ -754,9 +760,20 @@ const SuperAdminProjectForm = () => {
               <input
                 type="text"
                 value={form.location}
-                readOnly
-                style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }}
-                placeholder={selectedBranch ? "e.g. Dindigul, Tamil Nadu" : "Select a Branch above to lock location"}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                readOnly={isBranchFeatureEnabled}
+                style={
+                  isBranchFeatureEnabled
+                    ? { backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }
+                    : {}
+                }
+                placeholder={
+                  isBranchFeatureEnabled
+                    ? selectedBranch
+                      ? "e.g. Dindigul, Tamil Nadu"
+                      : "Select a Branch above to lock location"
+                    : "e.g. Dindigul, Tamil Nadu"
+                }
                 required
               />
              
@@ -767,9 +784,20 @@ const SuperAdminProjectForm = () => {
               <input
                 type="text"
                 value={form.city}
-                readOnly
-                style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }}
-                placeholder={selectedBranch ? "e.g. Dindigul" : "Select a Branch above to lock city"}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                readOnly={isBranchFeatureEnabled}
+                style={
+                  isBranchFeatureEnabled
+                    ? { backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }
+                    : {}
+                }
+                placeholder={
+                  isBranchFeatureEnabled
+                    ? selectedBranch
+                      ? "e.g. Dindigul"
+                      : "Select a Branch above to lock city"
+                    : "e.g. Dindigul"
+                }
                 required
               />
             
