@@ -137,7 +137,7 @@ export const verifyDeviceOtpAndProceed = async (req, res, next) => {
           deviceEnrollmentAttempts: 0,
         },
       },
-      { new: true, session: session || undefined }
+      { returnDocument: "after", session: session || undefined }
     );
 
     if (!updatedUser) {
@@ -504,7 +504,14 @@ export const claimApprovedSession = async (req, res, next) => {
       });
     }
 
-    // 3. Create new TrustedDevice with APPROVED status and isCurrentSession: true
+    // 3. Clean up previous devices FIRST so the partial unique index ({ userId: 1, status: "APPROVED" })
+    // does not collide when saving the newly approved device on non-transactional database setups.
+    await TrustedDevice.deleteMany(
+      { userId: requestDoc.userId },
+      session ? { session } : undefined
+    );
+
+    // 4. Create new TrustedDevice with APPROVED status and isCurrentSession: true
     const newDevice = new TrustedDevice({
       userId: requestDoc.userId,
       tenantId: requestDoc.tenantId,
@@ -524,15 +531,6 @@ export const claimApprovedSession = async (req, res, next) => {
     });
 
     await newDevice.save(session ? { session } : undefined);
-
-    // 4. Permanently delete all previous TrustedDevice records for this user so only current approved device remains
-    await TrustedDevice.deleteMany(
-      {
-        userId: requestDoc.userId,
-        _id: { $ne: newDevice._id },
-      },
-      session ? { session } : undefined
-    );
 
     // 5. Permanently delete all DeviceApprovalRequests for this user to keep DB clean
     await DeviceApprovalRequest.deleteMany(

@@ -67,11 +67,6 @@ export default function LayoutEditorModal({ project, plots = [], onClose, onSave
         .getProjectLayout(targetId)
         .then((res) => {
           if (res?.success) {
-            if (!res.data?.storageConfigured) {
-              setStorageWarning(
-                "Cloudinary persistent storage is not configured in backend environment variables. Image uploads require CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
-              );
-            }
             const l = res.data?.layout;
             if (l) {
               const refImg = l.referenceImageUrl || l.imageUrl;
@@ -171,7 +166,7 @@ export default function LayoutEditorModal({ project, plots = [], onClose, onSave
     setIsDragging(false);
   };
 
-  // File upload to Cloudinary handler
+  // File upload handler
   const processImageFile = async (file) => {
     if (!file) return;
 
@@ -210,7 +205,7 @@ export default function LayoutEditorModal({ project, plots = [], onClose, onSave
           if (res?.success && res.data?.imageUrl) {
             setImageUrl(res.data.imageUrl);
             setPublicId(res.data.publicId || "");
-            showToast("Layout image uploaded successfully to persistent Cloudinary storage!", "success");
+            showToast("Layout image uploaded successfully to persistent storage!", "success");
           } else {
             showToast(res?.message || "Failed to upload image.", "error");
           }
@@ -246,7 +241,7 @@ export default function LayoutEditorModal({ project, plots = [], onClose, onSave
       referenceImageUrl: imageUrl,
       imageUrl,
       publicId,
-      provider: "cloudinary",
+      provider: "volume",
       width: imgDimensions.width,
       height: imgDimensions.height,
       compassOrientation: 0,

@@ -1,0 +1,454 @@
+/* ==========================================================================
+   Subscription & Plan Quota Modern UI (super-admin/subscription)
+   ========================================================================== */
+
+.sub-details-page {
+  padding: 28px;
+  max-width: 1240px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.sub-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.sub-header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.sub-header-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sub-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.sub-refresh-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.sub-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Alert Banners */
+.sub-alert-card {
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sub-alert-card.expired {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.sub-alert-card.warning {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.sub-alert-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.sub-alert-card.expired .sub-alert-icon-wrap {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.sub-alert-card.warning .sub-alert-icon-wrap {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.sub-alert-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.sub-alert-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* 2-Column Hero Card */
+.sub-hero-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  overflow: hidden;
+}
+
+/* Left Brand Panel */
+.sub-hero-brand {
+  background: linear-gradient(165deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.sub-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.sub-status-pill.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.sub-status-pill.trial {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.sub-status-pill.expired {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.sub-plan-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 18px 0 10px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.sub-plan-desc {
+  font-size: 13.5px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sub-hero-footer-meta {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.sub-hero-footer-label {
+  color: #94a3b8;
+}
+
+.sub-hero-footer-val {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+/* Right Metrics Grid */
+.sub-metrics-panel {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background-color: #ffffff;
+}
+
+.sub-metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sub-metric-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sub-metric-label-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 170px;
+}
+
+.sub-metric-icon-bubble {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.sub-metric-label-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.sub-metric-sublabel {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Quota Item Layout */
+.sub-quota-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.sub-quota-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sub-quota-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.sub-quota-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.sub-progress-bar-wrap {
+  width: 180px;
+  height: 7px;
+  border-radius: 999px;
+  background-color: #f1f5f9;
+  overflow: hidden;
+  position: relative;
+}
+
+.sub-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease-out;
+}
+
+.sub-quota-hint {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Plain Value Group */
+.sub-metric-value-box {
+  text-align: right;
+}
+
+.sub-metric-value-primary {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sub-metric-value-secondary {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Bottom 2 Cards Grid */
+.sub-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.sub-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 26px 28px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sub-card-header-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.sub-card-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.sub-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sub-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+}
+
+.sub-info-label {
+  color: #64748b;
+}
+
+.sub-info-val {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.sub-role-badge {
+  background: #fdf2f0;
+  color: #a63d2f;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sub-help-text {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0 0 18px 0;
+}
+
+.sub-help-footer {
+  font-size: 12px;
+  color: #94a3b8;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 960px) {
+  .sub-hero-card {
+    grid-template-columns: 1fr;
+  }
+  .sub-hero-brand {
+    padding: 28px 24px;
+  }
+  .sub-metrics-panel {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sub-details-page {
+    padding: 18px;
+  }
+  .sub-metric-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .sub-quota-block {
+    align-items: flex-start;
+    width: 100%;
+  }
+  .sub-progress-bar-wrap {
+    width: 100%;
+  }
+  .sub-metric-value-box {
+    text-align: left;
+  }
+  .sub-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}

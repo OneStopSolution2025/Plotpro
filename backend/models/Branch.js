@@ -24,7 +24,7 @@ const branchSchema = new mongoose.Schema(
     branchAdmin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null,
+      required: [true, "Branch Admin reference is required"],
       index: true,
     },
     name: {

@@ -474,6 +474,16 @@ export const deleteAdminAccountBySupreme = async (req, res, next) => {
     // 4. Delete admin user record
     await User.findByIdAndDelete(admin._id);
 
+    // 5. Clean up any branch that was managed by this admin to prevent orphaned branches
+    const affectedBranches = await Branch.find({ branchAdmin: admin._id });
+    for (const b of affectedBranches) {
+      await Project.updateMany(
+        { branchId: b._id },
+        { $set: { branchId: null, adminId: null } }
+      );
+      await Branch.deleteOne({ _id: b._id });
+    }
+
     // Notify the Super Admin (workspace subscriber) about Supreme Admin's deletion
     await createNotification({
       recipient: subscriber._id,

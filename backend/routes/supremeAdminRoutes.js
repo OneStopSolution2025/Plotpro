@@ -21,6 +21,12 @@ import {
   getSeatUsage,
 } from "../controllers/supremeAdminController.js";
 import {
+  getPublishedProjectsSummary,
+  getSuperAdminPublishedCounts,
+  getSuperAdminPublishedAdmins,
+  getSuperAdminPublishedProjectsAdminWise,
+} from "../controllers/supremeAdminPublishedProjectsController.js";
+import {
   getRetailerRequests,
   getRetailerRequestById,
   approveRetailerRequest,
@@ -81,6 +87,19 @@ router.patch("/subscriptions/:id/status", updateSubscriptionStatus);
 
 // Admin Seat Usage
 router.get("/seat-usage", getSeatUsage);
+
+// ─── Published Projects Overview (platform-wide, READ-ONLY) ─────────────────
+// Strictly read-only: no create/update/delete/publish/unpublish operations.
+router.get("/published-projects/summary", getPublishedProjectsSummary);
+router.get("/published-projects/super-admins", getSuperAdminPublishedCounts);
+router.get(
+  "/published-projects/super-admins/:subscriberId",
+  getSuperAdminPublishedAdmins
+);
+router.get(
+  "/published-projects/super-admins/:subscriberId/admins/:adminId/projects",
+  getSuperAdminPublishedProjectsAdminWise
+);
 
 // ─── Trusted Device Oversight & Management ────────────────────────────────────
 router.get("/devices/pending", getPendingDeviceRequests);

@@ -92,36 +92,94 @@
 .plots-stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    gap: 16px;
     margin-bottom: 2rem;
 }
 
 .plot-stat-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    border: 1px solid #eee;
+    background: #ffffff;
+    border: 2px solid #f1f5f9;
+    border-radius: 18px;
+    padding: 22px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    min-height: 125px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    box-shadow: none;
+}
+
+.plot-stat-card:hover {
+    transform: translateY(-3px);
+    border-color: #cbd5e1;
+    box-shadow: 0 12px 28px rgba(23, 36, 15, 0.08);
+}
+
+.plot-stat-card.total {
+    background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+}
+
+.plot-stat-card.total:hover { border-color: #17240f; }
+.plot-stat-card.available:hover { border-color: #10b981; }
+.plot-stat-card.reserved:hover { border-color: #f59e0b; }
+.plot-stat-card.sold:hover { border-color: #ef4444; }
+
+.plot-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .plot-stat-card .stat-label {
-    font-size: 0.9rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0;
 }
+
+.plot-stat-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.plot-stat-card.total .plot-stat-indicator { background: #17240f; box-shadow: 0 0 0 3px rgba(23, 36, 15, 0.15); }
+.plot-stat-card.available .plot-stat-indicator { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+.plot-stat-card.reserved .plot-stat-indicator { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+.plot-stat-card.sold .plot-stat-indicator { background: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
 
 .plot-stat-card .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1a1a1a;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1;
+    margin-top: 14px;
+    letter-spacing: -1px;
 }
 
-.plot-stat-card.total { border-left: 4px solid #a63d2f; }
-.plot-stat-card.available { border-left: 4px solid #28a745; }
-.plot-stat-card.reserved { border-left: 4px solid #ffc107; }
-.plot-stat-card.sold { border-left: 4px solid #dc3545; }
+.plot-stat-card.available .stat-value { color: #059669; }
+.plot-stat-card.reserved .stat-value { color: #d97706; }
+.plot-stat-card.sold .stat-value { color: #dc2626; }
+
+.plot-stat-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+@media (max-width: 1024px) {
+    .plots-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .plots-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
 /* Filters */
 .plots-controls {

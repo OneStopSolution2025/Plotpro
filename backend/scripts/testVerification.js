@@ -68,7 +68,7 @@ async function runTests() {
         $expr: { $lt: ["$usedSeats", "$assignedSeats"] },
       },
       { $inc: { usedSeats: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!res1 || res1.usedSeats !== 1) throw new Error("Failed to reserve 1st seat");
     console.log("  ✓ Reserved 1st seat (usedSeats = 1/2): PASSED");
@@ -82,7 +82,7 @@ async function runTests() {
         $expr: { $lt: ["$usedSeats", "$assignedSeats"] },
       },
       { $inc: { usedSeats: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!res2 || res2.usedSeats !== 2) throw new Error("Failed to reserve 2nd seat");
     console.log("  ✓ Reserved 2nd seat (usedSeats = 2/2): PASSED");
@@ -96,7 +96,7 @@ async function runTests() {
         $expr: { $lt: ["$usedSeats", "$assignedSeats"] },
       },
       { $inc: { usedSeats: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (res3 !== null) throw new Error("Quota exceeded but reservation succeeded!");
     console.log("  ✓ Over-quota reservation rejected atomically: PASSED");
@@ -105,7 +105,7 @@ async function runTests() {
     const releaseRes = await Subscription.findOneAndUpdate(
       { _id: testSub._id, usedSeats: { $gt: 0 } },
       { $inc: { usedSeats: -1 } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (releaseRes.usedSeats !== 1) throw new Error("Failed to release seat");
     console.log("  ✓ Released 1 seat idempotently (usedSeats = 1/2): PASSED");
@@ -121,7 +121,7 @@ async function runTests() {
         $expr: { $lt: ["$usedSeats", "$assignedSeats"] },
       },
       { $inc: { usedSeats: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (expiredRes !== null) throw new Error("Expired subscription allowed seat reservation!");
     console.log("  ✓ Expired subscription blocked from reserving seats: PASSED");

@@ -570,11 +570,16 @@ export const deleteAdminAccount = async (req, res, next) => {
     // 4. Delete the admin user record permanently from DB
     await User.findByIdAndDelete(admin._id);
 
-    // 5. Detach the admin from any branch they managed (branch itself is kept)
-    await Branch.updateMany(
-      { branchAdmin: admin._id },
-      { $set: { branchAdmin: null } }
-    );
+    // 5. Clean up any branch that was managed by this admin to prevent orphaned branches
+    // Unlink branch projects safely before deleting the branch
+    const affectedBranches = await Branch.find({ branchAdmin: admin._id });
+    for (const b of affectedBranches) {
+      await Project.updateMany(
+        { branchId: b._id },
+        { $set: { branchId: null, adminId: null } }
+      );
+      await Branch.deleteOne({ _id: b._id });
+    }
 
     // Sync subscription usedSeats to actual count of active admins
     const actualRemainingCount = await User.countDocuments({
@@ -1754,7 +1759,7 @@ export const getProjectLayoutSuperAdmin = async (req, res, next) => {
         layout: project.layout || {
           referenceImageUrl: "",
           imageUrl: "",
-          provider: "cloudinary",
+          provider: "volume",
           publicId: "",
           version: 1,
           width: 1200,
@@ -1774,7 +1779,7 @@ export const getProjectLayoutSuperAdmin = async (req, res, next) => {
           facing: p.facing,
           price: p.price,
         })),
-        storageConfigured: storageService.isConfigured(),
+        storageConfigured: true,
       },
     });
   } catch (error) {
@@ -1961,7 +1966,7 @@ export const saveProjectLayoutSuperAdmin = async (req, res, next) => {
     const updatedLayout = {
       referenceImageUrl: referenceImg ? String(referenceImg).trim() : "",
       imageUrl: referenceImg ? String(referenceImg).trim() : "",
-      provider: layout.provider || "cloudinary",
+      provider: layout.provider || "volume",
       publicId: newPublicId || oldPublicId || "",
       version: currentVersion + 1,
       width: Number(layout.width) || project.layout?.width || 1200,

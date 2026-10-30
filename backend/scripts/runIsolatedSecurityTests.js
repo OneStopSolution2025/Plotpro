@@ -14,6 +14,7 @@
  *      3. scripts/testJwtSecurity.js             (Fix 3 — JWT config + attribution)
  *      4. scripts/testDeviceSecurity.js          (regression — device flow)
  *      5. scripts/testUploadRetirement.js        (upload retirement — signup doc/proof removal)
+ *      6. scripts/testSupremePublishedProjects.js (Supreme Admin published projects overview)
  *
  *  The application database (MONGODB_URI from backend/.env) is never touched:
  *  each child process receives MONGODB_URI pointed at the ephemeral instance,
@@ -35,6 +36,7 @@ const SUITES = [
   "testJwtSecurity.js",
   "testDeviceSecurity.js",
   "testUploadRetirement.js",
+  "testSupremePublishedProjects.js",
 ];
 
 async function runSuite(scriptName, mongoUri) {

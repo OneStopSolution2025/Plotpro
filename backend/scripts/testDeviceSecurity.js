@@ -128,7 +128,7 @@ async function runDeviceSecurityTests() {
           deviceEnrollmentAttempts: 0,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     );
     assert(consumedUser !== null, "First-device challenge consumed atomically");
 
@@ -246,7 +246,7 @@ async function runDeviceSecurityTests() {
           deviceEnrollmentAttempts: 0,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     );
     assert(consumedTransferUser !== null, "Transfer OTP challenge consumed atomically");
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -21,12 +21,16 @@ import {
   FaCheckCircle,
   FaPaperPlane,
   FaMapMarkedAlt,
+  FaCloudUploadAlt,
+  FaSpinner,
 } from "react-icons/fa";
 
 import ConfirmationModal from "../components/ConfirmationModal";
 import CustomDropdown from "../components/CustomDropdown";
-import LayoutEditorModal from "../components/LayoutEditorModal";
+import { adminApi, superAdminApi } from "../../services/api";
+import { resolveImageUrl } from "../../utils/imageUrl";
 import "../styles/projectplots.css";
+import "../styles/admin-project-form.css";
 
 const ProjectPlots = () => {
   // useParams() is a React Router hook.
@@ -37,7 +41,7 @@ const ProjectPlots = () => {
   const navigate = useNavigate();
 
   // Get project data from ProjectContext.
-  const { projects, updateProject, isLoading: projectsLoading } = useProjects();
+  const { projects, setProjects, updateProject, refreshProjects, isLoading: projectsLoading } = useProjects();
 
   // Get plot data and updatePlot() from PlotContext.
   const { plots, setPlots, updatePlot, createPlot, deletePlot, fetchPlotsForProject } = usePlots();
@@ -54,6 +58,21 @@ const ProjectPlots = () => {
   const [resubmitting, setResubmitting] = useState(false);
   const [resubmitSuccess, setResubmitSuccess] = useState(false);
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
+
+  // Layout / Cover image modal state
+  const [isUploadingLayout, setIsUploadingLayout] = useState(false);
+  const [isSavingLayout, setIsSavingLayout] = useState(false);
+  const [isDragOverLayout, setIsDragOverLayout] = useState(false);
+  const [layoutImagePreview, setLayoutImagePreview] = useState("");
+  const layoutFileInputRef = useRef(null);
+  const [layoutUploadMessage, setLayoutUploadMessage] = useState(null);
+
+  // Keep layoutImagePreview in sync with project only when modal opens or route project changes (not during active editing)
+  useEffect(() => {
+    if (project && showLayoutEditor) {
+      setLayoutImagePreview(project.image || (project.images && project.images[0]) || project.layout?.referenceImageUrl || project.layout?.imageUrl || "");
+    }
+  }, [showLayoutEditor, project?.id]);
 
   // Search input state.
   const [search, setSearch] = useState("");
@@ -711,47 +730,41 @@ const ProjectPlots = () => {
 
         {/* Stats Cards */}
         <div className="plots-stats-grid">
-
           <div className="plot-stat-card total">
-            <span className="stat-label">
-              Total Plots
-            </span>
-
-            <span className="stat-value">
-              {totalPlots}
-            </span>
+            <div className="plot-stat-top">
+              <span className="stat-label">Total Plots</span>
+              <div className="plot-stat-indicator"></div>
+            </div>
+            <div className="stat-value">{totalPlots}</div>
+            <span className="plot-stat-desc">Master layout inventory</span>
           </div>
 
           <div className="plot-stat-card available">
-            <span className="stat-label">
-              Available
-            </span>
-
-            <span className="stat-value">
-              {availablePlots}
-            </span>
+            <div className="plot-stat-top">
+              <span className="stat-label">Available</span>
+              <div className="plot-stat-indicator"></div>
+            </div>
+            <div className="stat-value">{availablePlots}</div>
+            <span className="plot-stat-desc">Open for new bookings</span>
           </div>
 
           <div className="plot-stat-card reserved">
-            <span className="stat-label">
-              Reserved
-            </span>
-
-            <span className="stat-value">
-              {reservedPlots}
-            </span>
+            <div className="plot-stat-top">
+              <span className="stat-label">Reserved</span>
+              <div className="plot-stat-indicator"></div>
+            </div>
+            <div className="stat-value">{reservedPlots}</div>
+            <span className="plot-stat-desc">Hold deposit pending</span>
           </div>
 
           <div className="plot-stat-card sold">
-            <span className="stat-label">
-              Sold
-            </span>
-
-            <span className="stat-value">
-              {soldPlots}
-            </span>
+            <div className="plot-stat-top">
+              <span className="stat-label">Sold</span>
+              <div className="plot-stat-indicator"></div>
+            </div>
+            <div className="stat-value">{soldPlots}</div>
+            <span className="plot-stat-desc">Successfully registered</span>
           </div>
-
         </div>
 
         {/* Toolbar / Filters */}
@@ -1223,23 +1236,315 @@ const ProjectPlots = () => {
         onCancel={() => setAlertModal(null)}
       />
 
-      {/* INTERACTIVE LAYOUT BOUNDARY EDITOR MODAL */}
+      {/* CLEAN PROJECT LAYOUT / COVER IMAGE UPLOAD MODAL */}
       {showLayoutEditor && project && (
-        <LayoutEditorModal
-          project={project}
-          plots={plots.filter((p) =>
-            String(p.projectId) === String(project.id) ||
-            String(p.projectCustomId) === String(project.customId) ||
-            String(p.projectMongoId) === String(project._id) ||
-            String(p.projectId) === String(project._id)
-          )}
-          onClose={() => setShowLayoutEditor(false)}
-          onSaveSuccess={async (savedLayout) => {
-            if (!isSuperAdminRole && updateProject) {
-              await updateProject(project.id || project._id, { layout: savedLayout }).catch(() => {});
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (!isUploadingLayout && !isSavingLayout) {
+              setShowLayoutEditor(false);
+              setLayoutUploadMessage(null);
             }
           }}
-        />
+        >
+          <div
+            className="modal-content"
+            style={{ maxWidth: "680px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="modal-header">
+              <h3>
+                Project Layout Image <span>({project.title})</span>
+              </h3>
+              <button
+                className="modal-close"
+                onClick={() => {
+                  if (!isUploadingLayout && !isSavingLayout) {
+                    setShowLayoutEditor(false);
+                    setLayoutUploadMessage(null);
+                  }
+                }}
+                disabled={isUploadingLayout || isSavingLayout}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="modal-body">
+              {layoutUploadMessage && (
+                <div
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "8px",
+                    marginBottom: "1rem",
+                    fontSize: "0.875rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    backgroundColor: layoutUploadMessage.type === "success" ? "#dcfce7" : "#fee2e2",
+                    color: layoutUploadMessage.type === "success" ? "#166534" : "#991b1b",
+                    border: `1px solid ${layoutUploadMessage.type === "success" ? "#bbf7d0" : "#fecaca"}`,
+                  }}
+                >
+                  {layoutUploadMessage.type === "success" ? <FaCheckCircle /> : <FaExclamationTriangle />}
+                  <span>{layoutUploadMessage.text}</span>
+                </div>
+              )}
+
+              <input
+                ref={layoutFileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  if (!file.type.startsWith("image/")) {
+                    setLayoutUploadMessage({ type: "error", text: "Please select a valid image file (PNG, JPG, WebP)." });
+                    return;
+                  }
+
+                  if (file.size > 20 * 1024 * 1024) {
+                    setLayoutUploadMessage({ type: "error", text: "Image file size exceeds the 20MB limit." });
+                    return;
+                  }
+
+                  setIsUploadingLayout(true);
+                  setLayoutUploadMessage(null);
+
+                  const reader = new FileReader();
+                  reader.onload = async (evt) => {
+                    const dataUrl = evt.target.result;
+                    const img = new Image();
+                    img.onload = async () => {
+                      const detectedWidth = img.naturalWidth || 1200;
+                      const detectedHeight = img.naturalHeight || 800;
+                      try {
+                        const targetId = project._id || project.id || "new";
+                        const isSuperAdminRole =
+                          profile?.role === "Super Administrator" ||
+                          profile?.role === "Supreme Administrator" ||
+                          profile?.role === "SUPER_ADMIN";
+                        const uploadApi = isSuperAdminRole ? superAdminApi : adminApi;
+
+                        const res = await uploadApi.uploadProjectImage(
+                          {
+                            fileData: dataUrl,
+                            mimeType: file.type,
+                            width: detectedWidth,
+                            height: detectedHeight,
+                          },
+                          targetId
+                        );
+
+                        if (res?.success && res.data?.imageUrl) {
+                          const uploadedUrl = res.data.imageUrl;
+                          setLayoutImagePreview(uploadedUrl);
+                          setLayoutUploadMessage({ type: "success", text: "Project layout image uploaded successfully to persistent storage!" });
+                        } else {
+                          setLayoutUploadMessage({ type: "error", text: res?.message || "Failed to upload image." });
+                        }
+                      } catch (err) {
+                        console.error("Upload layout image error:", err);
+                        setLayoutUploadMessage({ type: "error", text: err.data?.message || err.message || "Upload failed." });
+                      } finally {
+                        setIsUploadingLayout(false);
+                      }
+                    };
+                    img.onerror = () => {
+                      setIsUploadingLayout(false);
+                      setLayoutUploadMessage({ type: "error", text: "Failed to read image dimensions." });
+                    };
+                    img.src = dataUrl;
+                  };
+                  reader.onerror = () => {
+                    setIsUploadingLayout(false);
+                    setLayoutUploadMessage({ type: "error", text: "Failed to read file." });
+                  };
+                  reader.readAsDataURL(file);
+                  e.target.value = "";
+                }}
+              />
+
+              {layoutImagePreview ? (
+                <div className="project-image-preview-card" style={{ flexDirection: "column", alignItems: "stretch", gap: "1rem" }}>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "260px",
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                      background: "#0f172a",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
+                  >
+                    <img
+                      src={resolveImageUrl(layoutImagePreview)}
+                      alt="Project Layout Preview"
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        left: "10px",
+                        background: "rgba(15, 23, 42, 0.75)",
+                        color: "#fff",
+                        padding: "4px 10px",
+                        borderRadius: "20px",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Layout / Cover Image
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "0.85rem", color: "#64748b", wordBreak: "break-all" }}>
+                      {layoutImagePreview}
+                    </span>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button
+                        type="button"
+                        className="btn-cancel"
+                        style={{ padding: "0.45rem 0.85rem", fontSize: "0.8rem" }}
+                        onClick={() => layoutFileInputRef.current?.click()}
+                        disabled={isUploadingLayout || isSavingLayout}
+                      >
+                        <FaCloudUploadAlt /> Replace
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-cancel"
+                        style={{ padding: "0.45rem 0.85rem", fontSize: "0.8rem", color: "#dc2626", borderColor: "#fecaca" }}
+                        onClick={() => setLayoutImagePreview("")}
+                        disabled={isUploadingLayout || isSavingLayout}
+                      >
+                        <FaTrash /> Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`project-image-dropzone ${isDragOverLayout ? "drag-over" : ""} ${isUploadingLayout ? "uploading" : ""}`}
+                  style={{ minHeight: "220px" }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOverLayout(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragOverLayout(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragOverLayout(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file && layoutFileInputRef.current) {
+                      const dt = new DataTransfer();
+                      dt.items.add(file);
+                      layoutFileInputRef.current.files = dt.files;
+                      layoutFileInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                  }}
+                  onClick={() => {
+                    if (!isUploadingLayout) layoutFileInputRef.current?.click();
+                  }}
+                >
+                  {isUploadingLayout ? (
+                    <div className="dropzone-content">
+                      <FaSpinner className="dropzone-icon fa-spin" />
+                      <p className="dropzone-primary-text">Uploading layout image to storage...</p>
+                      <span className="dropzone-secondary-text">Please wait while the image is being saved</span>
+                    </div>
+                  ) : (
+                    <div className="dropzone-content">
+                      <div className="dropzone-icon-wrap">
+                        <FaCloudUploadAlt className="dropzone-icon" />
+                      </div>
+                      <p className="dropzone-primary-text">
+                        Drag &amp; drop layout image here, or <span className="dropzone-browse-link">browse</span>
+                      </p>
+                      <span className="dropzone-secondary-text">
+                        PNG, JPG, JPEG, WEBP supported (up to 20MB)
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => {
+                  setShowLayoutEditor(false);
+                  setLayoutUploadMessage(null);
+                }}
+                disabled={isUploadingLayout || isSavingLayout}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-save"
+                disabled={isUploadingLayout || isSavingLayout}
+                onClick={async () => {
+                  setIsSavingLayout(true);
+                  setLayoutUploadMessage(null);
+                  try {
+                    const cleanUrl = layoutImagePreview.trim();
+                    const targetId = project._id || project.id;
+                    const existingImages = Array.isArray(project.images) ? [...project.images] : [];
+                    if (cleanUrl) {
+                      if (existingImages.length === 0) existingImages.push(cleanUrl);
+                      else existingImages[0] = cleanUrl;
+                    }
+
+                    const layoutPayload = {
+                      ...(project.layout || {}),
+                      referenceImageUrl: cleanUrl,
+                      imageUrl: cleanUrl,
+                      provider: "volume",
+                    };
+
+                    if (updateProject) {
+                      await updateProject(targetId, {
+                        image: cleanUrl,
+                        images: existingImages,
+                        layout: layoutPayload,
+                      });
+                    }
+
+                    setLayoutUploadMessage({ type: "success", text: "Project layout image successfully saved and updated!" });
+                    setTimeout(() => {
+                      setShowLayoutEditor(false);
+                      setLayoutUploadMessage(null);
+                    }, 1000);
+                  } catch (err) {
+                    console.error("Failed to save project layout image:", err);
+                    setLayoutUploadMessage({ type: "error", text: err.message || "Failed to save project image." });
+                  } finally {
+                    setIsSavingLayout(false);
+                  }
+                }}
+              >
+                {isSavingLayout ? <FaSpinner className="fa-spin" /> : <FaSave />}
+                <span>{isSavingLayout ? "Saving..." : "Save Image"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </>

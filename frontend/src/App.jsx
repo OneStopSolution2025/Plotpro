@@ -58,6 +58,9 @@ import SubscriberManagement from "./admin/pages/supreme/SubscriberManagement.jsx
 import PlanManagement from "./admin/pages/supreme/PlanManagement.jsx";
 import SubscriptionManagement from "./admin/pages/supreme/SubscriptionManagement.jsx";
 import SeatUsageOverview from "./admin/pages/supreme/SeatUsageOverview.jsx";
+import PublishedProjects from "./admin/pages/supreme/PublishedProjects.jsx";
+import PublishedProjectsTenant from "./admin/pages/supreme/PublishedProjectsTenant.jsx";
+import PublishedProjectsAdmin from "./admin/pages/supreme/PublishedProjectsAdmin.jsx";
 import SupremeAdminProfile from "./admin/pages/supreme/SupremeAdminProfile.jsx";
 import RetailerRequests from "./admin/pages/supreme/RetailerRequests.jsx";
 import TrustedDevices from "./admin/pages/supreme/TrustedDevices.jsx";
@@ -168,6 +171,12 @@ function App() {
                     <Route path="plans" element={<PlanManagement />} />
                     <Route path="subscriptions" element={<SubscriptionManagement />} />
                     <Route path="seat-usage" element={<SeatUsageOverview />} />
+                    <Route path="published-projects" element={<PublishedProjects />} />
+                    <Route path="published-projects/tenant/:subscriberId" element={<PublishedProjectsTenant />} />
+                    <Route
+                      path="published-projects/tenant/:subscriberId/admin/:adminId"
+                      element={<PublishedProjectsAdmin />}
+                    />
                     <Route path="trusted-devices" element={<TrustedDevices />} />
                     <Route path="profile" element={<SupremeAdminProfile />} />
                   </Route>

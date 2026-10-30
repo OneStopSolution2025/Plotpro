@@ -959,7 +959,7 @@ export const getProjectLayoutAdmin = async (req, res, next) => {
         layout: project.layout || {
           referenceImageUrl: "",
           imageUrl: "",
-          provider: "cloudinary",
+          provider: "volume",
           publicId: "",
           version: 1,
           width: 1200,
@@ -979,7 +979,7 @@ export const getProjectLayoutAdmin = async (req, res, next) => {
           facing: p.facing,
           price: p.price,
         })),
-        storageConfigured: storageService.isConfigured(),
+        storageConfigured: true,
       },
     });
   } catch (error) {
@@ -1154,7 +1154,7 @@ export const saveProjectLayoutAdmin = async (req, res, next) => {
     const updatedLayout = {
       referenceImageUrl: referenceImg ? String(referenceImg).trim() : "",
       imageUrl: referenceImg ? String(referenceImg).trim() : "",
-      provider: layout.provider || "cloudinary",
+      provider: layout.provider || "volume",
       publicId: newPublicId || oldPublicId || "",
       version: currentVersion + 1,
       width: Number(layout.width) || project.layout?.width || 1200,

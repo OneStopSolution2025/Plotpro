@@ -242,7 +242,7 @@ export const handleAdministrativeDeviceLogin = async (req, res, user) => {
               claimedAt: new Date(),
             },
           },
-          { new: true, session: session || undefined }
+          { returnDocument: "after", session: session || undefined }
         );
         const claimedDoc = await query;
 
@@ -254,14 +254,11 @@ export const handleAdministrativeDeviceLogin = async (req, res, user) => {
           });
         }
 
-        // Revoke the existing approved device if one exists
-        if (approvedDevice) {
-          approvedDevice.status = "REPLACED";
-          approvedDevice.isCurrentSession = false;
-          approvedDevice.revokedAt = new Date();
-          approvedDevice.revocationReason = `Replaced by workstation '${claimedDoc.deviceLabel}' via approved transfer cutover.`;
-          await approvedDevice.save(session ? { session } : undefined);
-        }
+        // Cleanly remove any existing device records for this user first
+        await TrustedDevice.deleteMany(
+          { userId: claimedDoc.userId },
+          session ? { session } : undefined
+        );
 
         // Create the newly approved device
         const newDevice = new TrustedDevice({
@@ -797,7 +794,7 @@ export const verifyOtp = async (req, res, next) => {
         resetOtpAttempts: { $lt: RESET_MAX_ATTEMPTS },
       },
       { $inc: { resetOtpAttempts: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     ).select("+resetOtpHash +resetOtpChallengeId +resetOtpAttempts +resetOtpVerified +resetOtpExpiry");
 
     if (!claimed) {
@@ -855,7 +852,7 @@ export const verifyOtp = async (req, res, next) => {
           resetOtpExpiry: new Date(Date.now() + RESET_VERIFIED_WINDOW_MS),
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!verified) {
@@ -952,7 +949,7 @@ export const resetPassword = async (req, res, next) => {
           resetOtpExpiry: null,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!consumed) {

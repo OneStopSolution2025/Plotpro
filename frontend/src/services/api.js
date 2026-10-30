@@ -237,6 +237,26 @@ export const supremeAdminApi = {
     api.patch(`/supreme-admin/subscriptions/${id}/status`, data),
   getSeatUsage: () => api.get("/supreme-admin/seat-usage"),
 
+  // Published Projects Overview (read-only)
+  getPublishedProjectsSummary: () =>
+    api.get("/supreme-admin/published-projects/summary"),
+  getPublishedProjectsBySuperAdmin: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return api.get(
+      `/supreme-admin/published-projects/super-admins${qs ? `?${qs}` : ""}`
+    );
+  },
+  getPublishedProjectsByTenantAdmins: (subscriberId) =>
+    api.get(
+      `/supreme-admin/published-projects/super-admins/${subscriberId}`
+    ),
+  getPublishedProjectsByBranchAdmin: (subscriberId, adminId, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return api.get(
+      `/supreme-admin/published-projects/super-admins/${subscriberId}/admins/${adminId}/projects${qs ? `?${qs}` : ""}`
+    );
+  },
+
   // Retailer (Super Admin) account creation requests
   getRetailerRequests: (params = {}) => {
     const qs = new URLSearchParams(params).toString();

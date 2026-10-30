@@ -132,7 +132,7 @@ const cleanupFailedProvisioning = async ({
   // Remove the branch created in THIS request (only our own doc)
   if (branchDoc) {
     try {
-      await Branch.deleteOne({ _id: branchDoc._id, branchAdmin: null });
+      await Branch.deleteOne({ _id: branchDoc._id });
     } catch (cleanupErr) {
       console.error("[BranchProvisioning cleanup] branch delete failed:", cleanupErr.message);
     }
@@ -231,6 +231,9 @@ export const createBranch = async (req, res, next) => {
     const branchName = name?.trim();
     const branchCity = city?.trim();
     const adminEmailNormalized = adminEmail?.trim().toLowerCase();
+    const adminNameTrimmed = adminName?.trim();
+    const adminMobileTrimmed = adminMobile?.trim();
+    const adminPasswordTrimmed = adminPassword?.trim();
 
     if (!branchName || !branchCity) {
       return res.status(400).json({
@@ -239,10 +242,18 @@ export const createBranch = async (req, res, next) => {
       });
     }
 
-    if (!adminName || !adminName.trim() || !adminEmailNormalized) {
+    if (!adminNameTrimmed || !adminEmailNormalized) {
       return res.status(400).json({
         success: false,
-        message: "Branch Admin name and email are required.",
+        message: "Branch Admin credentials (Name and Email) are strictly required. A branch cannot be created without a dedicated Branch Administrator.",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(adminEmailNormalized)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid Branch Admin email address.",
       });
     }
 
@@ -346,10 +357,49 @@ export const createBranch = async (req, res, next) => {
     let createdUserDoc = null;
 
     try {
-      // ── 5. Create the branch (branchAdmin linked afterwards) ─────────────
+      // ── 5. Provision or upgrade the Branch Admin account FIRST ──────────
+      // This ensures a valid Branch Admin account exists before the branch is created
+      const initialBranchId = new (await import("mongoose")).default.Types.ObjectId();
+
+      let adminDocId = null;
+      if (existingUserDoc) {
+        // Upgrade existing customer account (same as createAdminAccount)
+        existingUserDoc.role = "ADMIN";
+        existingUserDoc.status = "ACTIVE";
+        existingUserDoc.tenantId = req.user._id;
+        existingUserDoc.branchId = initialBranchId;
+        if (adminNameTrimmed) existingUserDoc.name = adminNameTrimmed;
+        if (adminMobileTrimmed) existingUserDoc.phone = adminMobileTrimmed;
+        if (adminPasswordTrimmed) {
+          const salt = await bcrypt.genSalt(10);
+          existingUserDoc.passwordHash = await bcrypt.hash(adminPasswordTrimmed, salt);
+        }
+        await existingUserDoc.save();
+        adminDocId = existingUserDoc._id;
+      } else {
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(
+          adminPasswordTrimmed || "Admin@123",
+          salt
+        );
+        createdUserDoc = await User.create({
+          name: adminNameTrimmed,
+          email: adminEmailNormalized,
+          passwordHash,
+          phone: adminMobileTrimmed || "",
+          role: "ADMIN",
+          status: "ACTIVE",
+          tenantId: req.user._id,
+          branchId: initialBranchId,
+        });
+        adminDocId = createdUserDoc._id;
+      }
+
+      // ── 6. Create the branch with the valid branchAdmin reference guaranteed ──
       branchDoc = await Branch.create({
+        _id: initialBranchId,
         tenantId: req.user._id,
-        branchAdmin: null,
+        branchAdmin: adminDocId,
         name: branchName,
         city: branchCity,
         region: region?.trim() || "",
@@ -358,43 +408,6 @@ export const createBranch = async (req, res, next) => {
         status: "ACTIVE",
         createdBy: req.user._id,
       });
-
-      // ── 6. Provision or upgrade the Branch Admin account ────────────────
-      if (existingUserDoc) {
-        // Upgrade existing customer account (same as createAdminAccount)
-        existingUserDoc.role = "ADMIN";
-        existingUserDoc.status = "ACTIVE";
-        existingUserDoc.tenantId = req.user._id;
-        existingUserDoc.branchId = branchDoc._id;
-        if (adminName.trim()) existingUserDoc.name = adminName.trim();
-        if (adminMobile && adminMobile.trim())
-          existingUserDoc.phone = adminMobile.trim();
-        if (adminPassword) {
-          const salt = await bcrypt.genSalt(10);
-          existingUserDoc.passwordHash = await bcrypt.hash(adminPassword, salt);
-        }
-        await existingUserDoc.save();
-        branchDoc.branchAdmin = existingUserDoc._id;
-        await branchDoc.save();
-      } else {
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(
-          adminPassword || "Admin@123",
-          salt
-        );
-        createdUserDoc = await User.create({
-          name: adminName.trim(),
-          email: adminEmailNormalized,
-          passwordHash,
-          phone: adminMobile ? adminMobile.trim() : "",
-          role: "ADMIN",
-          status: "ACTIVE",
-          tenantId: req.user._id,
-          branchId: branchDoc._id,
-        });
-        branchDoc.branchAdmin = createdUserDoc._id;
-        await branchDoc.save();
-      }
     } catch (provisionError) {
       // Full compensation: remove branch/user fragments, restore seat ledger
       await cleanupFailedProvisioning({

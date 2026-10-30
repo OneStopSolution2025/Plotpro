@@ -240,4 +240,9 @@ projectSchema.virtual("plots", {
   foreignField: "projectId",
 });
 
+// Per-admin published listings/counts (Supreme Admin Published Projects
+// Overview): all new queries match adminId + approvalStatus + isArchived,
+// which plain single-field indexes leave partially unoptimized.
+projectSchema.index({ adminId: 1, approvalStatus: 1, isArchived: 1 });
+
 export default mongoose.model("Project", projectSchema);
