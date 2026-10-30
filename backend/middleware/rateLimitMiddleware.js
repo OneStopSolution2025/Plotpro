@@ -111,12 +111,19 @@ export const deviceVerifyLimiter = rateLimit({
   limit: 5,
 });
 
-// GET /api/auth/device/request-status + POST /api/auth/device/claim-approved-
-// session — session-establishment endpoints, capped per IP.
+// POST /api/auth/device/claim-approved-session — session claim endpoint, capped per IP
 export const deviceSessionLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000,
   limit: 5,
+});
+
+// GET /api/auth/device/request-status — polling endpoint queried every 3-5 seconds by pending workstations.
+// Capped generously per IP to avoid tripping 429 during normal browser polling (up to 30 min wait).
+export const deviceStatusPollLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
 });
 
 // ─── Fix 2: Public Lead Forms (SEPARATE buckets per form) ─────────────────────

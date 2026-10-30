@@ -34,7 +34,7 @@ const PhoneInputField = ({
   };
 
   return (
-    <div className={`phone-input-group ${className}`} style={style}>
+    <div className={`phone-input-group ${error ? "has-error" : ""} ${className}`} style={style}>
       <div className="phone-country-select-wrapper" style={selectStyle}>
         <select
           value={countryCode}

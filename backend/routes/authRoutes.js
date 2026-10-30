@@ -31,6 +31,7 @@ import {
   deviceResendLimiter,
   deviceVerifyLimiter,
   deviceSessionLimiter,
+  deviceStatusPollLimiter,
   retailerRequestLimiter,
 } from "../middleware/rateLimitMiddleware.js";
 
@@ -48,7 +49,7 @@ router.get("/me", protect, getMe);
 router.post("/device/verify-otp", deviceVerifyLimiter, verifyDeviceOtpAndProceed);
 router.post("/device/enroll-first-device", deviceVerifyLimiter, enrollFirstDevice);
 router.post("/device/resend-enrollment-otp", deviceResendLimiter, resendEnrollmentOtp);
-router.get("/device/request-status", deviceSessionLimiter, getRequestStatus);
+router.get("/device/request-status", deviceStatusPollLimiter, getRequestStatus);
 router.post("/device/claim-approved-session", deviceSessionLimiter, claimApprovedSession);
 
 // Password reset flow (IP rate-limited; DB-backed attempt cap + cooldown inside controllers)
