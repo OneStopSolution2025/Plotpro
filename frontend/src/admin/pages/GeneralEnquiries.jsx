@@ -28,6 +28,8 @@ import ConfirmationModal from "../components/ConfirmationModal";
 
 const cleanPhone = (phone) => (phone ? String(phone).replace(/[\s\-+]/g, "") : "");
 
+const ENQUIRIES_PAGE_SIZE = 10;
+
 const ENQUIRY_STATUS_OPTIONS = [
   { value: "ALL", label: "All Statuses" },
   { value: "NEW", label: "New" },
@@ -109,6 +111,12 @@ const GeneralEnquiries = () => {
   const [submittingStatus, setSubmittingStatus] = useState(false);
   const [alertModal, setAlertModal] = useState(null);
   const [lastSyncTime, setLastSyncTime] = useState("");
+
+  // Server-side pagination for the branch drill-down table
+  const [page, setPage] = useState(1);
+  const [pageEnquiries, setPageEnquiries] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const isMountedRef = useRef(true);
 
@@ -302,24 +310,45 @@ const GeneralEnquiries = () => {
     return enquiries.filter((e) => matchesBranch(e, selectedBranchId));
   }, [enquiries, selectedBranchId]);
 
-  // Filtered enquiries for selected branch
-  const filteredBranchEnquiries = useMemo(() => {
-    return branchEnquiries.filter((e) => {
-      if (statusFilter !== "ALL" && e.status !== statusFilter) return false;
-      if (itemSearchTerm.trim()) {
-        const term = itemSearchTerm.toLowerCase().trim();
-        const matchCustomer =
-          e.fullName?.toLowerCase().includes(term) ||
-          e.email?.toLowerCase().includes(term) ||
-          e.mobile?.toLowerCase().includes(term);
-        const matchProject = e.projectId?.title?.toLowerCase().includes(term);
-        const matchPlot = e.plot?.toLowerCase().includes(term);
-        const matchMessage = e.message?.toLowerCase().includes(term);
-        return matchCustomer || matchProject || matchPlot || matchMessage;
-      }
-      return true;
-    });
-  }, [branchEnquiries, statusFilter, itemSearchTerm]);
+  // Server-side paginated fetch for the selected branch's enquiries
+  useEffect(() => {
+    if (activeTab !== "enquiries" || !selectedBranchId) return undefined;
+
+    let cancelled = false;
+
+    const params = {
+      page,
+      limit: ENQUIRIES_PAGE_SIZE,
+      branchId: selectedBranchId === "unassigned" ? "unassigned" : selectedBranchId,
+    };
+    if (itemSearchTerm.trim()) params.search = itemSearchTerm.trim();
+    if (statusFilter !== "ALL") params.status = statusFilter;
+
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return null;
+        setPageLoading(true);
+        return superAdminApi.getAllEnquiries(params);
+      })
+      .then((res) => {
+        if (cancelled || !res) return;
+        setPageEnquiries(Array.isArray(res.data) ? res.data : []);
+        setPagination(res.pagination || null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[GeneralEnquiries] Paginated fetch failed:", err);
+        setPageEnquiries([]);
+        setPagination(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPageLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, selectedBranchId, itemSearchTerm, statusFilter, page, lastSyncTime]);
 
   // Site visits for selected branch
   const branchSiteVisits = useMemo(() => {
@@ -651,6 +680,7 @@ const GeneralEnquiries = () => {
                       setActiveTab("enquiries");
                       setStatusFilter("ALL");
                       setItemSearchTerm("");
+                      setPage(1);
                     }}
                     role="button"
                     tabIndex={0}
@@ -710,6 +740,7 @@ const GeneralEnquiries = () => {
                   navigate("/super-admin/general-enquiries");
                   setStatusFilter("ALL");
                   setItemSearchTerm("");
+                  setPage(1);
                 }}
               >
                 <FaArrowLeft /> Back to All Branches
@@ -743,6 +774,7 @@ const GeneralEnquiries = () => {
                   onClick={() => {
                     setActiveTab("enquiries");
                     setStatusFilter("ALL");
+                    setPage(1);
                   }}
                 >
                   <FaInbox />
@@ -754,6 +786,7 @@ const GeneralEnquiries = () => {
                   onClick={() => {
                     setActiveTab("siteVisits");
                     setStatusFilter("ALL");
+                    setPage(1);
                   }}
                 >
                   <FaCalendarAlt />
@@ -822,12 +855,15 @@ const GeneralEnquiries = () => {
                       type="text"
                       placeholder="Filter leads..."
                       value={itemSearchTerm}
-                      onChange={(e) => setItemSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setItemSearchTerm(e.target.value);
+                        setPage(1);
+                      }}
                     />
                   </div>
                   <div className="enquiries-filter-select-box">
                     <FaFilter />
-                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
                       {ENQUIRY_STATUS_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
@@ -846,7 +882,19 @@ const GeneralEnquiries = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBranchEnquiries.map((e) => (
+                    {pageEnquiries.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          style={{ textAlign: "center", padding: "40px 16px", color: "#64748b" }}
+                        >
+                          {pageLoading
+                            ? "Loading enquiries..."
+                            : "No enquiries match your search or status filter."}
+                        </td>
+                      </tr>
+                    )}
+                    {pageEnquiries.map((e) => (
                       <tr key={e._id}>
                         <td>
                           <strong style={{ color: "#17240f", fontSize: 14 }}>{e.fullName || "—"}</strong>
@@ -860,7 +908,7 @@ const GeneralEnquiries = () => {
                           {new Date(e.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </td>
                         <td>{getEnquiryStatusBadge(e.status)}</td>
-                     
+                      
                         <td style={{ textAlign: "right" }}>
                           <div className="action-buttons-cell" style={{ justifyContent: "flex-end" }}>
                             <button className="enquiry-action-btn call-btn" onClick={() => handleCall(e.mobile)} title="Call">
@@ -878,6 +926,43 @@ const GeneralEnquiries = () => {
                     ))}
                   </tbody>
                 </table>
+
+                {pagination && pagination.total > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "14px 20px",
+                      borderTop: "1px solid #e2e8f0",
+                      flexWrap: "wrap",
+                      gap: 12,
+                    }}
+                  >
+                    <span style={{ fontSize: 13, color: "#64748b" }}>
+                      Showing {pageEnquiries.length} of {pagination.total} enquiries
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button
+                        className="enquiries-filter-btn"
+                        disabled={page <= 1 || pageLoading}
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      >
+                        Previous
+                      </button>
+                      <span style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>
+                        Page {pagination.page} of {pagination.totalPages || 1}
+                      </span>
+                      <button
+                        className="enquiries-filter-btn"
+                        disabled={!pagination.hasNextPage || pageLoading}
+                        onClick={() => setPage((current) => current + 1)}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

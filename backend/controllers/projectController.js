@@ -6,7 +6,7 @@ import { createNotification } from "./notificationController.js";
 import { resolveAdminProjectScope } from "../middleware/ownershipMiddleware.js";
 import storageService from "../services/storageService.js";
 import { verifyTenantProjectQuota } from "../utils/projectQuotaHelper.js";
-
+import { getNextSequence, withCustomIdRetry } from "../utils/counterHelper.js";
 const ALLOWED_PROJECT_FIELDS = [
   "title",
   "location",
@@ -227,23 +227,25 @@ export const createAdminProject = async (req, res, next) => {
       branchId = branch._id;
     }
 
-    // Determine next integer customId
-    const maxProject = await Project.findOne().sort({ customId: -1 });
-    const nextCustomId = maxProject && maxProject.customId ? maxProject.customId + 1 : 1;
+    // Determine next integer customId via atomic counter (shared global sequence)
+    const createProject = async () => {
+      const nextCustomId = await getNextSequence("project:customId");
+      return await Project.create({
+        ...sanitized,
+        customId: nextCustomId,
+        adminId: req.user._id,
+        branchId, // server-derived: user's branch or null for legacy admins
+        approvalStatus: "PENDING", // Always PENDING for new admin projects
+        approvedAt: null,
+        approvedBy: null,
+        rejectionReason: "",
+        hasPendingUpdates: false,
+        pendingUpdates: null,
+        isArchived: false,
+      });
+    };
 
-    const newProject = await Project.create({
-      ...sanitized,
-      customId: nextCustomId,
-      adminId: req.user._id,
-      branchId, // server-derived: user's branch or null for legacy admins
-      approvalStatus: "PENDING", // Always PENDING for new admin projects
-      approvedAt: null,
-      approvedBy: null,
-      rejectionReason: "",
-      hasPendingUpdates: false,
-      pendingUpdates: null,
-      isArchived: false,
-    });
+    const newProject = await withCustomIdRetry(createProject, 3);
 
     // Generate initial plots if counts are provided
     const availableCount = Number(req.body.availablePlots) || 0;
@@ -252,64 +254,40 @@ export const createAdminProject = async (req, res, next) => {
     const totalCount = availableCount + reservedCount + soldCount;
 
     if (totalCount > 0) {
-      const plotsToInsert = [];
-      let plotIdx = 1;
       const defaultPlotPrice = newProject.plotPrice || "₹12 Lakh";
       const defaultPlotSize = newProject.plotSizes ? newProject.plotSizes.split("–")[0].trim() : "600 sq.ft";
       const initialPlotImage = newProject.defaultPlotImage || newProject.image || "";
       const initialPlotImages = initialPlotImage ? [initialPlotImage] : [];
+      const plotCounterId = `plot:${newProject._id}`;
 
-      for (let i = 0; i < availableCount; i++) {
-        plotsToInsert.push({
-          customId: `${nextCustomId}-${plotIdx}`,
-          projectId: newProject._id,
-          projectCustomId: nextCustomId,
-          plotNumber: String(plotIdx),
-          size: defaultPlotSize,
-          facing: "East",
-          price: defaultPlotPrice,
-          status: "Available",
-          image: initialPlotImage,
-          images: initialPlotImages,
-        });
-        plotIdx++;
-      }
+      const statuses = [
+        ...Array(availableCount).fill("Available"),
+        ...Array(reservedCount).fill("Reserved"),
+        ...Array(soldCount).fill("Sold"),
+      ];
 
-      for (let i = 0; i < reservedCount; i++) {
-        plotsToInsert.push({
-          customId: `${nextCustomId}-${plotIdx}`,
-          projectId: newProject._id,
-          projectCustomId: nextCustomId,
-          plotNumber: String(plotIdx),
-          size: defaultPlotSize,
-          facing: "East",
-          price: defaultPlotPrice,
-          status: "Reserved",
-          image: initialPlotImage,
-          images: initialPlotImages,
-        });
-        plotIdx++;
-      }
+      const insertInitialPlots = async () => {
+        const freshPlots = [];
+        for (const status of statuses) {
+          const sequence = await getNextSequence(plotCounterId);
+          const plotNumber = String(sequence);
+          freshPlots.push({
+            customId: `${newProject.customId}-${sequence}`,
+            projectId: newProject._id,
+            projectCustomId: newProject.customId,
+            plotNumber,
+            size: defaultPlotSize,
+            facing: "East",
+            price: defaultPlotPrice,
+            status,
+            image: initialPlotImage,
+            images: initialPlotImages,
+          });
+        }
+        return await Plot.insertMany(freshPlots);
+      };
 
-      for (let i = 0; i < soldCount; i++) {
-        plotsToInsert.push({
-          customId: `${nextCustomId}-${plotIdx}`,
-          projectId: newProject._id,
-          projectCustomId: nextCustomId,
-          plotNumber: String(plotIdx),
-          size: defaultPlotSize,
-          facing: "East",
-          price: defaultPlotPrice,
-          status: "Sold",
-          image: initialPlotImage,
-          images: initialPlotImages,
-        });
-        plotIdx++;
-      }
-
-      if (plotsToInsert.length > 0) {
-        await Plot.insertMany(plotsToInsert);
-      }
+      await withCustomIdRetry(insertInitialPlots, 3);
     }
 
     // Notify all Super Admins about the new project awaiting approval
@@ -560,15 +538,6 @@ const syncProjectPlotInventory = async (
 
   const plotsToCreate = [];
 
-  const existingPlotNumbers = existingPlots
-    .map((plot) => Number(plot.plotNumber))
-    .filter((number) => Number.isFinite(number));
-
-  let nextPlotNumber =
-    existingPlotNumbers.length > 0
-      ? Math.max(...existingPlotNumbers) + 1
-      : 1;
-
   const defaultPlotPrice =
     project.plotPrice || "₹12 Lakh";
 
@@ -582,11 +551,14 @@ const syncProjectPlotInventory = async (
     project.image ||
     "";
 
-  const createPlotData = (status) => {
-    const plotNumber = String(nextPlotNumber);
+  const plotCounterId = `plot:${project._id}`;
+
+  const createPlotData = async (status) => {
+    const sequence = await getNextSequence(plotCounterId);
+    const plotNumber = String(sequence);
 
     const plot = {
-      customId: `${project.customId}-${plotNumber}`,
+      customId: `${project.customId}-${sequence}`,
       projectId: project._id,
       projectCustomId: project.customId,
       plotNumber,
@@ -598,31 +570,44 @@ const syncProjectPlotInventory = async (
       images: defaultImage ? [defaultImage] : [],
     };
 
-    nextPlotNumber++;
-
     return plot;
   };
 
   for (let i = 0; i < requiredNewAvailable; i++) {
     plotsToCreate.push(
-      createPlotData("Available")
+      await createPlotData("Available")
     );
   }
 
   for (let i = 0; i < requiredNewReserved; i++) {
     plotsToCreate.push(
-      createPlotData("Reserved")
+      await createPlotData("Reserved")
     );
   }
 
   for (let i = 0; i < requiredNewSold; i++) {
     plotsToCreate.push(
-      createPlotData("Sold")
+      await createPlotData("Sold")
     );
   }
 
   if (plotsToCreate.length > 0) {
-    await Plot.insertMany(plotsToCreate);
+    const insertBulkPlots = async () => {
+      // Rebuild with fresh sequences on retry (counter gaps acceptable)
+      const freshPlots = [];
+      for (let i = 0; i < requiredNewAvailable; i++) {
+        freshPlots.push(await createPlotData("Available"));
+      }
+      for (let i = 0; i < requiredNewReserved; i++) {
+        freshPlots.push(await createPlotData("Reserved"));
+      }
+      for (let i = 0; i < requiredNewSold; i++) {
+        freshPlots.push(await createPlotData("Sold"));
+      }
+      return await Plot.insertMany(freshPlots);
+    };
+
+    await withCustomIdRetry(insertBulkPlots, 3);
   }
 
   // -----------------------------------------

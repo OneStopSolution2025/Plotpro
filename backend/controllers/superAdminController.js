@@ -11,6 +11,7 @@ import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { createNotification } from "./notificationController.js";
 import { storageService } from "../services/storageService.js";
 import { countTenantProjects, verifyTenantProjectQuota } from "../utils/projectQuotaHelper.js";
+import { getNextSequence, withCustomIdRetry } from "../utils/counterHelper.js";
 
 /**
  * Helper to resolve tenant admins, projects, and plot IDs for a Super Admin
@@ -1363,9 +1364,8 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       }
     }
 
-    // Determine next integer customId
-    const maxProject = await Project.findOne().sort({ customId: -1 });
-    const nextCustomId = maxProject && maxProject.customId ? maxProject.customId + 1 : 1;
+    // Determine next integer customId via atomic counter (shared global sequence)
+    // (obtained inside the retry loop below)
 
     // Parse priceLakhs if not provided
     let parsedPriceLakhs = priceLakhs;
@@ -1396,7 +1396,12 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       effectiveCity = assignedBranch.city;
     }
 
-    const newProject = await Project.create({
+    let newProject = null;
+    let _projectCreateAttempts = 0;
+    while (!newProject) {
+      const nextCustomId = await getNextSequence("project:customId");
+      try {
+        newProject = await Project.create({
       title: title.trim(),
       location: effectiveLocation,
       city: effectiveCity,
@@ -1430,7 +1435,21 @@ export const createProjectSuperAdmin = async (req, res, next) => {
       hasPendingUpdates: false,
       pendingUpdates: null,
       isArchived: false,
-    });
+        });
+      } catch (err) {
+        if (
+          err &&
+          err.code === 11000 &&
+          err.keyValue &&
+          Object.prototype.hasOwnProperty.call(err.keyValue, "customId") &&
+          _projectCreateAttempts < 3
+        ) {
+          _projectCreateAttempts += 1;
+          continue;
+        }
+        throw err;
+      }
+    }
 
     // Generate initial plots if counts are provided
     const numAvailable = Number(availableCount) || 0;
@@ -1439,12 +1458,11 @@ export const createProjectSuperAdmin = async (req, res, next) => {
     const totalCount = numAvailable + numReserved + numSold;
 
     if (totalCount > 0) {
-      const plotsToInsert = [];
-      let plotIdx = 1;
       const defaultPlotPrice = newProject.plotPrice || "₹12 Lakh";
       const defaultPlotSize = newProject.plotSizes ? newProject.plotSizes.split("–")[0].trim() : "600 sq.ft";
       const initialPlotImage = newProject.defaultPlotImage || newProject.image || "";
       const initialPlotImages = initialPlotImage ? [initialPlotImage] : [];
+      const plotCounterId = `plot:${newProject._id}`;
 
       const statusList = [
         ...Array(numAvailable).fill("Available"),
@@ -1452,23 +1470,28 @@ export const createProjectSuperAdmin = async (req, res, next) => {
         ...Array(numSold).fill("Sold"),
       ];
 
-      for (const plotStatus of statusList) {
-        plotsToInsert.push({
-          customId: `${nextCustomId}-${plotIdx}`,
-          projectId: newProject._id,
-          projectCustomId: nextCustomId,
-          plotNumber: String(plotIdx),
-          size: defaultPlotSize,
-          facing: "East",
-          price: defaultPlotPrice,
-          status: plotStatus,
-          image: initialPlotImage,
-          images: initialPlotImages,
-        });
-        plotIdx++;
-      }
+      const insertInitialPlots = async () => {
+        const freshPlots = [];
+        for (const plotStatus of statusList) {
+          const sequence = await getNextSequence(plotCounterId);
+          const plotNumber = String(sequence);
+          freshPlots.push({
+            customId: `${newProject.customId}-${sequence}`,
+            projectId: newProject._id,
+            projectCustomId: newProject.customId,
+            plotNumber,
+            size: defaultPlotSize,
+            facing: "East",
+            price: defaultPlotPrice,
+            status: plotStatus,
+            image: initialPlotImage,
+            images: initialPlotImages,
+          });
+        }
+        return await Plot.insertMany(freshPlots);
+      };
 
-      await Plot.insertMany(plotsToInsert);
+      await withCustomIdRetry(insertInitialPlots, 3);
     }
 
     // Persist layout subdocument and map regions to newly generated plots if provided

@@ -3,9 +3,16 @@
  * Provides centralized fetch wrappers with Bearer token authentication and error handling.
  */
 
-export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { appendQueryParams } from "./queryString.js";
 
-const getToken = () => localStorage.getItem("dreamcity_token");
+// `import.meta.env` is provided by Vite at build time; the fallback keeps this
+// module importable in plain Node (unit tests) without a bundler.
+const env = import.meta.env || {};
+
+export const BASE_URL = env.VITE_API_URL || "http://localhost:5000/api";
+
+const getToken = () =>
+  typeof localStorage === "undefined" ? null : localStorage.getItem("dreamcity_token");
 
 export const setAuthToken = (token) => {
   if (token) {
@@ -18,12 +25,15 @@ export const setAuthToken = (token) => {
 export const getAuthToken = () => getToken();
 
 async function request(endpoint, options = {}) {
-  const url = `${BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const { params, ...fetchOptions } = options;
+
+  const baseUrl = `${BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const url = appendQueryParams(baseUrl, params);
   const token = getToken();
 
   const headers = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...fetchOptions.headers,
   };
 
   if (token) {
@@ -31,7 +41,7 @@ async function request(endpoint, options = {}) {
   }
 
   const config = {
-    ...options,
+    ...fetchOptions,
     credentials: "include",
     headers,
   };

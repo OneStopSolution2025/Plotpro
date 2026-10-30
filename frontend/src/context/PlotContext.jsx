@@ -254,11 +254,7 @@ export const PlotProvider = ({ children }) => {
           res = await publicApi.getProjectPlots(projectId);
         }
       } else if (isSuperAdminRoute && role === "SUPER_ADMIN") {
-        try {
-          res = await adminApi.getProjectPlots(projectId);
-        } catch {
-          res = await publicApi.getProjectPlots(projectId);
-        }
+        res = await superAdminApi.getProjectPlots(projectId);
       } else {
         // ALWAYS use public API on public client-facing routes
         res = await publicApi.getProjectPlots(projectId);

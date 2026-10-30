@@ -3,6 +3,7 @@ import Project from "../models/Project.js";
 import Branch from "../models/Branch.js";
 import User from "../models/User.js";
 import Plot from "../models/Plot.js";
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { findProjectByIdentifier } from "../middleware/ownershipMiddleware.js";
 import { getTenantContext } from "./superAdminController.js";
@@ -365,9 +366,22 @@ export const logEnquiryActivityAdmin = async (req, res, next) => {
 
 /**
  * @desc    Get all enquiries across all branches (Super Admin oversight, tenant isolated)
- * @route   GET /api/super-admin/enquiries
+ * @route   GET /api/super-admin/enquiries?page=&limit=&search=&status=&branchId=
  * @access  Private (Super Admin)
  */
+const ENQUIRY_STATUSES = ["NEW", "CONTACTED", "FOLLOW_UP", "CLOSED"];
+const MAX_ENQUIRY_PAGE_SIZE = 100;
+
+/** Escape user-supplied text before compiling it into a RegExp. */
+const escapeRegExp = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Parse a positive integer query param, falling back when invalid. */
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
   try {
     const { tenantProjectIds, tenantAdminIds } = await getTenantContext(req.user._id);
@@ -377,7 +391,7 @@ export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
     const tenantBranches = await Branch.find({ tenantId: req.user._id }).select("_id");
     const tenantBranchIds = tenantBranches.map((b) => b._id);
 
-    const filter = {
+    const tenantScope = {
       $or: [
         { tenantId: req.user._id },
         ...(tenantBranchIds.length > 0 ? [{ branchId: { $in: tenantBranchIds } }] : []),
@@ -386,7 +400,76 @@ export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
       ],
     };
 
-    const enquiries = await Enquiry.find(filter)
+    // ─── Optional filters (search / status / branch) ───────────────────
+    const extraConditions = [];
+    const query = req.query || {};
+    const { search, status, branchId } = query;
+
+    if (typeof search === "string" && search.trim()) {
+      const rx = new RegExp(escapeRegExp(search.trim()), "i");
+      extraConditions.push({
+        $or: [
+          { fullName: rx },
+          { email: rx },
+          { mobile: rx },
+          { message: rx },
+          { plot: rx },
+        ],
+      });
+    }
+
+    if (
+      typeof status === "string" &&
+      status.trim() &&
+      status.trim().toUpperCase() !== "ALL"
+    ) {
+      const normalizedStatus = status.trim().toUpperCase();
+      if (!ENQUIRY_STATUSES.includes(normalizedStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid status. Allowed values: ${ENQUIRY_STATUSES.join(", ")}.`,
+        });
+      }
+      extraConditions.push({ status: normalizedStatus });
+    }
+
+    if (typeof branchId === "string" && branchId.trim()) {
+      const normalizedBranchId = branchId.trim();
+      if (normalizedBranchId === "unassigned" || normalizedBranchId === "direct") {
+        extraConditions.push({ branchId: null });
+      } else if (mongoose.isValidObjectId(normalizedBranchId)) {
+        extraConditions.push({ branchId: normalizedBranchId });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branchId.",
+        });
+      }
+    }
+
+    const filter =
+      extraConditions.length > 0
+        ? { $and: [tenantScope, ...extraConditions] }
+        : tenantScope;
+
+    // ─── Optional pagination (backward compatible) ─────────────────────
+    // When `limit` is omitted the full list is returned, preserving the
+    // original behaviour for dashboards that aggregate client-side.
+    const paginationRequested =
+      query.limit !== undefined && String(query.limit).trim() !== "";
+
+    const page = parsePositiveInt(query.page, 1);
+    const limit = Math.min(
+      parsePositiveInt(query.limit, 20),
+      MAX_ENQUIRY_PAGE_SIZE
+    );
+    const skip = (page - 1) * limit;
+
+    const total = paginationRequested
+      ? await Enquiry.countDocuments(filter)
+      : null;
+
+    let enquiryQuery = Enquiry.find(filter)
       .populate({
         path: "projectId",
         select: "title customId location branchId adminId",
@@ -396,6 +479,12 @@ export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
       .populate("assignedAdminId", "name email phone role branchId")
       .populate("activityLog.performedBy", "name email role")
       .sort({ createdAt: -1 });
+
+    if (paginationRequested) {
+      enquiryQuery = enquiryQuery.skip(skip).limit(limit);
+    }
+
+    const enquiries = await enquiryQuery;
 
     // Enrich with plot availability if enquiry has plot & project (read-only)
     const enriched = await Promise.all(
@@ -425,11 +514,25 @@ export const getAllEnquiriesSuperAdmin = async (req, res, next) => {
       })
     );
 
-    res.status(200).json({
+    const payload = {
       success: true,
       count: enriched.length,
       data: enriched,
-    });
+    };
+
+    if (paginationRequested) {
+      const totalPages = Math.ceil(total / limit);
+      payload.pagination = {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      };
+    }
+
+    return res.status(200).json(payload);
   } catch (error) {
     next(error);
   }

@@ -2,6 +2,7 @@ import Plot from "../models/Plot.js";
 import Project from "../models/Project.js";
 import User from "../models/User.js";
 import { createNotification } from "./notificationController.js";
+import { getNextSequence, withCustomIdRetry } from "../utils/counterHelper.js";
 
 /**
  * @desc    Get all plots belonging to an admin-owned project
@@ -57,21 +58,24 @@ export const createAdminProjectPlot = async (req, res, next) => {
       });
     }
 
-    const plotIndex = (await Plot.countDocuments({ projectId: project._id })) + 1;
-    const customId = `${project.customId || project._id}-${plotIndex}`;
+    const createPlot = async () => {
+      const seq = await getNextSequence(`plot:${project._id}`);
+      const cid = `${project.customId || project._id}-${seq}`;
+      return await Plot.create({
+        customId: cid,
+        projectId: project._id,
+        projectCustomId: project.customId || null,
+        plotNumber: String(plotNumber).trim(),
+        size: size.trim(),
+        facing: facing.trim(),
+        price: price.trim(),
+        status: status || "Available",
+        image: image || project.image || "",
+        images: images || project.images || [],
+      });
+    };
 
-    const newPlot = await Plot.create({
-      customId,
-      projectId: project._id,
-      projectCustomId: project.customId || null,
-      plotNumber: String(plotNumber).trim(),
-      size: size.trim(),
-      facing: facing.trim(),
-      price: price.trim(),
-      status: status || "Available",
-      image: image || project.image || "",
-      images: images || project.images || [],
-    });
+    const newPlot = await withCustomIdRetry(createPlot, 3);
 
     res.status(201).json({
       success: true,
