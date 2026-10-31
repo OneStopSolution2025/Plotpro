@@ -1425,20 +1425,27 @@ const SuperAdminProjectForm = () => {
           <button
             type="submit"
             className="save-btn"
-            disabled={saving || !plotsValid || !selectedBranchId}
+            disabled={saving || !plotsValid || (isBranchFeatureEnabled && !selectedBranchId)}
             style={{
-              background: saving || !plotsValid || !selectedBranchId ? undefined : "#059669",
+              background:
+                saving || !plotsValid || (isBranchFeatureEnabled && !selectedBranchId)
+                  ? undefined
+                  : "#059669",
             }}
           >
             {saving ? (
               "Creating & Publishing..."
-            ) : !selectedBranchId ? (
+            ) : isBranchFeatureEnabled && !selectedBranchId ? (
               <>
                 <FaLock /> Select Branch &amp; Admin to Publish
               </>
-            ) : (
+            ) : selectedBranch ? (
               <>
                 <FaSave /> Create &amp; Approve Project to {selectedBranch.name}
+              </>
+            ) : (
+              <>
+                <FaSave /> Create &amp; Approve Project
               </>
             )}
           </button>
