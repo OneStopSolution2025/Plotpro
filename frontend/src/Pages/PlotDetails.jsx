@@ -34,12 +34,12 @@ import {
     MapPinned,
 } from "lucide-react";
 
-import hospital from '../assets/Plotdetails/hospital.png'
-import shoppingmall from '../assets/Plotdetails/shoppingmall.png'
-import road from '../assets/Plotdetails/road.png'
-import bus from '../assets/Plotdetails/bus.png'
-import train from '../assets/Plotdetails/train.png'
-import school from '../assets/Plotdetails/school.png'
+import hospital from '../assets/Plotdetails/hospital.webp'
+import shoppingmall from '../assets/Plotdetails/shoppingmall.webp'
+import road from '../assets/Plotdetails/road.webp'
+import bus from '../assets/Plotdetails/bus.webp'
+import train from '../assets/Plotdetails/train.webp'
+import school from '../assets/Plotdetails/school.webp'
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -183,7 +183,7 @@ function PlotDetails() {
         }
     }
 
-    const DEFAULT_PLOT_IMAGE = "/assets/plot.png";
+    const DEFAULT_PLOT_IMAGE = "/assets/plot.webp";
     const FALLBACK_PLOT_IMAGE = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80";
 
     const rawPlotImages =

@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Finalcta from "../components/Final-cta";
 
-import heroimage from "../assets/bg-image.jpg";
+import heroimage from "../assets/bg-image.webp";
 
 import Homecardlist from "../components/Cardlist/Homecardlist";
 

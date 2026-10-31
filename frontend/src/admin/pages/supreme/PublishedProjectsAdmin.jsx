@@ -4,13 +4,6 @@ import { supremeAdminApi } from "../../../services/api";
 import { FaExternalLinkAlt, FaArrowLeft, FaInbox } from "react-icons/fa";
 import "../../styles/super-admin.css";
 
-/* =========================================================
-   PLOTPRO — SUPREME ADMIN: PUBLISHED PROJECTS
-   Drill-down level 3 — published projects created by ONE
-   Branch Admin (or "Unknown / Legacy"). Strictly read-only.
-   Project details open the existing public project page
-   (published + non-archived only) in a new tab.
-   ========================================================= */
 
 const UNKNOWN_LEGACY = "legacy";
 

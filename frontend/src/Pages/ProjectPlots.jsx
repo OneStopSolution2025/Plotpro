@@ -401,7 +401,7 @@ function ProjectPlots() {
                                         key={plot.id}
                                         plotId={plot.id}
                                         plotNumber={plot.plotNumber}
-                                        image={plot.image || project.defaultPlotImage || project.image || "/assets/plot.png"}
+                                        image={plot.image || project.defaultPlotImage || project.image || "/assets/plot.webp"}
                                         size={plot.size}
                                         facing={plot.facing}
                                         price={plot.price}

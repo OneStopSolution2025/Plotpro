@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { superAdminApi } from "../../services/api";
 import { useAdmins } from "../context/AdminContext";
+import { useToast } from "../../context/ToastContext";
 import { resolveImageUrl } from "../../utils/imageUrl";
 import {
   AVAILABLE_BENEFITS,
@@ -110,6 +111,7 @@ const SuperAdminProjectForm = () => {
     isValidPlotPrice,
   } = useProjects();
   const { subscriptionInfo, fetchSubscriptionInfo } = useAdmins();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (fetchSubscriptionInfo) {
@@ -421,7 +423,9 @@ const SuperAdminProjectForm = () => {
       const current = Array.isArray(prev.benefits) ? prev.benefits : [];
       const exists = current.some((b) => b.title === benefitObj.title);
       if (!exists && current.length >= 4) {
-        setMessage({ type: "error", text: "You can select a maximum of 4 project benefits (Why Choose Us)." });
+        const limitMsg = "You can select a maximum of 4 project benefits (Why Choose Us).";
+        setMessage({ type: "error", text: limitMsg });
+        showToast(limitMsg, "error");
         return prev;
       }
       const updated = exists
@@ -446,7 +450,9 @@ const SuperAdminProjectForm = () => {
       const current = Array.isArray(prev.amenities) ? prev.amenities : [];
       const exists = current.includes(item);
       if (!exists && current.length >= 8) {
-        setMessage({ type: "error", text: "You can select a maximum of 8 project amenities." });
+        const limitMsg = "You can select a maximum of 8 project amenities.";
+        setMessage({ type: "error", text: limitMsg });
+        showToast(limitMsg, "error");
         return prev;
       }
       const updated = exists
@@ -489,6 +495,7 @@ const SuperAdminProjectForm = () => {
     if (errors.length > 0) {
       setValidationErrors(errors);
       setMessage({ type: "error", text: errors.join(". ") });
+      showToast(errors[0], "error");
       return;
     }
 
@@ -547,10 +554,12 @@ const SuperAdminProjectForm = () => {
         ]);
       }
 
+      const successMsg = res?.message || "Project created and published successfully to the client website!";
       setMessage({
         type: "success",
-        text: res?.message || "Project created and published successfully to the client website!",
+        text: successMsg,
       });
+      showToast(successMsg, "success");
 
       setTimeout(() => {
         if (selectedBranchId) {
@@ -561,10 +570,12 @@ const SuperAdminProjectForm = () => {
       }, 700);
     } catch (err) {
       console.error("[SuperAdminProjectForm] Submit error:", err);
+      const errMsg = err.data?.message || err.message || "Failed to save project. Please check required fields.";
       setMessage({
         type: "error",
-        text: err.data?.message || err.message || "Failed to save project. Please check required fields.",
+        text: errMsg,
       });
+      showToast(errMsg, "error");
     } finally {
       setSaving(false);
     }
@@ -1020,7 +1031,7 @@ const SuperAdminProjectForm = () => {
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/png, image/jpeg, image/jpg, image/webp"
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/avif, image/bmp"
               style={{ display: "none" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -1092,8 +1103,8 @@ const SuperAdminProjectForm = () => {
                 {isUploadingImage ? (
                   <div className="dropzone-content">
                     <FaSpinner className="dropzone-icon fa-spin" />
-                    <p className="dropzone-primary-text">Uploading image to cloud...</p>
-                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                    <p className="dropzone-primary-text">Uploading image & converting to WebP...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is compressed and optimized for persistent storage</span>
                   </div>
                 ) : (
                   <div className="dropzone-content">
@@ -1125,7 +1136,7 @@ const SuperAdminProjectForm = () => {
             <input
               ref={plotFileInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/avif, image/bmp"
               style={{ display: "none" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -1197,8 +1208,8 @@ const SuperAdminProjectForm = () => {
                 {isUploadingPlotImage ? (
                   <div className="dropzone-content">
                     <FaSpinner className="dropzone-icon fa-spin" />
-                    <p className="dropzone-primary-text">Uploading plot image to cloud...</p>
-                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                    <p className="dropzone-primary-text">Uploading plot image & converting to WebP...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is compressed and optimized for persistent storage</span>
                   </div>
                 ) : (
                   <div className="dropzone-content">

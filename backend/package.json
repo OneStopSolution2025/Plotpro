@@ -27,7 +27,8 @@
     "mongodb": "^7.7.0",
     "mongoose": "^9.9.5",
     "nodemailer": "^10.2.1",
-    "resend": "^6.31.0"
+    "resend": "^6.31.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "mongodb-memory-server": "^11.3.0",

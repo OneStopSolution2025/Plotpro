@@ -15,7 +15,7 @@ import { authApi } from "../services/api";
 
 import "../css/Login.css";
 import "../css/ForgotPassword.css";
-import loginImage from "../assets/bg-image.jpg";
+import loginImage from "../assets/bg-image.webp";
 
 // ─── Step indicators ─────────────────────────────────────────────────────────
 const STEPS = ["Email", "Verify OTP", "New Password"];

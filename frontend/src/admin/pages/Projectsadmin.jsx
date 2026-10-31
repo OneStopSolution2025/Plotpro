@@ -92,7 +92,7 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 
-import projectFallbackImg from "../../assets/projectimg1.png";
+import projectFallbackImg from "../../assets/projectimg1.webp";
 import ConfirmationModal from "../components/ConfirmationModal";
 import "../styles/projectsadmin.css";
 const Projects = () => {

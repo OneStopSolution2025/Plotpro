@@ -26,7 +26,7 @@ import { formatFullPhone } from "../utils/phoneUtils";
 import { authApi } from "../services/api";
 
 import "../css/Signup.css";
-import signupImage from "../assets/bg-image.jpg";
+import signupImage from "../assets/bg-image.webp";
 
 const BUSINESS_TYPE_OPTIONS = [
     { value: "SOLE_PROPRIETOR", label: "Individual / Sole Proprietor" },

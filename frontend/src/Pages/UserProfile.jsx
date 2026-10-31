@@ -35,7 +35,7 @@ import { resolveImageUrl } from "../utils/imageUrl";
 import "../css/UserProfile.css";
 
 export const DEFAULT_PROJECT_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80";
-export const DEFAULT_PLOT_IMAGE = "/assets/plot.png";
+export const DEFAULT_PLOT_IMAGE = "/assets/plot.webp";
 export const FALLBACK_PLOT_IMAGE = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80";
 
 export default function UserProfile() {

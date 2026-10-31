@@ -698,9 +698,9 @@
   background:
     linear-gradient(
       180deg,
-      rgba(7, 17, 31, 0.88) 0%,
-      rgba(10, 25, 45, 0.58) 32%,
-      rgba(7, 17, 31, 0.35) 60%,
+      rgba(7, 17, 31, 0.10) 0%,
+      rgba(10, 25, 45, 0.38) 32%,
+      rgba(7, 17, 31, 0.25) 60%,
       rgba(7, 17, 31, 0.92) 100%
     );
 }
@@ -762,12 +762,10 @@
   font-weight: 700;
 
   letter-spacing: -0.8px;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
 }
 
 .visual-content h2 span {
-  color: #ff8a75;
-  text-shadow: 0 2px 18px rgba(255, 122, 102, 0.35);
+  color: #a63d2f;
 }
 
 .visual-content p {

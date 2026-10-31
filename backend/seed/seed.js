@@ -131,8 +131,8 @@ const runSeed = async () => {
           facing: facings[(index - 1) % facings.length],
           price: prices[(index - 1) % prices.length],
           status: statuses[(index - 1) % statuses.length],
-          image: "/assets/plot.png",
-          images: ["/assets/plot.png"],
+          image: "/assets/plot.webp",
+          images: ["/assets/plot.webp"],
         });
       }
     });

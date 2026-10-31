@@ -27,6 +27,7 @@ import {
 } from "../../data/projects";
 import { useAdminProfile } from "../context/AdminProfileContext";
 import { useNotifications } from "../context/NotificationContext";
+import { useToast } from "../../context/ToastContext";
 import CustomDropdown from "../components/CustomDropdown";
 import "../styles/admin-project-form.css";
 
@@ -121,6 +122,7 @@ const AdminProjectForm = () => {
   const { plots, setPlots, getNextPlotIndex } = usePlots();
   const { profile, isSubscriptionExpired } = useAdminProfile();
   const { addNotification } = useNotifications();
+  const { showToast } = useToast();
 
   const maxProjects = profile?.projectQuota?.maxProjects ?? 10;
   const usedProjects = profile?.projectQuota?.usedProjects ?? (projects ? projects.filter((p) => !p.isArchived).length : 0);
@@ -421,7 +423,9 @@ const AdminProjectForm = () => {
       const current = Array.isArray(prev.benefits) ? prev.benefits : [];
       const exists = current.some((b) => b.title === benefitObj.title);
       if (!exists && current.length >= 4) {
-        setMessage({ type: "error", text: "You can select a maximum of 4 project benefits (Why Choose Us)." });
+        const limitMsg = "You can select a maximum of 4 project benefits (Why Choose Us).";
+        setMessage({ type: "error", text: limitMsg });
+        showToast(limitMsg, "error");
         return prev;
       }
       const updated = exists
@@ -446,7 +450,9 @@ const AdminProjectForm = () => {
       const current = Array.isArray(prev.amenities) ? prev.amenities : [];
       const exists = current.includes(item);
       if (!exists && current.length >= 8) {
-        setMessage({ type: "error", text: "You can select a maximum of 8 project amenities." });
+        const limitMsg = "You can select a maximum of 8 project amenities.";
+        setMessage({ type: "error", text: limitMsg });
+        showToast(limitMsg, "error");
         return prev;
       }
       const updated = exists
@@ -658,6 +664,7 @@ const AdminProjectForm = () => {
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
       setMessage({ type: "error", text: validation.errors.join(". ") });
+      showToast(validation.errors[0], "error");
       return;
     }
 
@@ -667,6 +674,7 @@ const AdminProjectForm = () => {
       const errorMsg = "Invalid plot price format. Use format like '8.5 Lakh', '12 Lakh', or '₹12.5 Lakh'";
       setValidationErrors([errorMsg]);
       setMessage({ type: "error", text: errorMsg });
+      showToast(errorMsg, "error");
       return;
     }
 
@@ -769,6 +777,7 @@ const AdminProjectForm = () => {
         }
 
         setMessage({ type: "success", text: "Project updated successfully!" });
+        showToast("Project updated successfully!", "success");
         setTimeout(() => {
           navigate("/admin/projects");
         }, 600);
@@ -822,13 +831,16 @@ const AdminProjectForm = () => {
         }
 
         setMessage({ type: "success", text: "Project created and saved to database successfully!" });
+        showToast("Project created and saved to database successfully!", "success");
         setTimeout(() => {
           navigate(`/admin/projects/${targetId}/manage`);
         }, 600);
       }
     } catch (err) {
       console.error("[AdminProjectForm] Submit error:", err);
-      setMessage({ type: "error", text: err.message || "Failed to save project. Please check required fields." });
+      const errMsg = err.message || "Failed to save project. Please check required fields.";
+      setMessage({ type: "error", text: errMsg });
+      showToast(errMsg, "error");
     } finally {
       setSaving(false);
     }
@@ -1145,7 +1157,7 @@ const AdminProjectForm = () => {
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/png, image/jpeg, image/jpg, image/webp"
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/avif, image/bmp"
               style={{ display: "none" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -1217,8 +1229,8 @@ const AdminProjectForm = () => {
                 {isUploadingImage ? (
                   <div className="dropzone-content">
                     <FaSpinner className="dropzone-icon fa-spin" />
-                    <p className="dropzone-primary-text">Uploading image to cloud...</p>
-                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                    <p className="dropzone-primary-text">Uploading image & converting to WebP...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is compressed and optimized for persistent storage</span>
                   </div>
                 ) : (
                   <div className="dropzone-content">
@@ -1250,7 +1262,7 @@ const AdminProjectForm = () => {
             <input
               ref={plotFileInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/avif, image/bmp"
               style={{ display: "none" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -1322,8 +1334,8 @@ const AdminProjectForm = () => {
                 {isUploadingPlotImage ? (
                   <div className="dropzone-content">
                     <FaSpinner className="dropzone-icon fa-spin" />
-                    <p className="dropzone-primary-text">Uploading plot image to cloud...</p>
-                    <span className="dropzone-secondary-text">Please wait while the image is being optimized and saved</span>
+                    <p className="dropzone-primary-text">Uploading plot image & converting to WebP...</p>
+                    <span className="dropzone-secondary-text">Please wait while the image is compressed and optimized for persistent storage</span>
                   </div>
                 ) : (
                   <div className="dropzone-content">

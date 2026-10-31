@@ -745,15 +745,17 @@
 ========================================= */
 
 .login-visual-overlay {
-    position: absolute;
+  position: absolute;
+  inset: 0;
 
-    inset: 0;
-
-    background:
-        linear-gradient(180deg,
-            rgba(10, 25, 45, 0.04) 0%,
-            rgba(10, 25, 45, 0.10) 38%,
-            rgba(7, 17, 31, 0.88) 100%);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 17, 31, 0.10) 0%,
+      rgba(10, 25, 45, 0.38) 32%,
+      rgba(7, 17, 31, 0.25) 60%,
+      rgba(7, 17, 31, 0.92) 100%
+    );
 }
 
 

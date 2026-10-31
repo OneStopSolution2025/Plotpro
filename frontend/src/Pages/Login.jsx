@@ -17,7 +17,7 @@ import { authApi, setAuthToken } from "../services/api";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import "../css/Login.css";
-import loginImage from "../assets/bg-image.jpg";
+import loginImage from "../assets/bg-image.webp";
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);

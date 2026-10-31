@@ -1296,7 +1296,7 @@ const ProjectPlots = () => {
               <input
                 ref={layoutFileInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/avif, image/bmp"
                 style={{ display: "none" }}
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
@@ -1462,8 +1462,8 @@ const ProjectPlots = () => {
                   {isUploadingLayout ? (
                     <div className="dropzone-content">
                       <FaSpinner className="dropzone-icon fa-spin" />
-                      <p className="dropzone-primary-text">Uploading layout image to storage...</p>
-                      <span className="dropzone-secondary-text">Please wait while the image is being saved</span>
+                      <p className="dropzone-primary-text">Uploading layout image & converting to WebP...</p>
+                      <span className="dropzone-secondary-text">Please wait while the image is compressed and optimized for persistent storage</span>
                     </div>
                   ) : (
                     <div className="dropzone-content">

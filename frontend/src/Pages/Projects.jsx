@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import Navbar from "../components/Navbar";
 import "../css/Projects.css";
 
-import bgimg from "../assets/bg-img.png";
+import bgimg from "../assets/bg-img.webp";
 import filterimg from "../assets/filter.svg";
 
 import ProjectCard from "../components/ProjectCard";

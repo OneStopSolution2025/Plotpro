@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Plotimg from '../assets/projectimg1.png'
+import Plotimg from '../assets/projectimg1.webp'
 import aboutimg from '../assets/About-section.jpg'
-import section4 from '../assets/bg-image.jpg'
+import section4 from '../assets/bg-image.webp'
 import "../css/About.css";
 import Navbar from '../components/Navbar'
 import Finalcta from '../components/Final-cta';

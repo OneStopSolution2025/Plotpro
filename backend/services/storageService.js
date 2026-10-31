@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import path from "path";
+import sharp from "sharp";
 import { sanitizeSvg } from "../utils/sanitizeSvg.js";
 import {
   getUploadDir,
@@ -148,7 +149,9 @@ class StorageService {
   }
 
   /**
-   * Saves a layout image to Persistent Volume storage (or local disk in dev).
+   * Saves a layout or plot image to Persistent Volume storage (or local disk in dev).
+   * Automatically converts any input format (PNG, JPEG, WebP, SVG, AVIF, TIFF, BMP)
+   * into an optimized, compressed WebP image before persisting to disk.
    *
    * @param {Object} options
    * @param {string} options.fileData - Base64 Data URI or raw base64 string
@@ -156,12 +159,21 @@ class StorageService {
    * @param {string} options.projectId - Project ID
    */
   async saveLocally({ fileData, mimeType, projectId }) {
-    const allowedMimes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+    const allowedMimes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+      "image/svg+xml",
+      "image/avif",
+      "image/tiff",
+      "image/bmp",
+    ];
     const normalizedMime = String(mimeType || "").toLowerCase();
 
-    if (!allowedMimes.includes(normalizedMime)) {
+    if (normalizedMime && !allowedMimes.includes(normalizedMime)) {
       const err = new Error(
-        `Invalid file format: ${mimeType}. Allowed formats are PNG, JPEG, WebP, and SVG.`
+        `Invalid file format: ${mimeType}. Allowed formats are PNG, JPEG, WebP, SVG, AVIF, TIFF, and BMP.`
       );
       err.statusCode = 400;
       throw err;
@@ -169,7 +181,7 @@ class StorageService {
 
     let { buffer } = parseAndValidateBase64(fileData);
 
-    // Sanitize SVG if applicable
+    // Sanitize SVG if applicable before passing to Sharp
     if (normalizedMime === "image/svg+xml") {
       let rawSvg = fileData;
       if (fileData.startsWith("data:image/svg+xml;base64,")) {
@@ -185,11 +197,47 @@ class StorageService {
       buffer = Buffer.from(sanitizedSvg, "utf-8");
     }
 
+    // Convert & compress image buffer to WebP with Sharp
+    let webpBuffer;
+    let imageWidth = 1200;
+    let imageHeight = 800;
+
+    try {
+      const sharpInstance = sharp(buffer, {
+        failOn: "none",
+        density: normalizedMime === "image/svg+xml" ? 300 : undefined,
+      });
+
+      const processed = await sharpInstance
+        .rotate() // Auto-orient based on EXIF
+        .resize({
+          width: 2560,
+          height: 2560,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({
+          quality: 80,
+          effort: 4,
+          smartSubsample: true,
+        })
+        .toBuffer({ resolveWithObject: true });
+
+      webpBuffer = processed.data;
+      imageWidth = processed.info.width || imageWidth;
+      imageHeight = processed.info.height || imageHeight;
+    } catch (conversionErr) {
+      console.error("[StorageService] Sharp WebP conversion failed:", conversionErr);
+      const err = new Error("Failed to process and convert image to WebP format. Please provide a valid image file.");
+      err.statusCode = 400;
+      throw err;
+    }
+
     const cleanProjectId = String(projectId || "project").replace(/[^a-zA-Z0-9_-]/g, "") || "project";
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
-    const ext = getExtensionForMime(normalizedMime);
-    const filename = `layout_${cleanProjectId}_${timestamp}_${randomSuffix}.${ext}`;
+    // Force .webp extension on all uploaded project & plot images
+    const filename = `layout_${cleanProjectId}_${timestamp}_${randomSuffix}.webp`;
 
     const layoutsDir = getLayoutsDir();
     if (!fs.existsSync(layoutsDir)) {
@@ -197,7 +245,7 @@ class StorageService {
     }
 
     const targetPath = resolveStoragePath(path.join("layouts", filename));
-    fs.writeFileSync(targetPath, buffer);
+    fs.writeFileSync(targetPath, webpBuffer);
 
     const baseUrl = getPublicBaseUrl();
     const imageUrl = baseUrl ? `${baseUrl}/uploads/layouts/${filename}` : `/uploads/layouts/${filename}`;
@@ -208,10 +256,10 @@ class StorageService {
       provider,
       imageUrl,
       publicId: filename,
-      format: ext,
-      width: 1200,
-      height: 800,
-      bytes: buffer.length,
+      format: "webp",
+      width: imageWidth,
+      height: imageHeight,
+      bytes: webpBuffer.length,
     };
   }
 
